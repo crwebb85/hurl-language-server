@@ -11,3 +11,6 @@ serde_json = "1.0.133"
 tokio = { version = "1.42.0", features = ["full"] }
 tower-lsp = { version = "0.20.0", features = ["proposed"] }
 log = "0.4.22"
+hurl_core = "6.0.0"
+dashmap = "6.1.0"
+ropey = "1.6.1"
