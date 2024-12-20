@@ -13,7 +13,6 @@ pub struct ImCompleteSemanticToken {
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum AstNode {
-    HurlFile,
     Entry {
         request: Box<AstNode>,
         response: Option<Box<AstNode>>,
@@ -49,7 +48,6 @@ impl fmt::Display for AstNode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         //TODO replace with correct logic
         match self {
-            AstNode::HurlFile => write!(f, "HurlFile"),
             AstNode::Entry {
                 request: _,
                 response: _,
@@ -64,7 +62,7 @@ impl fmt::Display for AstNode {
 pub type Span = Range<usize>;
 pub type Spanned<T> = (T, Span);
 
-pub fn entry_parser() -> impl Parser<char, AstNode, Error = Simple<char>> {
+pub fn ast_parser() -> impl Parser<char, Vec<AstNode>, Error = Simple<char>> {
     let method = filter::<_, _, Simple<char>>(char::is_ascii_uppercase)
         .repeated()
         .at_least(1)
@@ -72,10 +70,26 @@ pub fn entry_parser() -> impl Parser<char, AstNode, Error = Simple<char>> {
         .map(AstNode::Method)
         .padded();
 
-    let url = take_until(text::newline().or(end()))
+    let sp = choice::<_, Simple<char>>([text::keyword(" "), text::keyword("\t")]);
+
+    let comment = just('#').then(
+        filter::<_, _, Simple<char>>(|c| c != &'\n')
+            .repeated()
+            .at_least(1),
+    );
+
+    let lt = sp
+        .clone()
+        .repeated()
+        .then(comment)
+        .or_not() // or_not makes the comment optional
+        .then(text::newline().or(end()));
+
+    let url = take_until(lt.clone())
         .map(|(url_chars, _)| url_chars)
         .collect::<String>()
         .map(AstNode::ValueString);
+
     let request_method_line = method.then(url).then_ignore(end());
     let request = request_method_line.map(|(method, url)| AstNode::Request {
         method: Box::new(method),
@@ -85,14 +99,14 @@ pub fn entry_parser() -> impl Parser<char, AstNode, Error = Simple<char>> {
         request: Box::new(request),
         response: None,
     });
-    entry
+    entry.repeated().then_ignore(lt.clone())
 }
 
 fn main() {
     println!("hi");
 
     //For quick debugging
-    let dummy_parser = entry_parser();
+    let dummy_parser = ast_parser();
 
     let src = "GET\nhttps://example.org";
     let ast_result = dummy_parser.parse(src);
@@ -102,116 +116,182 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use insta::assert_debug_snapshot;
 
     #[test]
     fn it_parse_simple_get() {
         let test_str = "GET https://example.org";
-        assert_eq!(
-        entry_parser().parse(test_str),
-            Ok(AstNode::Entry {
-                request: Box::new(AstNode::Request {
-                    method: Box::new(AstNode::Method("GET".to_owned())),
-                    url: Box::new(AstNode::ValueString("https://example.org".to_owned()))
-                }),
-                response: None
-            }),
-            "we are testing that a single line entry without a linefeed at the end correctly parses"
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method(
+                            "GET",
+                        ),
+                        url: ValueString(
+                            "https://example.org",
+                        ),
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+            // "we are testing that a single line entry without a linefeed at the end correctly parses"
         );
     }
 
     #[test]
     fn it_parses_simple_get_with_trailing_newline() {
         let test_str = "GET https://example.org\n";
-        assert_eq!(
-            entry_parser().parse(test_str),
-            Ok(AstNode::Entry {
-                request: Box::new(AstNode::Request {
-                    method: Box::new(AstNode::Method("GET".to_owned())),
-                    url: Box::new(AstNode::ValueString("https://example.org".to_owned()))
-                }),
-                response: None
-            }),
-            "we are testing that a single line entry with a linefeed at the end correctly parses"
+        assert_debug_snapshot!(
+            ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method(
+                            "GET",
+                        ),
+                        url: ValueString(
+                            "https://example.org",
+                        ),
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+            // "we are testing that a single line entry with a linefeed at the end correctly parses"
         );
     }
 
     #[test]
     fn it_parses_simple_get_with_newline_after_method() {
         let test_str = "GET\nhttps://example.org";
-        assert_eq!(
-            entry_parser().parse(test_str),
-            Ok(AstNode::Entry {
-                request: Box::new(AstNode::Request {
-                    method: Box::new(AstNode::Method("GET".to_owned())),
-                    url: Box::new(AstNode::ValueString("https://example.org".to_owned()))
-                }),
-                response: None
-            }),
-            "we are testing that a single line entry with a linefeed at the end correctly parses"
+        assert_debug_snapshot!(
+            ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method(
+                            "GET",
+                        ),
+                        url: ValueString(
+                            "https://example.org",
+                        ),
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+            // "we are testing that a single line entry with a linefeed at the end correctly parses"
         );
     }
 
     #[test]
     fn it_parses_simple_get_with_newline_after_method_and_after_url() {
         let test_str = "GET\nhttps://example.org\n";
-        assert_eq!(
-            entry_parser().parse(test_str),
-            Ok(AstNode::Entry {
-                request: Box::new(AstNode::Request {
-                    method: Box::new(AstNode::Method("GET".to_owned())),
-                    url: Box::new(AstNode::ValueString("https://example.org".to_owned()))
-                }),
-                response: None
-            }),
-            "we are testing that a single line entry with a linefeed at the end correctly parses"
+        assert_debug_snapshot!(
+            ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method(
+                            "GET",
+                        ),
+                        url: ValueString(
+                            "https://example.org",
+                        ),
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+            // "we are testing that a single line entry with a linefeed at the end correctly parses"
         );
     }
 
     #[test]
     fn it_parses_simple_get_with_extra_whitespace() {
         let test_str = "GET\n https://example.org";
-        assert_eq!(
-            entry_parser().parse(test_str),
-            Ok(AstNode::Entry {
-                request: Box::new(AstNode::Request {
-                    method: Box::new(AstNode::Method("GET".to_owned())),
-                    url: Box::new(AstNode::ValueString("https://example.org".to_owned()))
-                }),
-                response: None
-            }),
-            "we are testing that a single line entry with extra whitespace correctly parses"
+        assert_debug_snapshot!(
+            ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method(
+                            "GET",
+                        ),
+                        url: ValueString(
+                            "https://example.org",
+                        ),
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+            // "we are testing that a single line entry with extra whitespace correctly parses"
         );
     }
 
     #[test]
     fn it_parses_simple_post() {
         let test_str = "POST https://example.org";
-        assert_eq!(
-            entry_parser().parse(test_str),
-            Ok(AstNode::Entry {
-                request: Box::new(AstNode::Request {
-                    method: Box::new(AstNode::Method("POST".to_owned())),
-                    url: Box::new(AstNode::ValueString("https://example.org".to_owned()))
-                }),
-                response: None
-            }),
-            "we are testing that a single line post entry parses correctly"
+        assert_debug_snapshot!(
+            ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method(
+                            "POST",
+                        ),
+                        url: ValueString(
+                            "https://example.org",
+                        ),
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+            // "we are testing that a single line post entry parses correctly"
         );
     }
-
     #[test]
     fn it_parses_unknown_method() {
         let test_str = "FOO https://example.org";
-        assert_eq!(
-            entry_parser().parse(test_str),
-            Ok(AstNode::Entry {
-                request: Box::new(AstNode::Request {
-                    method: Box::new(AstNode::Method("FOO".to_owned())),
-                    url: Box::new(AstNode::ValueString("https://example.org".to_owned()))
-                }),
-                response: None
-            }),
-            "we are testing that an unknow method parses correctly"
-        );
+        assert_debug_snapshot!(ast_parser().parse(test_str),@r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method(
+                            "FOO",
+                        ),
+                        url: ValueString(
+                            "https://example.org",
+                        ),
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "# );
     }
 }
