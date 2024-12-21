@@ -1,7 +1,6 @@
 use chumsky::prelude::*;
 use text::TextParser;
 
-use core::fmt;
 use std::ops::Range;
 
 #[derive(Debug)]
@@ -12,62 +11,54 @@ pub struct ImCompleteSemanticToken {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum AstNode {
-    Entry {
-        request: Box<AstNode>,
-        response: Option<Box<AstNode>>,
-    },
-    Request {
-        method: Box<AstNode>,
-        url: Box<AstNode>,
-    },
-    // Response,
-    Method(String),
-    // Version,
-    // Status,
-    // Header,
-    // Body,
-    // RequestSection,
-    //TODO
-    // basic-auth-section
-    // |query-string-params-section
-    // |form-params-section
-    // |multipart-form-data-section
-    // |cookies-section
-    // |options-section
-    // ResponseSection,
-    //TODO
-    //  captures-section
-    // |asserts-section
-    // KeyValue,
-    // KeyString(String),
-    ValueString(String),
+pub struct Method {
+    value: String,
+    // TODO add a trait to validate if method is valid,
 }
 
-impl fmt::Display for AstNode {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        //TODO replace with correct logic
-        match self {
-            AstNode::Entry {
-                request: _,
-                response: _,
-            } => write!(f, "entry"),
-            AstNode::Request { method: _, url: _ } => write!(f, "request"),
-            AstNode::Method(s) => write!(f, "{}", s),
-            AstNode::ValueString(s) => write!(f, "{}", s),
-        }
-    }
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct ValueString {
+    value: String,
+    // TODO add other fields
+    // variables: Vec<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Header {
+    key: String,
+    value: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Request {
+    method: Method,
+    url: ValueString,
+    header: Vec<Header>,
+    //TODO define/parse remaining fields
+    // request_sections: Vec<RequestSection>,
+    // body: Body,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Response {
+    //TODO fill remaining fields
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Entry {
+    request: Box<Request>,
+    response: Option<Box<Response>>,
 }
 
 pub type Span = Range<usize>;
 pub type Spanned<T> = (T, Span);
 
-pub fn ast_parser() -> impl Parser<char, Vec<AstNode>, Error = Simple<char>> {
+pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
     let method = filter::<_, _, Simple<char>>(char::is_ascii_uppercase)
         .repeated()
         .at_least(1)
         .collect::<String>()
-        .map(AstNode::Method)
+        .map(|value| Method { value })
         .padded();
 
     let sp = choice::<_, Simple<char>>([text::keyword(" "), text::keyword("\t")]);
@@ -88,15 +79,17 @@ pub fn ast_parser() -> impl Parser<char, Vec<AstNode>, Error = Simple<char>> {
     let url = take_until(lt.clone())
         .map(|(url_chars, _)| url_chars)
         .collect::<String>()
-        .map(AstNode::ValueString);
+        .map(|url_string| ValueString { value: url_string });
 
-    let request_method_line = method.then(url).then_ignore(end());
-    let request = request_method_line.map(|(method, url)| AstNode::Request {
-        method: Box::new(method),
-        url: Box::new(url),
-    });
-    let entry = request.map(|request| AstNode::Entry {
-        request: Box::new(request),
+    let request = method
+        .then(url)
+        .map(|(method_value, url_value_string)| Request {
+            method: method_value,
+            url: url_value_string,
+            header: vec![],
+        });
+    let entry = request.map(|request_value| Entry {
+        request: Box::new(request_value),
         response: None,
     });
     entry.repeated().then_ignore(lt.clone())
@@ -128,12 +121,13 @@ mod tests {
             [
                 Entry {
                     request: Request {
-                        method: Method(
-                            "GET",
-                        ),
-                        url: ValueString(
-                            "https://example.org",
-                        ),
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org",
+                        },
+                        header: [],
                     },
                     response: None,
                 },
@@ -154,12 +148,13 @@ mod tests {
             [
                 Entry {
                     request: Request {
-                        method: Method(
-                            "GET",
-                        ),
-                        url: ValueString(
-                            "https://example.org",
-                        ),
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org",
+                        },
+                        header: [],
                     },
                     response: None,
                 },
@@ -180,12 +175,13 @@ mod tests {
             [
                 Entry {
                     request: Request {
-                        method: Method(
-                            "GET",
-                        ),
-                        url: ValueString(
-                            "https://example.org",
-                        ),
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org",
+                        },
+                        header: [],
                     },
                     response: None,
                 },
@@ -206,12 +202,13 @@ mod tests {
             [
                 Entry {
                     request: Request {
-                        method: Method(
-                            "GET",
-                        ),
-                        url: ValueString(
-                            "https://example.org",
-                        ),
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org",
+                        },
+                        header: [],
                     },
                     response: None,
                 },
@@ -232,12 +229,13 @@ mod tests {
             [
                 Entry {
                     request: Request {
-                        method: Method(
-                            "GET",
-                        ),
-                        url: ValueString(
-                            "https://example.org",
-                        ),
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org",
+                        },
+                        header: [],
                     },
                     response: None,
                 },
@@ -258,12 +256,13 @@ mod tests {
             [
                 Entry {
                     request: Request {
-                        method: Method(
-                            "POST",
-                        ),
-                        url: ValueString(
-                            "https://example.org",
-                        ),
+                        method: Method {
+                            value: "POST",
+                        },
+                        url: ValueString {
+                            value: "https://example.org",
+                        },
+                        header: [],
                     },
                     response: None,
                 },
@@ -281,12 +280,13 @@ mod tests {
             [
                 Entry {
                     request: Request {
-                        method: Method(
-                            "FOO",
-                        ),
-                        url: ValueString(
-                            "https://example.org",
-                        ),
+                        method: Method {
+                            value: "FOO",
+                        },
+                        url: ValueString {
+                            value: "https://example.org",
+                        },
+                        header: [],
                     },
                     response: None,
                 },
