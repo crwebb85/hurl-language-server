@@ -93,15 +93,13 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
 
     let header = key_value.repeated();
 
-    let request =
-        method
-            .then(url)
-            .then(header)
-            .map(|((method_value, url_value_string), headers)| Request {
-                method: method_value,
-                url: url_value_string,
-                header: headers,
-            });
+    let request = sp.repeated().ignore_then(method.then(url).then(header).map(
+        |((method_value, url_value_string), headers)| Request {
+            method: method_value,
+            url: url_value_string,
+            header: headers,
+        },
+    ));
     let entry = request.map(|request_value| Entry {
         request: Box::new(request_value),
         response: None,
@@ -344,6 +342,51 @@ mod tests {
             ],
         )
         "#,
+        );
+    }
+
+    #[test]
+    fn it_parse_simple_get_with_leading_whitespace() {
+        let test_str = "    GET https://example.org";
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org",
+                        },
+                        header: [],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+            // "we are testing that a single line entry without a linefeed at the end correctly parses"
+        );
+    }
+
+    #[ignore]
+    #[test]
+    fn it_parse_multiple_entries_with_leading_whitespace() {
+        //TODO this currently failes because I need to improve the value-string parsing (currently
+        //it things the second "https:" is the start of a new header key
+
+        //    GET https://example.org
+        //GET https://example.org/protected
+        //Authorization: Basic Ym9iOnNlY3JldA==";
+        let test_str = "    GET https://example.org\nGET https://example.org/protected\nAuthorization: Basic Ym9iOnNlY3JldA==";
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        "#,
+            // "we are testing that a single line entry without a linefeed at the end correctly parses"
         );
     }
 }
