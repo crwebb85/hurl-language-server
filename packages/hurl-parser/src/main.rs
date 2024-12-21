@@ -24,7 +24,7 @@ pub struct ValueString {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct Header {
+pub struct KeyValue {
     key: String,
     value: String,
 }
@@ -33,7 +33,7 @@ pub struct Header {
 pub struct Request {
     method: Method,
     url: ValueString,
-    header: Vec<Header>,
+    header: Vec<KeyValue>,
     //TODO define/parse remaining fields
     // request_sections: Vec<RequestSection>,
     // body: Body,
@@ -81,13 +81,27 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
         .collect::<String>()
         .map(|url_string| ValueString { value: url_string });
 
-    let request = method
-        .then(url)
-        .map(|(method_value, url_value_string)| Request {
-            method: method_value,
-            url: url_value_string,
-            header: vec![],
-        });
+    let key = take_until(just(':'))
+        .map(|(key_chars, _)| key_chars)
+        .collect::<String>();
+
+    let value = take_until(lt.clone())
+        .map(|(key_value, _)| key_value)
+        .collect::<String>();
+
+    let key_value = key.then(value).map(|(key, value)| KeyValue { key, value });
+
+    let header = key_value.repeated();
+
+    let request =
+        method
+            .then(url)
+            .then(header)
+            .map(|((method_value, url_value_string), headers)| Request {
+                method: method_value,
+                url: url_value_string,
+                header: headers,
+            });
     let entry = request.map(|request_value| Entry {
         request: Box::new(request_value),
         response: None,
@@ -293,5 +307,43 @@ mod tests {
             ],
         )
         "# );
+    }
+
+    #[test]
+    fn it_parses_header() {
+        // let test_str = r#"
+        // GET https://example.org/protected
+        // Authorization: Basic Ym9iOnNlY3JldA==
+        // "#;
+        let test_str = "GET https://example.org/protected\nAuthorization: Basic Ym9iOnNlY3JldA==";
+
+        //TODO parser needs to improve parsing of key-string and value-string to exclude the
+        //as the leading space before "Basic" probably shouldn't be there.
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org/protected",
+                        },
+                        header: [
+                            KeyValue {
+                                key: "Authorization",
+                                value: " Basic Ym9iOnNlY3JldA==",
+                            },
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
     }
 }
