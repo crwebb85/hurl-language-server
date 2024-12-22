@@ -207,14 +207,20 @@ mod tests {
                         },
                         header: [
                             KeyValue {
-                                key: KeyString {
+                                key: InterpolatedString {
                                     parts: [
                                         Str(
                                             "Authorization",
                                         ),
                                     ],
                                 },
-                                value: " Basic Ym9iOnNlY3JldA==",
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            " Basic Ym9iOnNlY3JldA==",
+                                        ),
+                                    ],
+                                },
                             },
                         ],
                     },
@@ -285,14 +291,20 @@ mod tests {
                         },
                         header: [
                             KeyValue {
-                                key: KeyString {
+                                key: InterpolatedString {
                                     parts: [
                                         Str(
                                             "Authorization",
                                         ),
                                     ],
                                 },
-                                value: " Basic Ym9iOnNlY3JldA==",
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            " Basic Ym9iOnNlY3JldA==",
+                                        ),
+                                    ],
+                                },
                             },
                         ],
                     },
@@ -301,6 +313,188 @@ mod tests {
             ],
         )
         "#,
+        );
+    }
+
+    #[test]
+    fn it_parse_colon_in_header_value() {
+        let test_str = "GET https://example.org\nkey: this:value:has:colons";
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org",
+                        },
+                        header: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "key",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            " this:value:has:colons",
+                                        ),
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parse_escaped_colon_in_header_key() {
+        let test_str =
+            "GET https://example.org\nkey\\:has\\:escaped\\:colons: thekeyhadescapedcolons";
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org",
+                        },
+                        header: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "key:has:escaped:colons",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            " thekeyhadescapedcolons",
+                                        ),
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parse_escaped_backslash_in_header_value() {
+        let test_str = "GET https://example.org\nkey: thekeyhasescaped\\\\backslash";
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org",
+                        },
+                        header: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "key",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            " thekeyhasescaped\\backslash",
+                                        ),
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_error_from_unescaped_backslash_in_header_value() {
+        //TODO improve error message and recovery from this type of error
+        let test_str = "GET https://example.org\nkey: this\\valuehasanunescapedbackslash";
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r"
+        Err(
+            [
+                Simple {
+                    span: 34..35,
+                    reason: Unexpected,
+                    expected: {
+                        Some(
+                            'r',
+                        ),
+                        Some(
+                            '#',
+                        ),
+                        Some(
+                            'n',
+                        ),
+                        Some(
+                            'b',
+                        ),
+                        Some(
+                            ':',
+                        ),
+                        Some(
+                            't',
+                        ),
+                        Some(
+                            '\\',
+                        ),
+                        Some(
+                            'u',
+                        ),
+                        Some(
+                            'f',
+                        ),
+                    },
+                    found: Some(
+                        'v',
+                    ),
+                    label: None,
+                },
+            ],
+        )
+        ",
         );
     }
 

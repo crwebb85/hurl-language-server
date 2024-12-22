@@ -17,20 +17,28 @@ pub struct Template {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum KeyStringPart {
+pub enum InterpolatedStringPart {
+    //I'm using this to represent the type for both
+    //value-string-content and key-string-content in
+    //the official grammer
     Str(String),
+    //I'm using this to represent the type
+    //template in the official grammer
     Template(Template),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct KeyString {
-    pub parts: Vec<KeyStringPart>,
+//I'm using this to represent the type for both
+//value-string and key-string in
+//the official grammer
+pub struct InterpolatedString {
+    pub parts: Vec<InterpolatedStringPart>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct KeyValue {
-    pub key: KeyString,
-    pub value: String,
+    pub key: InterpolatedString,
+    pub value: InterpolatedString,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

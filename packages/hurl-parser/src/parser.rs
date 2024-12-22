@@ -1,7 +1,9 @@
 pub mod types;
 use chumsky::prelude::*;
 use text::TextParser;
-use types::{Entry, KeyString, KeyStringPart, KeyValue, Method, Request, ValueString};
+use types::{
+    Entry, InterpolatedString, InterpolatedStringPart, KeyValue, Method, Request, ValueString,
+};
 #[cfg(test)]
 mod test;
 
@@ -33,10 +35,14 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
         .collect::<String>()
         .map(|url_string| ValueString { value: url_string });
 
-    let escape = just('\\').ignore_then(
+    let key_string_escaped_char = just('\\').ignore_then(
+        //TODO for some reason when I test hurl files with the hurl cli using
+        //these escape sequences I get errors. I need to investivate if that is
+        //a version issue or if my understanding on this grammar is wrong
         just('\\')
-            .or(just('/'))
-            .or(just('"'))
+            .or(just('#').to('#'))
+            .or(just(':').to(':'))
+            .or(just('\\').to('\\'))
             .or(just('b').to('\x08'))
             .or(just('f').to('\x0C'))
             .or(just('n').to('\n'))
@@ -68,16 +74,45 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
             || c == &'@'
             || c == &'$'
     })
-    .or(escape)
+    .or(key_string_escaped_char)
     .repeated()
     .at_least(1)
     .collect::<String>()
-    .map(KeyStringPart::Str)
-    .map(|k| KeyString { parts: vec![k] });
+    .map(InterpolatedStringPart::Str)
+    .map(|k| InterpolatedString { parts: vec![k] });
 
-    let value = take_until(lt.clone())
-        .map(|(key_value, _)| key_value)
-        .collect::<String>();
+    let value_string_escaped_char = just('\\').ignore_then(
+        just('\\')
+            .or(just('#').to('#'))
+            .or(just('\\').to('\\'))
+            .or(just('b').to('\x08'))
+            .or(just('f').to('\x0C'))
+            .or(just('n').to('\n'))
+            .or(just('r').to('\r'))
+            .or(just('t').to('\t'))
+            .or(just('u').ignore_then(
+                filter(|c: &char| c.is_digit(16))
+                    .repeated()
+                    .exactly(4)
+                    .collect::<String>()
+                    .validate(|digits, span, emit| {
+                        char::from_u32(u32::from_str_radix(&digits, 16).unwrap()).unwrap_or_else(
+                            || {
+                                emit(Simple::custom(span, "invalid unicode character"));
+                                '\u{FFFD}' // unicode replacement character
+                            },
+                        )
+                    }),
+            )),
+    );
+
+    let value = filter::<_, _, Simple<char>>(|c: &char| c != &'#' && c != &'\n' && c != &'\\')
+        .or(value_string_escaped_char)
+        .repeated()
+        .at_least(1)
+        .collect::<String>()
+        .map(InterpolatedStringPart::Str)
+        .map(|k| InterpolatedString { parts: vec![k] });
 
     let key_value = key
         .then_ignore(just(':'))
