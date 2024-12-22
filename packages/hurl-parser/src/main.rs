@@ -24,8 +24,24 @@ pub struct ValueString {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Template {
+    //TODO
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum KeyStringPart {
+    Str(String),
+    Template(Template),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct KeyString {
+    parts: Vec<KeyStringPart>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct KeyValue {
-    key: String,
+    key: KeyString,
     value: String,
 }
 
@@ -81,15 +97,56 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
         .collect::<String>()
         .map(|url_string| ValueString { value: url_string });
 
-    let key = take_until(just(':'))
-        .map(|(key_chars, _)| key_chars)
-        .collect::<String>();
+    let escape = just('\\').ignore_then(
+        just('\\')
+            .or(just('/'))
+            .or(just('"'))
+            .or(just('b').to('\x08'))
+            .or(just('f').to('\x0C'))
+            .or(just('n').to('\n'))
+            .or(just('r').to('\r'))
+            .or(just('t').to('\t'))
+            .or(just('u').ignore_then(
+                filter(|c: &char| c.is_digit(16))
+                    .repeated()
+                    .exactly(4)
+                    .collect::<String>()
+                    .validate(|digits, span, emit| {
+                        char::from_u32(u32::from_str_radix(&digits, 16).unwrap()).unwrap_or_else(
+                            || {
+                                emit(Simple::custom(span, "invalid unicode character"));
+                                '\u{FFFD}' // unicode replacement character
+                            },
+                        )
+                    }),
+            )),
+    );
+
+    let key = filter::<_, _, Simple<char>>(|c: &char| {
+        c.is_ascii_alphanumeric()
+            || c == &'_'
+            || c == &'-'
+            || c == &'.'
+            || c == &'['
+            || c == &']'
+            || c == &'@'
+            || c == &'$'
+    })
+    .or(escape)
+    .repeated()
+    .at_least(1)
+    .collect::<String>()
+    .map(KeyStringPart::Str)
+    .map(|k| KeyString { parts: vec![k] });
 
     let value = take_until(lt.clone())
         .map(|(key_value, _)| key_value)
         .collect::<String>();
 
-    let key_value = key.then(value).map(|(key, value)| KeyValue { key, value });
+    let key_value = key
+        .then_ignore(just(':'))
+        .then(value)
+        .map(|(key, value)| KeyValue { key, value });
 
     let header = key_value.repeated();
 
@@ -111,11 +168,11 @@ fn main() {
     println!("hi");
 
     //For quick debugging
-    let dummy_parser = ast_parser();
+    // let dummy_parser = ast_parser();
 
-    let src = "GET\nhttps://example.org";
-    let ast_result = dummy_parser.parse(src);
-    println!("{:?}", ast_result);
+    // let src = "GET\nhttps://example.org";
+    // let ast_result = dummy_parser.parse(src);
+    // println!("{:?}", ast_result);
 }
 
 #[cfg(test)]
@@ -146,7 +203,6 @@ mod tests {
             ],
         )
         "#,
-            // "we are testing that a single line entry without a linefeed at the end correctly parses"
         );
     }
 
@@ -173,7 +229,6 @@ mod tests {
             ],
         )
         "#,
-            // "we are testing that a single line entry with a linefeed at the end correctly parses"
         );
     }
 
@@ -200,7 +255,6 @@ mod tests {
             ],
         )
         "#,
-            // "we are testing that a single line entry with a linefeed at the end correctly parses"
         );
     }
 
@@ -227,7 +281,6 @@ mod tests {
             ],
         )
         "#,
-            // "we are testing that a single line entry with a linefeed at the end correctly parses"
         );
     }
 
@@ -254,7 +307,6 @@ mod tests {
             ],
         )
         "#,
-            // "we are testing that a single line entry with extra whitespace correctly parses"
         );
     }
 
@@ -281,7 +333,6 @@ mod tests {
             ],
         )
         "#,
-            // "we are testing that a single line post entry parses correctly"
         );
     }
     #[test]
@@ -332,7 +383,13 @@ mod tests {
                         },
                         header: [
                             KeyValue {
-                                key: "Authorization",
+                                key: KeyString {
+                                    parts: [
+                                        Str(
+                                            "Authorization",
+                                        ),
+                                    ],
+                                },
                                 value: " Basic Ym9iOnNlY3JldA==",
                             },
                         ],
@@ -368,16 +425,11 @@ mod tests {
             ],
         )
         "#,
-            // "we are testing that a single line entry without a linefeed at the end correctly parses"
         );
     }
 
-    #[ignore]
     #[test]
     fn it_parse_multiple_entries_with_leading_whitespace() {
-        //TODO this currently failes because I need to improve the value-string parsing (currently
-        //it things the second "https:" is the start of a new header key
-
         //    GET https://example.org
         //GET https://example.org/protected
         //Authorization: Basic Ym9iOnNlY3JldA==";
@@ -385,8 +437,46 @@ mod tests {
         assert_debug_snapshot!(
         ast_parser().parse(test_str),
             @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org",
+                        },
+                        header: [],
+                    },
+                    response: None,
+                },
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org/protected",
+                        },
+                        header: [
+                            KeyValue {
+                                key: KeyString {
+                                    parts: [
+                                        Str(
+                                            "Authorization",
+                                        ),
+                                    ],
+                                },
+                                value: " Basic Ym9iOnNlY3JldA==",
+                            },
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
         "#,
-            // "we are testing that a single line entry without a linefeed at the end correctly parses"
         );
     }
 }
