@@ -498,6 +498,108 @@ mod tests {
         );
     }
 
+    #[test]
+    fn it_parses_header_key_template() {
+        let test_str = "GET https://example.org\nkey-{{ }}: dummyvalue";
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org",
+                        },
+                        header: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "key-",
+                                        ),
+                                        Template(
+                                            Template,
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            " dummyvalue",
+                                        ),
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_header_value_with_emoji() {
+        let test_str = "GET https://example.org\nkey: valuewithemoji\u{1F600}";
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org",
+                        },
+                        header: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "key",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            " valuewithemoji😀",
+                                        ),
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[ignore]
+    #[test]
+    fn it_parses_header_value_template() {
+        //TODO fix so that template is parsed correctly
+        let test_str = "GET https://example.org\nkey: dummyvalue-{{ }}";
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r"
+
+        ",
+        );
+    }
+
     #[ignore]
     #[test]
     fn it_parse_invalid_unicode_in_header_key() {

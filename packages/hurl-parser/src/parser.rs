@@ -2,7 +2,8 @@ pub mod types;
 use chumsky::prelude::*;
 use text::TextParser;
 use types::{
-    Entry, InterpolatedString, InterpolatedStringPart, KeyValue, Method, Request, ValueString,
+    Entry, InterpolatedString, InterpolatedStringPart, KeyValue, Method, Request, Template,
+    ValueString,
 };
 #[cfg(test)]
 mod test;
@@ -35,6 +36,15 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
         .collect::<String>()
         .map(|url_string| ValueString { value: url_string });
 
+    //TODO finish expr parsing logic
+    let expr = just(' ');
+
+    let template = just("{{")
+        .ignored()
+        .then(expr)
+        .then_ignore(just("}}"))
+        .to(Template {}); //TODO add template contents
+
     let key_string_escaped_char = just('\\').ignore_then(
         //TODO for some reason when I test hurl files with the hurl cli using
         //these escape sequences I get errors. I need to investivate if that is
@@ -64,7 +74,7 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
             )),
     );
 
-    let key = filter::<_, _, Simple<char>>(|c: &char| {
+    let key_str_part = filter::<_, _, Simple<char>>(|c: &char| {
         c.is_ascii_alphanumeric()
             || c == &'_'
             || c == &'-'
@@ -78,8 +88,17 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
     .repeated()
     .at_least(1)
     .collect::<String>()
-    .map(InterpolatedStringPart::Str)
-    .map(|k| InterpolatedString { parts: vec![k] });
+    .map(InterpolatedStringPart::Str);
+
+    let key_template_part = template
+        .clone()
+        .map(|t| InterpolatedStringPart::Template(t));
+
+    let key = key_str_part
+        .or(key_template_part)
+        .repeated()
+        .at_least(1)
+        .map(|k| InterpolatedString { parts: k });
 
     let value_string_escaped_char = just('\\').ignore_then(
         just('\\')
@@ -106,13 +125,23 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
             )),
     );
 
-    let value = filter::<_, _, Simple<char>>(|c: &char| c != &'#' && c != &'\n' && c != &'\\')
-        .or(value_string_escaped_char)
+    let value_str_part =
+        filter::<_, _, Simple<char>>(|c: &char| c != &'#' && c != &'\n' && c != &'\\')
+            .or(value_string_escaped_char)
+            .repeated()
+            .at_least(1)
+            .collect::<String>()
+            .map(InterpolatedStringPart::Str);
+
+    let value_template_part = template
+        .clone()
+        .map(|t| InterpolatedStringPart::Template(t));
+
+    let value = value_template_part
+        .or(value_str_part)
         .repeated()
         .at_least(1)
-        .collect::<String>()
-        .map(InterpolatedStringPart::Str)
-        .map(|k| InterpolatedString { parts: vec![k] });
+        .map(|v| InterpolatedString { parts: v });
 
     let key_value = key
         .then_ignore(just(':'))
