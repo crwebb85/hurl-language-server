@@ -587,16 +587,106 @@ mod tests {
         );
     }
 
-    #[ignore]
     #[test]
     fn it_parses_header_value_template() {
-        //TODO fix so that template is parsed correctly
         let test_str = "GET https://example.org\nkey: dummyvalue-{{ }}";
         assert_debug_snapshot!(
         ast_parser().parse(test_str),
-            @r"
-
-        ",
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org",
+                        },
+                        header: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "key",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            " dummyvalue-",
+                                        ),
+                                        Template(
+                                            Template,
+                                        ),
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+    #[test]
+    fn it_parses_header_value_template_end_a_non_template_bracket() {
+        let test_str = "GET https://example.org\nkey: dummy{v}alue-{{ }}";
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org",
+                        },
+                        header: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "key",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            " dummy",
+                                        ),
+                                        Str(
+                                            "{",
+                                        ),
+                                        Str(
+                                            "v",
+                                        ),
+                                        Str(
+                                            "}",
+                                        ),
+                                        Str(
+                                            "alue-",
+                                        ),
+                                        Template(
+                                            Template,
+                                        ),
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
         );
     }
 

@@ -125,13 +125,26 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
             )),
     );
 
-    let value_str_part =
-        filter::<_, _, Simple<char>>(|c: &char| c != &'#' && c != &'\n' && c != &'\\')
-            .or(value_string_escaped_char)
-            .repeated()
-            .at_least(1)
-            .collect::<String>()
-            .map(InterpolatedStringPart::Str);
+    let value_str_part = filter::<_, _, Simple<char>>(|c: &char| {
+        c != &'#' && c != &'\n' && c != &'\\' 
+            //currly brackets while allowed will be handled after trying to parse
+            //as a template
+            && c != &'{' && c != &'}'
+    })
+    .or(value_string_escaped_char)
+    .repeated()
+    .at_least(1)
+    .collect::<String>()
+    .map(InterpolatedStringPart::Str);
+
+
+    let value_brackets = filter::<_, _, Simple<char>>(|c: &char| {
+        c == &'{' || c == &'}'
+    })
+    .repeated()
+    .at_least(1)
+    .collect::<String>()
+    .map(InterpolatedStringPart::Str);
 
     let value_template_part = template
         .clone()
@@ -139,6 +152,7 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
 
     let value = value_template_part
         .or(value_str_part)
+        .or(value_brackets)
         .repeated()
         .at_least(1)
         .map(|v| InterpolatedString { parts: v });
