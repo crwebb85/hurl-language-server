@@ -5,13 +5,6 @@ pub struct Method {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct ValueString {
-    pub value: String,
-    // TODO add other fields
-    // variables: Vec<String>,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Variable {
     VariableName(String),
     FunctionName(String),
@@ -100,7 +93,7 @@ pub struct KeyValue {
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Request {
     pub method: Method,
-    pub url: ValueString,
+    pub url: InterpolatedString,
     pub header: Vec<KeyValue>,
     //TODO define/parse remaining fields
     // request_sections: Vec<RequestSection>,

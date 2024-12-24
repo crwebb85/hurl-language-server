@@ -17,8 +17,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org",
+                                ),
+                            ],
                         },
                         header: [],
                     },
@@ -43,8 +47,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org",
+                                ),
+                            ],
                         },
                         header: [],
                     },
@@ -69,8 +77,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org",
+                                ),
+                            ],
                         },
                         header: [],
                     },
@@ -95,8 +107,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org",
+                                ),
+                            ],
                         },
                         header: [],
                     },
@@ -121,8 +137,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org",
+                                ),
+                            ],
                         },
                         header: [],
                     },
@@ -147,8 +167,12 @@ mod tests {
                         method: Method {
                             value: "POST",
                         },
-                        url: ValueString {
-                            value: "https://example.org",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org",
+                                ),
+                            ],
                         },
                         header: [],
                     },
@@ -170,8 +194,12 @@ mod tests {
                         method: Method {
                             value: "FOO",
                         },
-                        url: ValueString {
-                            value: "https://example.org",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org",
+                                ),
+                            ],
                         },
                         header: [],
                     },
@@ -202,8 +230,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org/protected",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org/protected",
+                                ),
+                            ],
                         },
                         header: [
                             KeyValue {
@@ -245,8 +277,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org",
+                                ),
+                            ],
                         },
                         header: [],
                     },
@@ -274,8 +310,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org",
+                                ),
+                            ],
                         },
                         header: [],
                     },
@@ -286,8 +326,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org/protected",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org/protected",
+                                ),
+                            ],
                         },
                         header: [
                             KeyValue {
@@ -329,8 +373,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org",
+                                ),
+                            ],
                         },
                         header: [
                             KeyValue {
@@ -373,8 +421,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org",
+                                ),
+                            ],
                         },
                         header: [
                             KeyValue {
@@ -416,8 +468,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org",
+                                ),
+                            ],
                         },
                         header: [
                             KeyValue {
@@ -537,8 +593,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org",
+                                ),
+                            ],
                         },
                         header: [
                             KeyValue {
@@ -590,8 +650,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org",
+                                ),
+                            ],
                         },
                         header: [
                             KeyValue {
@@ -633,8 +697,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org",
+                                ),
+                            ],
                         },
                         header: [
                             KeyValue {
@@ -685,8 +753,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org",
+                                ),
+                            ],
                         },
                         header: [
                             KeyValue {
@@ -750,8 +822,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org/cn",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org/cn",
+                                ),
+                            ],
                         },
                         header: [
                             KeyValue {
@@ -811,8 +887,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org/cn",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org/cn",
+                                ),
+                            ],
                         },
                         header: [
                             KeyValue {
@@ -893,8 +973,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org/cn",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org/cn",
+                                ),
+                            ],
                         },
                         header: [
                             KeyValue {
@@ -944,8 +1028,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org/cn",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org/cn",
+                                ),
+                            ],
                         },
                         header: [
                             KeyValue {
@@ -998,8 +1086,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org/cn",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org/cn",
+                                ),
+                            ],
                         },
                         header: [
                             KeyValue {
@@ -1066,8 +1158,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org",
+                                ),
+                            ],
                         },
                         header: [
                             KeyValue {
@@ -1119,8 +1215,12 @@ mod tests {
                         method: Method {
                             value: "GET",
                         },
-                        url: ValueString {
-                            value: "https://example.org",
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org",
+                                ),
+                            ],
                         },
                         header: [
                             KeyValue {

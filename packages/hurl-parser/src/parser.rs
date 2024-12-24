@@ -2,7 +2,7 @@ pub mod types;
 use chumsky::prelude::*;
 use text::TextParser;
 use types::{
-    Entry, Expr, FilterFunction, InterpolatedString, InterpolatedStringPart, KeyValue, Method, Request, Template, ValueString, Variable
+    Entry, Expr, FilterFunction, InterpolatedString, InterpolatedStringPart, KeyValue, Method, Request, Template, Variable
 };
 #[cfg(test)]
 mod test;
@@ -29,11 +29,6 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
         .then(comment)
         .or_not() // or_not makes the comment optional
         .then(text::newline().or(end()));
-
-    let url = take_until(lt.clone())
-        .map(|(url_chars, _)| url_chars)
-        .collect::<String>()
-        .map(|url_string| ValueString { value: url_string });
 
     let function = choice::<_, Simple<char>>([
         text::keyword("getEnv").to(Variable::FunctionName("getEnv".to_owned())), 
@@ -293,7 +288,7 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
         .or(value_str_part)
         .or(value_brackets);
 
-    let value = value_part
+    let value_string = value_part
         .repeated()
         .at_least(1)
         .map(|v| InterpolatedString { parts: v });
@@ -301,18 +296,23 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
     let key_value = key
         .then_ignore(just(':'))
         .then_ignore(sp.clone().repeated())//TODO: I think this is an offspec sp
-        .then(value)
+        .then(value_string.clone())
         .map(|(key, value)| KeyValue { key, value });
 
     let header = key_value.repeated();
 
-    let request = sp.clone().repeated().ignore_then(method.then(url).then(header).map(
-        |((method_value, url_value_string), headers)| Request {
-            method: method_value,
-            url: url_value_string,
-            header: headers,
-        },
-    ));
+    let request = sp.clone()
+        .repeated()
+        .ignore_then(method
+            .then(value_string.clone())
+            .then_ignore(lt.clone())
+            .then(header)
+            .map( |((method_value, url_value_string), headers)| Request {
+                method: method_value,
+                url: url_value_string,
+                header: headers,
+            })
+        );
     let entry = request.map(|request_value| Entry {
         request: Box::new(request_value),
         response: None,
