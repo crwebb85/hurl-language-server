@@ -984,6 +984,76 @@ mod tests {
     }
 
     #[test]
+    fn it_parses_recursive_templates() {
+        let test_str =
+            "GET https://example.org/cn\nkey: {{apikey urlDecode split \"{{seperator}}\"}}";
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org/cn",
+                        },
+                        header: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "key",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "apikey",
+                                                    ),
+                                                    filters: [
+                                                        UrlDecode,
+                                                        Split {
+                                                            sep: InterpolatedString {
+                                                                parts: [
+                                                                    Template(
+                                                                        Template {
+                                                                            expr: Expr {
+                                                                                variable: VariableName(
+                                                                                    "seperator",
+                                                                                ),
+                                                                                filters: [],
+                                                                            },
+                                                                        },
+                                                                    ),
+                                                                ],
+                                                            },
+                                                        },
+                                                    ],
+                                                },
+                                            },
+                                        ),
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
     fn it_parses_header_value_template() {
         let test_str = "GET https://example.org\nkey: dummyvalue-{{apikey}}";
         assert_debug_snapshot!(
