@@ -12,8 +12,64 @@ pub struct ValueString {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum Variable {
+    VariableName(String),
+    FunctionName(String),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum FilterFunction {
+    Count,
+    DaysAfterNow,
+    DaysBeforeNow,
+    Decode {
+        encoding: InterpolatedString,
+        //Official grammar does not have this field but
+        //all examples do
+    },
+    Format {
+        fmt: InterpolatedString,
+    },
+    HtmlEscape,
+    HtmlUnescape,
+    JsonPath {
+        expr: InterpolatedString, //TODO this doesn't match the examples but
+                                  //I think this matches the official grammer
+    },
+    Nth {
+        nth: u64,
+    },
+    Regex {
+        value: InterpolatedString,
+    },
+    Replace {
+        old_value: InterpolatedString,
+        new_value: InterpolatedString,
+    },
+    Split {
+        sep: InterpolatedString,
+    },
+    ToDate {
+        fmt: InterpolatedString,
+    },
+    ToFloat,
+    ToInt,
+    UrlDecode,
+    UrlEncode,
+    XPath {
+        expr: InterpolatedString,
+    },
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Expr {
+    pub variable: Variable,
+    pub filters: Vec<FilterFunction>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Template {
-    //TODO
+    pub expr: Expr,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

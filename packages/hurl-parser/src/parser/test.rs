@@ -217,7 +217,7 @@ mod tests {
                                 value: InterpolatedString {
                                     parts: [
                                         Str(
-                                            " Basic Ym9iOnNlY3JldA==",
+                                            "Basic Ym9iOnNlY3JldA==",
                                         ),
                                     ],
                                 },
@@ -301,7 +301,7 @@ mod tests {
                                 value: InterpolatedString {
                                     parts: [
                                         Str(
-                                            " Basic Ym9iOnNlY3JldA==",
+                                            "Basic Ym9iOnNlY3JldA==",
                                         ),
                                     ],
                                 },
@@ -344,7 +344,7 @@ mod tests {
                                 value: InterpolatedString {
                                     parts: [
                                         Str(
-                                            " this:value:has:colons",
+                                            "this:value:has:colons",
                                         ),
                                     ],
                                 },
@@ -388,7 +388,7 @@ mod tests {
                                 value: InterpolatedString {
                                     parts: [
                                         Str(
-                                            " thekeyhadescapedcolons",
+                                            "thekeyhadescapedcolons",
                                         ),
                                     ],
                                 },
@@ -431,7 +431,7 @@ mod tests {
                                 value: InterpolatedString {
                                     parts: [
                                         Str(
-                                            " thekeyhasescaped\\backslash",
+                                            "thekeyhasescaped\\backslash",
                                         ),
                                     ],
                                 },
@@ -499,8 +499,34 @@ mod tests {
     }
 
     #[test]
-    fn it_parses_header_key_template() {
+    fn it_errors_header_key_with_empty_template() {
+        //TODO make this a recoverable error that warns the user that if they probably forgot to
+        //add the template contents (this warning can only be done for header templates since
+        //for other interpolated string locations the curly brackets are valid text
         let test_str = "GET https://example.org\nkey-{{ }}: dummyvalue";
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r"
+        Err(
+            [
+                Simple {
+                    span: 30..31,
+                    reason: Unexpected,
+                    expected: {},
+                    found: Some(
+                        ' ',
+                    ),
+                    label: None,
+                },
+            ],
+        )
+        ",
+        );
+    }
+
+    #[test]
+    fn it_parses_header_key_template() {
+        let test_str = "GET https://example.org\nkey-{{env}}: dummyvalue";
         assert_debug_snapshot!(
         ast_parser().parse(test_str),
             @r#"
@@ -522,14 +548,21 @@ mod tests {
                                             "key-",
                                         ),
                                         Template(
-                                            Template,
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "env",
+                                                    ),
+                                                    filters: [],
+                                                },
+                                            },
                                         ),
                                     ],
                                 },
                                 value: InterpolatedString {
                                     parts: [
                                         Str(
-                                            " dummyvalue",
+                                            "dummyvalue",
                                         ),
                                     ],
                                 },
@@ -572,7 +605,7 @@ mod tests {
                                 value: InterpolatedString {
                                     parts: [
                                         Str(
-                                            " valuewithemoji😀",
+                                            "valuewithemoji😀",
                                         ),
                                     ],
                                 },
@@ -588,7 +621,7 @@ mod tests {
     }
 
     #[test]
-    fn it_parses_header_value_template() {
+    fn it_parses_empty_header_value_template_as_string() {
         let test_str = "GET https://example.org\nkey: dummyvalue-{{ }}";
         assert_debug_snapshot!(
         ast_parser().parse(test_str),
@@ -615,10 +648,16 @@ mod tests {
                                 value: InterpolatedString {
                                     parts: [
                                         Str(
-                                            " dummyvalue-",
+                                            "dummyvalue-",
                                         ),
-                                        Template(
-                                            Template,
+                                        Str(
+                                            "{{",
+                                        ),
+                                        Str(
+                                            " ",
+                                        ),
+                                        Str(
+                                            "}}",
                                         ),
                                     ],
                                 },
@@ -632,6 +671,7 @@ mod tests {
         "#,
         );
     }
+
     #[test]
     fn it_parses_header_value_template_end_a_non_template_bracket() {
         let test_str = "GET https://example.org\nkey: dummy{v}alue-{{ }}";
@@ -660,7 +700,7 @@ mod tests {
                                 value: InterpolatedString {
                                     parts: [
                                         Str(
-                                            " dummy",
+                                            "dummy",
                                         ),
                                         Str(
                                             "{",
@@ -674,8 +714,14 @@ mod tests {
                                         Str(
                                             "alue-",
                                         ),
-                                        Template(
-                                            Template,
+                                        Str(
+                                            "{{",
+                                        ),
+                                        Str(
+                                            " ",
+                                        ),
+                                        Str(
+                                            "}}",
                                         ),
                                     ],
                                 },
@@ -689,6 +735,360 @@ mod tests {
         "#,
         );
     }
+
+    #[test]
+    fn it_parses_decode_filter_in_header_value() {
+        let test_str = "GET https://example.org/cn\nkey: {{apikey decode \"gb2312\"}}";
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org/cn",
+                        },
+                        header: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "key",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "apikey",
+                                                    ),
+                                                    filters: [
+                                                        Decode {
+                                                            encoding: InterpolatedString {
+                                                                parts: [
+                                                                    Str(
+                                                                        "gb2312",
+                                                                    ),
+                                                                ],
+                                                            },
+                                                        },
+                                                    ],
+                                                },
+                                            },
+                                        ),
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_template_header_value_template_with_whitespace_after_colon() {
+        let test_str = "GET https://example.org/cn\nkey: {{apikey}}";
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org/cn",
+                        },
+                        header: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "key",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "apikey",
+                                                    ),
+                                                    filters: [],
+                                                },
+                                            },
+                                        ),
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_errors_from_newline_before_value_of_key_value_pair() {
+        let test_str = "GET https://example.org/cn\nkey:\ndummy_key";
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r"
+        Err(
+            [
+                Simple {
+                    span: 31..32,
+                    reason: Unexpected,
+                    expected: {
+                        Some(
+                            '\\',
+                        ),
+                        Some(
+                            '{',
+                        ),
+                    },
+                    found: Some(
+                        '\n',
+                    ),
+                    label: None,
+                },
+            ],
+        )
+        ",
+        );
+    }
+
+    #[test]
+    fn it_parses_template_header_value_template_without_whitespace_after_colon() {
+        let test_str = "GET https://example.org/cn\nkey:{{apikey}}";
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org/cn",
+                        },
+                        header: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "key",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "apikey",
+                                                    ),
+                                                    filters: [],
+                                                },
+                                            },
+                                        ),
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_url_decode_filter_in_header_value() {
+        let test_str = "GET https://example.org/cn\nkey: {{apikey urlDecode}}";
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org/cn",
+                        },
+                        header: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "key",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "apikey",
+                                                    ),
+                                                    filters: [
+                                                        UrlDecode,
+                                                    ],
+                                                },
+                                            },
+                                        ),
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_header_value_template() {
+        let test_str = "GET https://example.org\nkey: dummyvalue-{{apikey}}";
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org",
+                        },
+                        header: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "key",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "dummyvalue-",
+                                        ),
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "apikey",
+                                                    ),
+                                                    filters: [],
+                                                },
+                                            },
+                                        ),
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_header_value_template_functions() {
+        let test_str = "GET https://example.org\nmessage: {{newUuid}}";
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: ValueString {
+                            value: "https://example.org",
+                        },
+                        header: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "message",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: FunctionName(
+                                                        "newUuid",
+                                                    ),
+                                                    filters: [],
+                                                },
+                                            },
+                                        ),
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    // text::keyword("getEnv").to(Variable::FunctionName("getEnv".to_owned())),
+    // text::keyword("newDate").to(Variable::FunctionName("newDate".to_owned())),
+    // text::keyword("newUuid").to(Variable::FunctionName("newUuid".to_owned()))
 
     #[ignore]
     #[test]
