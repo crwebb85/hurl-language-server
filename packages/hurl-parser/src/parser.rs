@@ -63,7 +63,7 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
                         )
                     }),
             )),
-    );
+    ).labelled("quoted_string_escaped_char");
 
     let quoted_str_part = filter::<_, _, Simple<char>>(|c: &char| {
         c != &'"' && c != &'\\' 
@@ -88,7 +88,7 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
             .ignored()
             .then(quoted_part.repeated().at_least(1))
             .then_ignore(just("\""))
-            .map(|(_, v)| InterpolatedString { parts: v });
+            .map(|(_, v)| InterpolatedString { parts: v }).labelled("qouted_string");
 
         let decode_filter_function = text::keyword("decode")
             .then_ignore(sp.clone())
@@ -177,7 +177,7 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
         .map(|(_, captured_expr)| Template {
             expr: captured_expr,
         })
-    }); 
+    }).labelled("template"); 
 
     let key_string_escaped_char = just('\\').ignore_then(
         //TODO for some reason when I test hurl files with the hurl cli using
@@ -206,7 +206,7 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
                         )
                     }),
             )),
-    );
+    ).labelled("key_string_escaped_char");
 
     let key_str_part = filter::<_, _, Simple<char>>(|c: &char| {
         c.is_ascii_alphanumeric()
@@ -222,17 +222,17 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
     .repeated()
     .at_least(1)
     .collect::<String>()
-    .map(InterpolatedStringPart::Str);
+    .map(InterpolatedStringPart::Str).labelled("key_str");
 
     let key_template_part = template
         .clone()
-        .map(|t| InterpolatedStringPart::Template(t));
+        .map(|t| InterpolatedStringPart::Template(t)).labelled("key_template");
 
     let key = key_str_part
         .or(key_template_part)
         .repeated()
         .at_least(1)
-        .map(|k| InterpolatedString { parts: k });
+        .map(|k| InterpolatedString { parts: k }).labelled("key");
 
     let value_string_escaped_char = just('\\').ignore_then(
         just('\\')
@@ -257,7 +257,7 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
                         )
                     }),
             )),
-    );
+    ).labelled("value_escaped_char");
 
     let value_str_part = filter::<_, _, Simple<char>>(|c: &char| {
         c != &'#' && c != &'\n' && c != &'\\' 
@@ -269,7 +269,7 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
     .repeated()
     .at_least(1)
     .collect::<String>()
-    .map(InterpolatedStringPart::Str);
+    .map(InterpolatedStringPart::Str).labelled("value_str");
 
 
     let value_brackets = filter::<_, _, Simple<char>>(|c: &char| {
@@ -278,44 +278,48 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
     .repeated()
     .at_least(1)
     .collect::<String>()
-    .map(InterpolatedStringPart::Str);
+    .map(InterpolatedStringPart::Str).labelled("value_brackets");
 
     let value_template_part = template
         .clone()
-        .map(|t| InterpolatedStringPart::Template(t));
+        .map(|t| InterpolatedStringPart::Template(t)).labelled("value_template");
 
     let value_part = value_template_part
         .or(value_str_part)
         .or(value_brackets);
 
-    let value_string = value_part
+    let value = value_part
         .repeated()
         .at_least(1)
-        .map(|v| InterpolatedString { parts: v });
+        .map(|v| InterpolatedString { parts: v }).labelled("value");
 
     let key_value = key
         .then_ignore(just(':'))
         .then_ignore(sp.clone().repeated())//TODO: I think this is an offspec sp
-        .then(value_string.clone())
-        .map(|(key, value)| KeyValue { key, value });
+        .then(value.clone())
+        .map(|(key, value)| KeyValue { key, value }).labelled("key_value");
 
-    let header = key_value.repeated();
+    let header = key_value.then_ignore(lt.clone()).labelled("header");
 
     let request = sp.clone()
         .repeated()
         .ignore_then(method
-            .then(value_string.clone())
+            .then(value.clone())
             .then_ignore(lt.clone())
-            .then(header)
+            .then(header.repeated())
+            // .then(request_section.repeated()) //TODO
             .map( |((method_value, url_value_string), headers)| Request {
                 method: method_value,
                 url: url_value_string,
                 header: headers,
+                request_sections: vec![]
             })
-        );
+        ).labelled("request");
+
     let entry = request.map(|request_value| Entry {
         request: Box::new(request_value),
         response: None,
-    });
+    }).labelled("entry");
+
     entry.repeated().then_ignore(lt.clone())
 }

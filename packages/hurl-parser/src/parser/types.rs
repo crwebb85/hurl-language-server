@@ -91,12 +91,14 @@ pub struct KeyValue {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct RequestSection {}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Request {
     pub method: Method,
     pub url: InterpolatedString,
     pub header: Vec<KeyValue>,
-    //TODO define/parse remaining fields
-    // request_sections: Vec<RequestSection>,
+    pub request_sections: Vec<RequestSection>,
     // body: Body,
 }
 

@@ -25,6 +25,7 @@ mod tests {
                             ],
                         },
                         header: [],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -55,6 +56,7 @@ mod tests {
                             ],
                         },
                         header: [],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -85,6 +87,7 @@ mod tests {
                             ],
                         },
                         header: [],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -115,6 +118,7 @@ mod tests {
                             ],
                         },
                         header: [],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -145,6 +149,7 @@ mod tests {
                             ],
                         },
                         header: [],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -175,6 +180,7 @@ mod tests {
                             ],
                         },
                         header: [],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -202,6 +208,7 @@ mod tests {
                             ],
                         },
                         header: [],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -255,6 +262,7 @@ mod tests {
                                 },
                             },
                         ],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -285,6 +293,7 @@ mod tests {
                             ],
                         },
                         header: [],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -318,6 +327,7 @@ mod tests {
                             ],
                         },
                         header: [],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -351,6 +361,7 @@ mod tests {
                                 },
                             },
                         ],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -398,6 +409,7 @@ mod tests {
                                 },
                             },
                         ],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -446,6 +458,7 @@ mod tests {
                                 },
                             },
                         ],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -493,6 +506,7 @@ mod tests {
                                 },
                             },
                         ],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -508,7 +522,7 @@ mod tests {
         let test_str = "GET https://example.org\nkey: this\\valuehasanunescapedbackslash";
         assert_debug_snapshot!(
         ast_parser().parse(test_str),
-            @r"
+            @r#"
         Err(
             [
                 Simple {
@@ -528,9 +542,6 @@ mod tests {
                             'b',
                         ),
                         Some(
-                            ':',
-                        ),
-                        Some(
                             't',
                         ),
                         Some(
@@ -546,11 +557,13 @@ mod tests {
                     found: Some(
                         'v',
                     ),
-                    label: None,
+                    label: Some(
+                        "value_escaped_char",
+                    ),
                 },
             ],
         )
-        ",
+        "#,
         );
     }
 
@@ -562,7 +575,7 @@ mod tests {
         let test_str = "GET https://example.org\nkey-{{ }}: dummyvalue";
         assert_debug_snapshot!(
         ast_parser().parse(test_str),
-            @r"
+            @r#"
         Err(
             [
                 Simple {
@@ -572,11 +585,13 @@ mod tests {
                     found: Some(
                         ' ',
                     ),
-                    label: None,
+                    label: Some(
+                        "template",
+                    ),
                 },
             ],
         )
-        ",
+        "#,
         );
     }
 
@@ -628,6 +643,7 @@ mod tests {
                                 },
                             },
                         ],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -675,6 +691,7 @@ mod tests {
                                 },
                             },
                         ],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -731,6 +748,7 @@ mod tests {
                                 },
                             },
                         ],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -799,6 +817,7 @@ mod tests {
                                 },
                             },
                         ],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -864,6 +883,7 @@ mod tests {
                                 },
                             },
                         ],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -919,6 +939,7 @@ mod tests {
                                 },
                             },
                         ],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -934,7 +955,7 @@ mod tests {
 
         assert_debug_snapshot!(
         ast_parser().parse(test_str),
-            @r"
+            @r#"
         Err(
             [
                 Simple {
@@ -951,11 +972,13 @@ mod tests {
                     found: Some(
                         '\n',
                     ),
-                    label: None,
+                    label: Some(
+                        "value",
+                    ),
                 },
             ],
         )
-        ",
+        "#,
         );
     }
 
@@ -1005,6 +1028,7 @@ mod tests {
                                 },
                             },
                         ],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -1062,6 +1086,7 @@ mod tests {
                                 },
                             },
                         ],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -1136,6 +1161,7 @@ mod tests {
                                 },
                             },
                         ],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -1193,6 +1219,7 @@ mod tests {
                                 },
                             },
                         ],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -1247,6 +1274,7 @@ mod tests {
                                 },
                             },
                         ],
+                        request_sections: [],
                     },
                     response: None,
                 },
@@ -1256,9 +1284,138 @@ mod tests {
         );
     }
 
-    // text::keyword("getEnv").to(Variable::FunctionName("getEnv".to_owned())),
-    // text::keyword("newDate").to(Variable::FunctionName("newDate".to_owned())),
-    // text::keyword("newUuid").to(Variable::FunctionName("newUuid".to_owned()))
+    #[test]
+    fn it_parses_multiple_headers() {
+        let test_str = "GET https://example.org\nmessage: {{newUuid}}\nkey: {{apikey}}";
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org",
+                                ),
+                            ],
+                        },
+                        header: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "message",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: FunctionName(
+                                                        "newUuid",
+                                                    ),
+                                                    filters: [],
+                                                },
+                                            },
+                                        ),
+                                    ],
+                                },
+                            },
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "key",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "apikey",
+                                                    ),
+                                                    filters: [],
+                                                },
+                                            },
+                                        ),
+                                    ],
+                                },
+                            },
+                        ],
+                        request_sections: [],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_invalid_variable_name_in_header() {
+        //TODO add diagnostic warnings for this
+        let test_str = "GET https://example.org\nkey: {{api-key}}";
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org",
+                                ),
+                            ],
+                        },
+                        header: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "key",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "{{",
+                                        ),
+                                        Str(
+                                            "api-key",
+                                        ),
+                                        Str(
+                                            "}}",
+                                        ),
+                                    ],
+                                },
+                            },
+                        ],
+                        request_sections: [],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
 
     #[ignore]
     #[test]
