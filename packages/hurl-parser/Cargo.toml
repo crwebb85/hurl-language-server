@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 chumsky = "0.9.3"
 insta = "1.41.1"
+ordered-float = "4.6.0"

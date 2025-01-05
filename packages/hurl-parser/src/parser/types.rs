@@ -1,3 +1,6 @@
+use ordered_float::OrderedFloat;
+use std::hash::Hash;
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Method {
     pub value: String,
@@ -5,7 +8,7 @@ pub struct Method {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum Variable {
+pub enum ExprValue {
     VariableName(String),
     FunctionName(String),
 }
@@ -56,7 +59,7 @@ pub enum FilterFunction {
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Expr {
-    pub variable: Variable,
+    pub variable: ExprValue,
     pub filters: Vec<FilterFunction>,
 }
 
@@ -91,13 +94,192 @@ pub struct KeyValue {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct RequestSection {}
+pub struct QueryStringParamsSection {
+    pub queries: Vec<KeyValue>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct FormParamsSection {
+    pub params: Vec<KeyValue>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct FileValue {
+    pub filename: InterpolatedString,
+    pub content_type: Option<String>,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct FileKeyValue {
+    pub key: InterpolatedString,
+    pub value: FileValue,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum MultipartFormParam {
+    FileParam(FileKeyValue),
+    KeyValueParam(KeyValue),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct MultipartFormDataSection {
+    pub params: Vec<MultipartFormParam>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct CookiesSection {
+    pub cookies: Vec<KeyValue>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Capture {
+    key: InterpolatedString,
+    //TODO add
+    // query
+    pub filters: Vec<FilterFunction>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct CapturesSection {
+    pub captures: Vec<Capture>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Assert {
+    // TODO
+    // pub query: Query,
+    pub filters: Vec<FilterFunction>,
+    // pub predicate: Predicate
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct AssertsSection {
+    pub asserts: Vec<Assert>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct BasicAuthSection {
+    pub key_values: Vec<KeyValue>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum BooleanOption {
+    Literal(bool),
+    Template(Template),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum DurationUnit {
+    Millisecond,
+    Second,
+    Minute,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Duration {
+    pub duration: u64,
+    pub unit: Option<DurationUnit>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum DurationOption {
+    Literal(Duration),
+    Template(Template),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum IntegerOption {
+    Literal(usize),
+    Template(Template),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum VariableValue {
+    Null,
+    Boolean(bool),
+    Integer(i64),
+    Float(OrderedFloat<f64>),
+    BigInteger(String),
+    String(InterpolatedString),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct VariableDefinitionOption {
+    pub name: String,
+    pub value: VariableValue,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum RequestOption {
+    //Boolean Options
+    Compressed(BooleanOption),
+    Location(BooleanOption),
+    LocationTrusted(BooleanOption),
+    Http10(BooleanOption),
+    Http11(BooleanOption),
+    Http2(BooleanOption),
+    Http3(BooleanOption),
+    Insecure(BooleanOption),
+    Ipv4(BooleanOption),
+    Ipv6(BooleanOption),
+    Netrc(BooleanOption),
+    NetrcOptional(BooleanOption),
+    PathAsIs(BooleanOption),
+    Skip(BooleanOption),
+    Verbose(BooleanOption),
+    VeryVerbose(BooleanOption),
+    //Duration Options
+    ConnectTimeout(DurationOption),
+    Delay(DurationOption),
+    RetryInterval(DurationOption),
+    //Integer Options
+    LimitRate(IntegerOption),
+    MaxRedirs(IntegerOption),
+    Repeat(IntegerOption),
+    Retry(IntegerOption),
+    //Filename options
+    Cacert(InterpolatedString),
+    //Filename password options
+    Cert(InterpolatedString),
+    //ValueString options
+    AwsSigv4(InterpolatedString),
+    Key(InterpolatedString),
+    ConnectTo(InterpolatedString),
+    NetrcFile(InterpolatedString),
+    Output(InterpolatedString),
+    Proxy(InterpolatedString),
+    Resolve(InterpolatedString),
+    UnixSocket(InterpolatedString),
+    User(InterpolatedString),
+    //Variable options
+    Variable(VariableDefinitionOption),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct RequestOptionsSection {
+    pub options: Vec<RequestOption>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct UnknownSection {
+    pub section_name: String,
+    pub lines: Vec<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum RequestSection {
+    BasicAuthSection(BasicAuthSection),
+    QueryStringParamsSection(QueryStringParamsSection),
+    FormParamsSection(FormParamsSection),
+    MultipartFormDataSection(MultipartFormDataSection),
+    CookiesSection(CookiesSection),
+    OptionsSection(RequestOptionsSection),
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Request {
     pub method: Method,
     pub url: InterpolatedString,
-    pub header: Vec<KeyValue>,
+    pub header: Vec<KeyValue>, //TODO rename to headers
     pub request_sections: Vec<RequestSection>,
     // body: Body,
 }

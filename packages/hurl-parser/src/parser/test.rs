@@ -569,7 +569,7 @@ mod tests {
 
     #[test]
     fn it_errors_header_key_with_empty_template() {
-        //TODO make this a recoverable error that warns the user that if they probably forgot to
+        //TODO make this a recoverable error that warns the user that they probably forgot to
         //add the template contents (this warning can only be done for header templates since
         //for other interpolated string locations the curly brackets are valid text
         let test_str = "GET https://example.org\nkey-{{ }}: dummyvalue";
@@ -1424,6 +1424,789 @@ mod tests {
         assert_debug_snapshot!(
         ast_parser().parse(test_str),
             @r#"
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_option_variables() {
+        let test_str = "GET https://{{host}}/{{id}}/status\n[Options]\nvariable: host=example.net\nvariable: id=1234";
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://",
+                                ),
+                                Template(
+                                    Template {
+                                        expr: Expr {
+                                            variable: VariableName(
+                                                "host",
+                                            ),
+                                            filters: [],
+                                        },
+                                    },
+                                ),
+                                Str(
+                                    "/",
+                                ),
+                                Template(
+                                    Template {
+                                        expr: Expr {
+                                            variable: VariableName(
+                                                "id",
+                                            ),
+                                            filters: [],
+                                        },
+                                    },
+                                ),
+                                Str(
+                                    "/status",
+                                ),
+                            ],
+                        },
+                        header: [],
+                        request_sections: [
+                            OptionsSection(
+                                RequestOptionsSection {
+                                    options: [
+                                        Variable(
+                                            VariableDefinitionOption {
+                                                name: "host",
+                                                value: String(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Str(
+                                                                "example.net",
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                            },
+                                        ),
+                                        Variable(
+                                            VariableDefinitionOption {
+                                                name: "id",
+                                                value: Integer(
+                                                    1234,
+                                                ),
+                                            },
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    // text::keyword("connect-timeout").to(RequestDurationOption::ConnectTimeout),
+    // text::keyword("delay").to(RequestDurationOption::Delay),
+    // text::keyword("retry-interval").to(RequestDurationOption::RetryInterval),
+    #[test]
+    fn it_parses_boolean_options() {
+        let test_str = "GET https://example.com\n[Options]\ncompressed: true\nlocation: true\nlocation-trusted: true\nhttp1.0: false\nhttp1.1: false\nhttp2: false\nhttp3: true\ninsecure: false\nipv4: false\nipv6: true\nnetrc: true\nnetrc-optional: true\npath-as-is: true\nskip: false\nverbose: true\nvery-verbose: true";
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.com",
+                                ),
+                            ],
+                        },
+                        header: [],
+                        request_sections: [
+                            OptionsSection(
+                                RequestOptionsSection {
+                                    options: [
+                                        Compressed(
+                                            Literal(
+                                                true,
+                                            ),
+                                        ),
+                                        Location(
+                                            Literal(
+                                                true,
+                                            ),
+                                        ),
+                                        LocationTrusted(
+                                            Literal(
+                                                true,
+                                            ),
+                                        ),
+                                        Http10(
+                                            Literal(
+                                                false,
+                                            ),
+                                        ),
+                                        Http11(
+                                            Literal(
+                                                false,
+                                            ),
+                                        ),
+                                        Http2(
+                                            Literal(
+                                                false,
+                                            ),
+                                        ),
+                                        Http3(
+                                            Literal(
+                                                true,
+                                            ),
+                                        ),
+                                        Insecure(
+                                            Literal(
+                                                false,
+                                            ),
+                                        ),
+                                        Ipv4(
+                                            Literal(
+                                                false,
+                                            ),
+                                        ),
+                                        Ipv6(
+                                            Literal(
+                                                true,
+                                            ),
+                                        ),
+                                        Netrc(
+                                            Literal(
+                                                true,
+                                            ),
+                                        ),
+                                        NetrcOptional(
+                                            Literal(
+                                                true,
+                                            ),
+                                        ),
+                                        PathAsIs(
+                                            Literal(
+                                                true,
+                                            ),
+                                        ),
+                                        Skip(
+                                            Literal(
+                                                false,
+                                            ),
+                                        ),
+                                        Verbose(
+                                            Literal(
+                                                true,
+                                            ),
+                                        ),
+                                        VeryVerbose(
+                                            Literal(
+                                                true,
+                                            ),
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_duration_options_with_templates() {
+        let test_str =
+            "GET https://example.com\n[Options]\nconnect-timeout: {{connectTimeout}}\ndelay: {{delay}}\nretry-interval: {{retryInterval}}";
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.com",
+                                ),
+                            ],
+                        },
+                        header: [],
+                        request_sections: [
+                            OptionsSection(
+                                RequestOptionsSection {
+                                    options: [
+                                        ConnectTimeout(
+                                            Template(
+                                                Template {
+                                                    expr: Expr {
+                                                        variable: VariableName(
+                                                            "connectTimeout",
+                                                        ),
+                                                        filters: [],
+                                                    },
+                                                },
+                                            ),
+                                        ),
+                                        Delay(
+                                            Template(
+                                                Template {
+                                                    expr: Expr {
+                                                        variable: VariableName(
+                                                            "delay",
+                                                        ),
+                                                        filters: [],
+                                                    },
+                                                },
+                                            ),
+                                        ),
+                                        RetryInterval(
+                                            Template(
+                                                Template {
+                                                    expr: Expr {
+                                                        variable: VariableName(
+                                                            "retryInterval",
+                                                        ),
+                                                        filters: [],
+                                                    },
+                                                },
+                                            ),
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_duration_options_with_default_unit() {
+        let test_str =
+            "GET https://example.com\n[Options]\nconnect-timeout: 5\ndelay: 4\nretry-interval: 500";
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.com",
+                                ),
+                            ],
+                        },
+                        header: [],
+                        request_sections: [
+                            OptionsSection(
+                                RequestOptionsSection {
+                                    options: [
+                                        ConnectTimeout(
+                                            Literal(
+                                                Duration {
+                                                    duration: 5,
+                                                    unit: None,
+                                                },
+                                            ),
+                                        ),
+                                        Delay(
+                                            Literal(
+                                                Duration {
+                                                    duration: 4,
+                                                    unit: None,
+                                                },
+                                            ),
+                                        ),
+                                        RetryInterval(
+                                            Literal(
+                                                Duration {
+                                                    duration: 500,
+                                                    unit: None,
+                                                },
+                                            ),
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_duration_options_with_default_s_unit() {
+        let test_str =
+            "GET https://example.com\n[Options]\nconnect-timeout: 5s\ndelay: 4s\nretry-interval: 500s";
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.com",
+                                ),
+                            ],
+                        },
+                        header: [],
+                        request_sections: [
+                            OptionsSection(
+                                RequestOptionsSection {
+                                    options: [
+                                        ConnectTimeout(
+                                            Literal(
+                                                Duration {
+                                                    duration: 5,
+                                                    unit: Some(
+                                                        Second,
+                                                    ),
+                                                },
+                                            ),
+                                        ),
+                                        Delay(
+                                            Literal(
+                                                Duration {
+                                                    duration: 4,
+                                                    unit: Some(
+                                                        Second,
+                                                    ),
+                                                },
+                                            ),
+                                        ),
+                                        RetryInterval(
+                                            Literal(
+                                                Duration {
+                                                    duration: 500,
+                                                    unit: Some(
+                                                        Second,
+                                                    ),
+                                                },
+                                            ),
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_duration_options_with_default_ms_unit() {
+        let test_str =
+            "GET https://example.com\n[Options]\nconnect-timeout: 5ms\ndelay: 4ms\nretry-interval: 500ms";
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.com",
+                                ),
+                            ],
+                        },
+                        header: [],
+                        request_sections: [
+                            OptionsSection(
+                                RequestOptionsSection {
+                                    options: [
+                                        ConnectTimeout(
+                                            Literal(
+                                                Duration {
+                                                    duration: 5,
+                                                    unit: Some(
+                                                        Millisecond,
+                                                    ),
+                                                },
+                                            ),
+                                        ),
+                                        Delay(
+                                            Literal(
+                                                Duration {
+                                                    duration: 4,
+                                                    unit: Some(
+                                                        Millisecond,
+                                                    ),
+                                                },
+                                            ),
+                                        ),
+                                        RetryInterval(
+                                            Literal(
+                                                Duration {
+                                                    duration: 500,
+                                                    unit: Some(
+                                                        Millisecond,
+                                                    ),
+                                                },
+                                            ),
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_duration_options_with_default_m_unit() {
+        let test_str =
+            "GET https://example.com\n[Options]\nconnect-timeout: 5m\ndelay: 4m\nretry-interval: 500m";
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.com",
+                                ),
+                            ],
+                        },
+                        header: [],
+                        request_sections: [
+                            OptionsSection(
+                                RequestOptionsSection {
+                                    options: [
+                                        ConnectTimeout(
+                                            Literal(
+                                                Duration {
+                                                    duration: 5,
+                                                    unit: Some(
+                                                        Minute,
+                                                    ),
+                                                },
+                                            ),
+                                        ),
+                                        Delay(
+                                            Literal(
+                                                Duration {
+                                                    duration: 4,
+                                                    unit: Some(
+                                                        Minute,
+                                                    ),
+                                                },
+                                            ),
+                                        ),
+                                        RetryInterval(
+                                            Literal(
+                                                Duration {
+                                                    duration: 500,
+                                                    unit: Some(
+                                                        Minute,
+                                                    ),
+                                                },
+                                            ),
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_retry_interval_option_with_default_unit() {
+        let test_str = "GET https://example.com\n[Options]\nretry-interval: 500";
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.com",
+                                ),
+                            ],
+                        },
+                        header: [],
+                        request_sections: [
+                            OptionsSection(
+                                RequestOptionsSection {
+                                    options: [
+                                        RetryInterval(
+                                            Literal(
+                                                Duration {
+                                                    duration: 500,
+                                                    unit: None,
+                                                },
+                                            ),
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_single_duration_options_with_default_unit() {
+        let test_str = "GET https://example.com\n[Options]\ndelay: 4";
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.com",
+                                ),
+                            ],
+                        },
+                        header: [],
+                        request_sections: [
+                            OptionsSection(
+                                RequestOptionsSection {
+                                    options: [
+                                        Delay(
+                                            Literal(
+                                                Duration {
+                                                    duration: 4,
+                                                    unit: None,
+                                                },
+                                            ),
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_integer_options() {
+        let test_str =
+            "GET https://example.com\n[Options]\nlimit-rate: 59\nmax-redirs: 109\nrepeat: 10\nretry: 5";
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.com",
+                                ),
+                            ],
+                        },
+                        header: [],
+                        request_sections: [
+                            OptionsSection(
+                                RequestOptionsSection {
+                                    options: [
+                                        LimitRate(
+                                            Literal(
+                                                59,
+                                            ),
+                                        ),
+                                        MaxRedirs(
+                                            Literal(
+                                                109,
+                                            ),
+                                        ),
+                                        Repeat(
+                                            Literal(
+                                                10,
+                                            ),
+                                        ),
+                                        Retry(
+                                            Literal(
+                                                5,
+                                            ),
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_query_string_params() {
+        let test_str =
+            "GET http://localhost:3000/api/search\n[QueryStringParams]\nq: 1982\nsort: name";
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "http://localhost:3000/api/search",
+                                ),
+                            ],
+                        },
+                        header: [],
+                        request_sections: [
+                            QueryStringParamsSection(
+                                QueryStringParamsSection {
+                                    queries: [
+                                        KeyValue {
+                                            key: InterpolatedString {
+                                                parts: [
+                                                    Str(
+                                                        "q",
+                                                    ),
+                                                ],
+                                            },
+                                            value: InterpolatedString {
+                                                parts: [
+                                                    Str(
+                                                        "1982",
+                                                    ),
+                                                ],
+                                            },
+                                        },
+                                        KeyValue {
+                                            key: InterpolatedString {
+                                                parts: [
+                                                    Str(
+                                                        "sort",
+                                                    ),
+                                                ],
+                                            },
+                                            value: InterpolatedString {
+                                                parts: [
+                                                    Str(
+                                                        "name",
+                                                    ),
+                                                ],
+                                            },
+                                        },
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
         "#,
         );
     }
