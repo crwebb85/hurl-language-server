@@ -567,7 +567,11 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
         Retry,
     }
 
-    let integer_option = text::int(10).map(|v:String| IntegerOption::Literal(v.parse::<usize>().unwrap()));
+    let integer_option = text::int(10).map(|v:String| match v.parse::<usize>() {
+        Ok(n) => IntegerOption::Literal(n),
+        Err(_) => IntegerOption::BigInteger(v),
+
+    });
 
     let integer_request_option = choice::<_, Simple<char>>([
         just("limit-rate").to(RequestIntegerOption::LimitRate), 

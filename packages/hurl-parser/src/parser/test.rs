@@ -2140,6 +2140,148 @@ mod tests {
         );
     }
 
+    #[cfg(target_pointer_width = "64")]
+    #[test]
+    fn it_parses_largest_valid_integer_option_for_usize_64() {
+        let test_str = format!(
+            "GET https://example.com\n[Options]\nlimit-rate: {}",
+            u64::MAX,
+        );
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.com",
+                                ),
+                            ],
+                        },
+                        header: [],
+                        request_sections: [
+                            OptionsSection(
+                                RequestOptionsSection {
+                                    options: [
+                                        LimitRate(
+                                            Literal(
+                                                18446744073709551615,
+                                            ),
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[cfg(any(target_pointer_width = "64", target_pointer_width = "32"))]
+    #[test]
+    fn it_parses_big_integer_option_usize_64() {
+        //18446744073709551616 is just outside the range of numbers for usize 64
+        let test_str = "GET https://example.com\n[Options]\nlimit-rate: 18446744073709551616";
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.com",
+                                ),
+                            ],
+                        },
+                        header: [],
+                        request_sections: [
+                            OptionsSection(
+                                RequestOptionsSection {
+                                    options: [
+                                        LimitRate(
+                                            BigInteger(
+                                                "18446744073709551616",
+                                            ),
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[cfg(any(target_pointer_width = "64", target_pointer_width = "32"))]
+    #[test]
+    fn it_parses_largest_valid_integer_option_for_usize_32() {
+        let test_str = format!(
+            "GET https://example.com\n[Options]\nlimit-rate: {}",
+            u32::MAX,
+        );
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.com",
+                                ),
+                            ],
+                        },
+                        header: [],
+                        request_sections: [
+                            OptionsSection(
+                                RequestOptionsSection {
+                                    options: [
+                                        LimitRate(
+                                            Literal(
+                                                4294967295,
+                                            ),
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
     #[test]
     fn it_parses_query_string_params() {
         let test_str =

@@ -190,6 +190,7 @@ pub enum DurationOption {
 pub enum IntegerOption {
     Literal(usize),
     Template(Template),
+    BigInteger(String), //TODO add a diagnostic error when integer is too large
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
