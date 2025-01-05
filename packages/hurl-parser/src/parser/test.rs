@@ -2283,6 +2283,483 @@ mod tests {
     }
 
     #[test]
+    fn it_parses_value_string_options() {
+        let test_str = "GET https://example.com\n[Options]\naws-sigv4: aws:amz:eu-central-1:sts\nconnect-to: example.com:8000:127.0.0.1:8080\nnetrc-file: ~/.netrc\nproxy: example.proxy:8050\nresolve: example.com:8000:127.0.0.1\nunix-socket: sock\nuser: joe=secret";
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.com",
+                                ),
+                            ],
+                        },
+                        header: [],
+                        request_sections: [
+                            OptionsSection(
+                                RequestOptionsSection {
+                                    options: [
+                                        AwsSigv4(
+                                            InterpolatedString {
+                                                parts: [
+                                                    Str(
+                                                        "aws:amz:eu-central-1:sts",
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                        ConnectTo(
+                                            InterpolatedString {
+                                                parts: [
+                                                    Str(
+                                                        "example.com:8000:127.0.0.1:8080",
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                        NetrcFile(
+                                            InterpolatedString {
+                                                parts: [
+                                                    Str(
+                                                        "~/.netrc",
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                        Proxy(
+                                            InterpolatedString {
+                                                parts: [
+                                                    Str(
+                                                        "example.proxy:8050",
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                        Resolve(
+                                            InterpolatedString {
+                                                parts: [
+                                                    Str(
+                                                        "example.com:8000:127.0.0.1",
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                        UnixSocket(
+                                            InterpolatedString {
+                                                parts: [
+                                                    Str(
+                                                        "sock",
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                        User(
+                                            InterpolatedString {
+                                                parts: [
+                                                    Str(
+                                                        "joe=secret",
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_value_string_options_with_templates() {
+        let test_str = "GET https://{{host}}:{{port}}\n[Options]\naws-sigv4: {{aws}}\nconnect-to: {{host}}:{{port}}:127.0.0.1:8080\nnetrc-file: {{filepath}}\nproxy: {{proxyhost}}:8050\nresolve: {{host}}:{{port}}:127.0.0.1\nunix-socket: {{socket}}\nuser: {{user}}={{password}}";
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://",
+                                ),
+                                Template(
+                                    Template {
+                                        expr: Expr {
+                                            variable: VariableName(
+                                                "host",
+                                            ),
+                                            filters: [],
+                                        },
+                                    },
+                                ),
+                                Str(
+                                    ":",
+                                ),
+                                Template(
+                                    Template {
+                                        expr: Expr {
+                                            variable: VariableName(
+                                                "port",
+                                            ),
+                                            filters: [],
+                                        },
+                                    },
+                                ),
+                            ],
+                        },
+                        header: [],
+                        request_sections: [
+                            OptionsSection(
+                                RequestOptionsSection {
+                                    options: [
+                                        AwsSigv4(
+                                            InterpolatedString {
+                                                parts: [
+                                                    Template(
+                                                        Template {
+                                                            expr: Expr {
+                                                                variable: VariableName(
+                                                                    "aws",
+                                                                ),
+                                                                filters: [],
+                                                            },
+                                                        },
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                        ConnectTo(
+                                            InterpolatedString {
+                                                parts: [
+                                                    Template(
+                                                        Template {
+                                                            expr: Expr {
+                                                                variable: VariableName(
+                                                                    "host",
+                                                                ),
+                                                                filters: [],
+                                                            },
+                                                        },
+                                                    ),
+                                                    Str(
+                                                        ":",
+                                                    ),
+                                                    Template(
+                                                        Template {
+                                                            expr: Expr {
+                                                                variable: VariableName(
+                                                                    "port",
+                                                                ),
+                                                                filters: [],
+                                                            },
+                                                        },
+                                                    ),
+                                                    Str(
+                                                        ":127.0.0.1:8080",
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                        NetrcFile(
+                                            InterpolatedString {
+                                                parts: [
+                                                    Template(
+                                                        Template {
+                                                            expr: Expr {
+                                                                variable: VariableName(
+                                                                    "filepath",
+                                                                ),
+                                                                filters: [],
+                                                            },
+                                                        },
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                        Proxy(
+                                            InterpolatedString {
+                                                parts: [
+                                                    Template(
+                                                        Template {
+                                                            expr: Expr {
+                                                                variable: VariableName(
+                                                                    "proxyhost",
+                                                                ),
+                                                                filters: [],
+                                                            },
+                                                        },
+                                                    ),
+                                                    Str(
+                                                        ":8050",
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                        Resolve(
+                                            InterpolatedString {
+                                                parts: [
+                                                    Template(
+                                                        Template {
+                                                            expr: Expr {
+                                                                variable: VariableName(
+                                                                    "host",
+                                                                ),
+                                                                filters: [],
+                                                            },
+                                                        },
+                                                    ),
+                                                    Str(
+                                                        ":",
+                                                    ),
+                                                    Template(
+                                                        Template {
+                                                            expr: Expr {
+                                                                variable: VariableName(
+                                                                    "port",
+                                                                ),
+                                                                filters: [],
+                                                            },
+                                                        },
+                                                    ),
+                                                    Str(
+                                                        ":127.0.0.1",
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                        UnixSocket(
+                                            InterpolatedString {
+                                                parts: [
+                                                    Template(
+                                                        Template {
+                                                            expr: Expr {
+                                                                variable: VariableName(
+                                                                    "socket",
+                                                                ),
+                                                                filters: [],
+                                                            },
+                                                        },
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                        User(
+                                            InterpolatedString {
+                                                parts: [
+                                                    Template(
+                                                        Template {
+                                                            expr: Expr {
+                                                                variable: VariableName(
+                                                                    "user",
+                                                                ),
+                                                                filters: [],
+                                                            },
+                                                        },
+                                                    ),
+                                                    Str(
+                                                        "=",
+                                                    ),
+                                                    Template(
+                                                        Template {
+                                                            expr: Expr {
+                                                                variable: VariableName(
+                                                                    "password",
+                                                                ),
+                                                                filters: [],
+                                                            },
+                                                        },
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_filename_options() {
+        let test_str = "GET https://example.com\n[Options]\ncacert: /etc/cert.pem\nkey: .ssh/id_rsa.pub\noutput: ./myreport";
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.com",
+                                ),
+                            ],
+                        },
+                        header: [],
+                        request_sections: [
+                            OptionsSection(
+                                RequestOptionsSection {
+                                    options: [
+                                        Cacert(
+                                            InterpolatedString {
+                                                parts: [
+                                                    Str(
+                                                        "/etc/cert.pem",
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                        Key(
+                                            InterpolatedString {
+                                                parts: [
+                                                    Str(
+                                                        ".ssh/id_rsa.pub",
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                        Output(
+                                            InterpolatedString {
+                                                parts: [
+                                                    Str(
+                                                        "./myreport",
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_filename_options_with_templates() {
+        let test_str = "GET https://example.com\n[Options]\ncacert: {{certfilepath}}\nkey: {{keyfilepath}}\noutput: {{reportfilepath}}";
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        Ok(
+            [
+                Entry {
+                    request: Request {
+                        method: Method {
+                            value: "GET",
+                        },
+                        url: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.com",
+                                ),
+                            ],
+                        },
+                        header: [],
+                        request_sections: [
+                            OptionsSection(
+                                RequestOptionsSection {
+                                    options: [
+                                        Cacert(
+                                            InterpolatedString {
+                                                parts: [
+                                                    Template(
+                                                        Template {
+                                                            expr: Expr {
+                                                                variable: VariableName(
+                                                                    "certfilepath",
+                                                                ),
+                                                                filters: [],
+                                                            },
+                                                        },
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                        Key(
+                                            InterpolatedString {
+                                                parts: [
+                                                    Template(
+                                                        Template {
+                                                            expr: Expr {
+                                                                variable: VariableName(
+                                                                    "keyfilepath",
+                                                                ),
+                                                                filters: [],
+                                                            },
+                                                        },
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                        Output(
+                                            InterpolatedString {
+                                                parts: [
+                                                    Template(
+                                                        Template {
+                                                            expr: Expr {
+                                                                variable: VariableName(
+                                                                    "reportfilepath",
+                                                                ),
+                                                                filters: [],
+                                                            },
+                                                        },
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                    response: None,
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
     fn it_parses_query_string_params() {
         let test_str =
             "GET http://localhost:3000/api/search\n[QueryStringParams]\nq: 1982\nsort: name";

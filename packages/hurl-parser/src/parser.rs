@@ -596,10 +596,8 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
     #[derive(Clone)]
     enum RequestValueStringOption {
         AwsSigv4,
-        Key,
         ConnectTo,
         NetrcFile,
-        Output,
         Proxy,
         Resolve,
         UnixSocket,
@@ -610,10 +608,8 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
 
     let value_string_request_option = choice::<_, Simple<char>>([
         just("aws-sigv4").to(RequestValueStringOption::AwsSigv4),
-        just("key").to(RequestValueStringOption::Key),
         just("connect-to").to(RequestValueStringOption::ConnectTo),
         just("netrc-file").to(RequestValueStringOption::NetrcFile),
-        just("output").to(RequestValueStringOption::Output),
         just("proxy").to(RequestValueStringOption::Proxy),
         just("resolve").to(RequestValueStringOption::Resolve),
         just("unix-socket").to(RequestValueStringOption::UnixSocket),
@@ -627,10 +623,8 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
     .map(|(option_type, option)| {
         match option_type {
             RequestValueStringOption::AwsSigv4 => RequestOption::AwsSigv4(option),
-            RequestValueStringOption::Key => RequestOption::Key(option),
             RequestValueStringOption::ConnectTo => RequestOption::ConnectTo(option),
             RequestValueStringOption::NetrcFile => RequestOption::NetrcFile(option),
-            RequestValueStringOption::Output => RequestOption::Output(option),
             RequestValueStringOption::Proxy => RequestOption::Proxy(option),
             RequestValueStringOption::Resolve => RequestOption::Resolve(option),
             RequestValueStringOption::UnixSocket => RequestOption::UnixSocket(option),
@@ -638,13 +632,33 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
         }
     });
 
-    let filename_request_option = just("cacert")
+
+    #[derive(Clone)]
+    enum RequestFilenameOption {
+        Cacert,
+        Key,
+        Output,
+    }
+
+    let filename_request_option = choice::<_, Simple<char>>([
+            just("cacert").to(RequestFilenameOption::Cacert),
+            //TODO offspec for key and output. The official parser parses as filenames but the spec
+            //says they are string-values
+            just("key").to(RequestFilenameOption::Key),
+            just("output").to(RequestFilenameOption::Output),
+        ])
         .then_ignore(sp.clone().repeated())
         .then_ignore(just(":"))
         .then_ignore(sp.clone().repeated())
         .then(filename)
         .then_ignore(lt.clone())
-        .map(|(_, filename)| RequestOption::Cacert(filename));
+        .map(|(option_type, option)| {
+            match option_type {
+                RequestFilenameOption::Cacert => RequestOption::Cacert(option),
+                RequestFilenameOption::Key => RequestOption::Key(option),
+                RequestFilenameOption::Output => RequestOption::Output(option),
+            }
+        });
     
     let filename_password_string_escaped_char = just('\\').ignore_then(
         just('\\')

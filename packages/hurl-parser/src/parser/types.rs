@@ -239,14 +239,14 @@ pub enum RequestOption {
     Retry(IntegerOption),
     //Filename options
     Cacert(InterpolatedString),
+    Key(InterpolatedString), //TODO this is off spec but official parsers parses this as a filename
+    Output(InterpolatedString), //TODO this is off spec but official parsers parses this as a filename
     //Filename password options
     Cert(InterpolatedString),
     //ValueString options
     AwsSigv4(InterpolatedString),
-    Key(InterpolatedString),
     ConnectTo(InterpolatedString),
     NetrcFile(InterpolatedString),
-    Output(InterpolatedString),
     Proxy(InterpolatedString),
     Resolve(InterpolatedString),
     UnixSocket(InterpolatedString),
