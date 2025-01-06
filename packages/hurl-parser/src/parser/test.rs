@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::parser::ast_parser;
+    use crate::parser::parser::ast_parser;
     use chumsky::Parser;
     use insta::assert_debug_snapshot;
 
