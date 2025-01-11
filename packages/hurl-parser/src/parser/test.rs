@@ -973,7 +973,7 @@ mod tests {
                         '\n',
                     ),
                     label: Some(
-                        "value",
+                        "key_value",
                     ),
                 },
             ],

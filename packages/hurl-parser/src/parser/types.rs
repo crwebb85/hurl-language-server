@@ -295,3 +295,8 @@ pub struct Entry {
     pub request: Box<Request>,
     pub response: Option<Box<Response>>,
 }
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Lt {
+    pub comment: Option<String>,
+}

@@ -1,7 +1,7 @@
 mod filename;
 mod key_value;
 mod options;
-mod parser;
+pub mod parser;
 mod primitives;
 mod quoted_string;
 mod request_section;
