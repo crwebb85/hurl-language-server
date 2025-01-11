@@ -7,38 +7,38 @@ use super::primitives::sp_parser;
 pub fn template_parser() -> impl Parser<char, Template, Error = Simple<char>> + Clone {
 
     let sp = sp_parser();
-    let quoted_string_escaped_char = just('\\').ignore_then(
-        just('\\')
-            .or(just('\\').to('\\'))
-            .or(just('b').to('\x08'))
-            .or(just('f').to('\x0C'))
-            .or(just('n').to('\n'))
-            .or(just('r').to('\r'))
-            .or(just('t').to('\t'))
-            .or(just('u').ignore_then(
-                filter(|c: &char| c.is_digit(16))
-                    .repeated()
-                    .exactly(4)
-                    .collect::<String>()
-                    .validate(|digits, span, emit| {
-                        char::from_u32(u32::from_str_radix(&digits, 16).unwrap()).unwrap_or_else(
-                            || {
-                                emit(Simple::custom(span, "invalid unicode character"));
-                                '\u{FFFD}' // unicode replacement character
-                            },
-                        )
-                    }),
-            )),
-    ).labelled("quoted_string_escaped_char");
+    let quoted_string_escaped_char = just('\\')
+        .ignore_then(
+            just('\\')
+                .or(just('\"').to('\"'))
+                .or(just('\\').to('\\'))
+                .or(just('b').to('\x08'))
+                .or(just('f').to('\x0C'))
+                .or(just('n').to('\n'))
+                .or(just('r').to('\r'))
+                .or(just('t').to('\t'))
+                .or(just('u').ignore_then(
+                    filter(|c: &char| c.is_digit(16))
+                        .repeated()
+                        .exactly(4)
+                        .collect::<String>()
+                        .validate(|digits, span, emit| {
+                            char::from_u32(u32::from_str_radix(&digits, 16).unwrap())
+                                .unwrap_or_else(|| {
+                                    emit(Simple::custom(span, "invalid unicode character"));
+                                    '\u{FFFD}' // unicode replacement character
+                                })
+                        }),
+                )),
+        )
+        .labelled("quoted_string_escaped_char");
 
-    let quoted_str_part = filter::<_, _, Simple<char>>(|c: &char| {
-        c != &'"' && c != &'\\' 
-    })
-    .or(quoted_string_escaped_char)
-    .repeated()
-    .at_least(1)
-    .collect::<String>()
-    .map(InterpolatedStringPart::Str);
+    let quoted_str_part = filter::<_, _, Simple<char>>(|c: &char| c != &'"' && c != &'\\')
+        .or(quoted_string_escaped_char)
+        .repeated()
+        .at_least(1)
+        .collect::<String>()
+        .map(InterpolatedStringPart::Str);
 
     let variable_name = 
         filter::<_, _, Simple<char>>(char::is_ascii_alphanumeric)
@@ -55,17 +55,16 @@ pub fn template_parser() -> impl Parser<char, Template, Error = Simple<char>> + 
 
     let template = recursive(|template| {
 
-        let quoted_template_part = template
-            .map(|t| InterpolatedStringPart::Template(t));
+        let quoted_template_part = template.map(|t| InterpolatedStringPart::Template(t));
 
-        let quoted_part = quoted_template_part
-            .or(quoted_str_part);
+        let quoted_part = quoted_template_part.or(quoted_str_part);
 
         let quoted_string = just("\"")
             .ignored()
-            .then(quoted_part.repeated().at_least(1))
+            .then(quoted_part.repeated())
             .then_ignore(just("\""))
-            .map(|(_, v)| InterpolatedString { parts: v }).labelled("quoted_string");
+            .map(|(_, v)| InterpolatedString { parts: v })
+            .labelled("quoted_string");
 
         let decode_filter_function = just("decode")
             .then_ignore(sp.clone())
