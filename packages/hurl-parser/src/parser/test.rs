@@ -1394,14 +1394,15 @@ mod tests {
                                 },
                                 value: InterpolatedString {
                                     parts: [
-                                        Str(
-                                            "{{",
-                                        ),
-                                        Str(
-                                            "api-key",
-                                        ),
-                                        Str(
-                                            "}}",
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "api-key",
+                                                    ),
+                                                    filters: [],
+                                                },
+                                            },
                                         ),
                                     ],
                                 },
