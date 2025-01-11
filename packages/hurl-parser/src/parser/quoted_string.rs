@@ -1,9 +1,22 @@
-use crate::parser::template::template_parser;
 use crate::parser::types::{InterpolatedString, InterpolatedStringPart};
 use chumsky::prelude::*;
 
-pub fn quoted_string_parser() -> impl Parser<char, InterpolatedString, Error = Simple<char>> + Clone
-{
+use super::{template::template_parser, types::Template};
+
+/// This exists to decouple the template parser and the quoted string parser
+/// since the grammer for the too recursively depend on each other
+///
+/// # Arguments
+///
+/// * `template` - the template parser.
+///
+/// # Returns
+/// The quoted string parser based on the given template parser
+///
+/// ```
+pub fn generic_quoted_string_parser<T: Parser<char, Template, Error = Simple<char>> + Clone>(
+    template: T,
+) -> impl Parser<char, InterpolatedString, Error = Simple<char>> + Clone {
     let quoted_string_escaped_char = just('\\')
         .ignore_then(
             just('\\')
@@ -37,8 +50,6 @@ pub fn quoted_string_parser() -> impl Parser<char, InterpolatedString, Error = S
         .collect::<String>()
         .map(InterpolatedStringPart::Str);
 
-    let template = template_parser();
-
     let quoted_template_part = template.map(|t| InterpolatedStringPart::Template(t));
 
     let quoted_part = quoted_template_part.or(quoted_str_part);
@@ -53,8 +64,15 @@ pub fn quoted_string_parser() -> impl Parser<char, InterpolatedString, Error = S
     quoted_string
 }
 
+pub fn quoted_string_parser() -> impl Parser<char, InterpolatedString, Error = Simple<char>> + Clone
+{
+    let template_parser = template_parser();
+    generic_quoted_string_parser(template_parser)
+}
+
 #[cfg(test)]
 mod quoted_string_tests {
+
     use super::*;
     use insta::assert_debug_snapshot;
 
