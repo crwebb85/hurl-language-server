@@ -20,8 +20,8 @@ pub fn generic_quoted_string_parser<T: Parser<char, Template, Error = Simple<cha
     let quoted_string_escaped_char = just('\\')
         .ignore_then(
             just('\\')
+                .to('\\')
                 .or(just('\"').to('\"'))
-                .or(just('\\').to('\\'))
                 .or(just('b').to('\x08'))
                 .or(just('f').to('\x0C'))
                 .or(just('n').to('\n'))
