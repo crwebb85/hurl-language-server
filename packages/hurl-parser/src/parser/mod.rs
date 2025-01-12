@@ -1,3 +1,4 @@
+mod expr;
 mod filename;
 mod key_value;
 mod options;

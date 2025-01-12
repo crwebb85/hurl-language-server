@@ -1,3 +1,5 @@
+use crate::parser::expr::variable_name_parser;
+
 use super::filename::filename_parser;
 use super::key_value::{key_parser, value_parser};
 use super::primitives::{lt_parser, sp_parser};
@@ -318,15 +320,7 @@ pub fn option_parser() -> impl Parser<char, RequestOption, Error = Simple<char>>
     .or(key.map(VariableValue::String))
     .or(quoted_string.map(VariableValue::String));
 
-    let variable_name = filter::<_, _, Simple<char>>(char::is_ascii_alphabetic)
-        .then(
-            filter::<_, _, Simple<char>>(|c: &char| {
-                c.is_ascii_alphanumeric() || c == &'_' || c == &'-'
-            })
-            .repeated()
-            .collect::<String>(),
-        )
-        .map(|(c, chars)| format!("{}{}", c, chars));
+    let variable_name = variable_name_parser();
 
     let variable_definition = variable_name
         .clone()
