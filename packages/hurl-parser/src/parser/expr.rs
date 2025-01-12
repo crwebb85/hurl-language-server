@@ -101,13 +101,16 @@ pub fn expr_parser<T: Parser<char, InterpolatedString, Error = Simple<char>> + C
     .or(todate_filter_function)
     .or(xpath_filter_function);
 
+    let filters = filter_function.separated_by(sp.clone().repeated());
+
     let expr = expr_variable
-    .then_ignore(sp.clone().or_not())
-    .then(filter_function.separated_by(sp.clone()))
+    .then_ignore(sp.clone().repeated())
+    .then(filters)
     .map( |(expr_var, filter_funcs)| Expr {
         variable: expr_var,
         filters: filter_funcs
     }).labelled("expr");
+
     expr
 }
 
@@ -610,7 +613,7 @@ mod expr_tests {
 
     #[test]
     fn it_parses_expr_with_count_filter() {
-        let test_str = r#"response jsonpath "$.names" count""#;
+        let test_str = r#"response jsonpath "$.names" count"#;
         let quoted_string = quoted_string_parser();
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
@@ -812,6 +815,60 @@ mod expr_tests {
         )
         "#,
         );
+    }
+
+
+    #[test]
+    fn it_parses_expr_with_extra_space_between_variable_and_filter() {
+        let test_str = "url  urlEncode";
+        let quoted_string = quoted_string_parser();
+        assert_debug_snapshot!(
+        expr_parser(quoted_string).parse(test_str),
+            @r#"
+        Ok(
+            Expr {
+                variable: VariableName(
+                    "url",
+                ),
+                filters: [
+                    UrlEncode,
+                ],
+            },
+        )
+        "#,
+        );
+    }
+
+
+    #[test]
+    fn it_parses_expr_with_extra_space_between_filters() {
+        let test_str = r#"response jsonpath "$.names"   count"#;
+        let quoted_string = quoted_string_parser();
+        assert_debug_snapshot!(
+        expr_parser(quoted_string).parse(test_str),
+            @r#"
+        Ok(
+            Expr {
+                variable: VariableName(
+                    "response",
+                ),
+                filters: [
+                    JsonPath {
+                        expr: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "$.names",
+                                ),
+                            ],
+                        },
+                    },
+                    Count,
+                ],
+            },
+        )
+        "#,
+        );
+
     }
 
 }
