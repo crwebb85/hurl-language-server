@@ -558,7 +558,7 @@ mod tests {
                         'v',
                     ),
                     label: Some(
-                        "value_escaped_char",
+                        "value-string-escaped-char",
                     ),
                 },
             ],
@@ -973,7 +973,7 @@ mod tests {
                         '\n',
                     ),
                     label: Some(
-                        "key_value",
+                        "key-value",
                     ),
                 },
             ],
