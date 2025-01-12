@@ -586,7 +586,7 @@ mod tests {
                         ' ',
                     ),
                     label: Some(
-                        "template",
+                        "variable_name",
                     ),
                 },
             ],

@@ -103,7 +103,7 @@ mod template_tests {
                         '1',
                     ),
                     label: Some(
-                        "template",
+                        "variable_name",
                     ),
                 },
             ],
