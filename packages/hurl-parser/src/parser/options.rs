@@ -1,4 +1,5 @@
 use crate::parser::expr::variable_name_parser;
+use crate::parser::primitives::escaped_unicode_parser;
 
 use super::filename::filename_parser;
 use super::key_value::{key_parser, value_parser};
@@ -247,21 +248,9 @@ pub fn option_parser() -> impl Parser<char, RequestOption, Error = Simple<char>>
                 .or(just(' ').to(' '))
                 .or(just('{').to('{'))
                 .or(just('}').to('}'))
-                .or(just(':').to(':'))
-                .or(just('u').ignore_then(
-                    filter(|c: &char| c.is_digit(16))
-                        .repeated()
-                        .exactly(4)
-                        .collect::<String>()
-                        .validate(|digits, span, emit| {
-                            char::from_u32(u32::from_str_radix(&digits, 16).unwrap())
-                                .unwrap_or_else(|| {
-                                    emit(Simple::custom(span, "invalid unicode character"));
-                                    '\u{FFFD}' // unicode replacement character
-                                })
-                        }),
-                )),
+                .or(just(':').to(':')),
         )
+        .or(escaped_unicode_parser())
         .labelled("filename_password_string_escaped_char");
 
     let filename_password_str_part = filter::<_, _, Simple<char>>(|c: &char| {

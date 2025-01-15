@@ -1,3 +1,4 @@
+use super::primitives::escaped_unicode_parser;
 use super::types::{InterpolatedString, InterpolatedStringPart, KeyValue};
 use super::{primitives::sp_parser, template::template_parser};
 use chumsky::prelude::*;
@@ -16,21 +17,9 @@ pub fn key_parser() -> impl Parser<char, InterpolatedString, Error = Simple<char
                 .or(just('f').to('\x0C'))
                 .or(just('n').to('\n'))
                 .or(just('r').to('\r'))
-                .or(just('t').to('\t'))
-                .or(just('u').ignore_then(
-                    filter(|c: &char| c.is_digit(16))
-                        .repeated()
-                        .exactly(4)
-                        .collect::<String>()
-                        .validate(|digits, span, emit| {
-                            char::from_u32(u32::from_str_radix(&digits, 16).unwrap())
-                                .unwrap_or_else(|| {
-                                    emit(Simple::custom(span, "invalid unicode character"));
-                                    '\u{FFFD}' // unicode replacement character
-                                })
-                        }),
-                )),
+                .or(just('t').to('\t')),
         )
+        .or(escaped_unicode_parser())
         .labelled("key-string-escaped-char");
 
     let key_string_text = filter::<_, _, Simple<char>>(|c: &char| {
@@ -78,21 +67,9 @@ pub fn value_parser() -> impl Parser<char, InterpolatedString, Error = Simple<ch
                 .or(just('f').to('\x0C'))
                 .or(just('n').to('\n'))
                 .or(just('r').to('\r'))
-                .or(just('t').to('\t'))
-                .or(just('u').ignore_then(
-                    filter(|c: &char| c.is_digit(16))
-                        .repeated()
-                        .exactly(4)
-                        .collect::<String>()
-                        .validate(|digits, span, emit| {
-                            char::from_u32(u32::from_str_radix(&digits, 16).unwrap())
-                                .unwrap_or_else(|| {
-                                    emit(Simple::custom(span, "invalid unicode character"));
-                                    '\u{FFFD}' // unicode replacement character
-                                })
-                        }),
-                )),
+                .or(just('t').to('\t')), // .or(escaped_unicode_parser()),
         )
+        .or(escaped_unicode_parser())
         .labelled("value-string-escaped-char");
 
     let template = template_parser();
@@ -359,6 +336,25 @@ mod value_string_tests {
                     ),
                 },
             ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_value_with_emoji() {
+        let test_str = r#"emoji\u{1F600}"#;
+        assert_debug_snapshot!(
+        value_parser().then_ignore(end()).parse(test_str),
+            @r#"
+        Ok(
+            InterpolatedString {
+                parts: [
+                    Str(
+                        "emoji😀",
+                    ),
+                ],
+            },
         )
         "#,
         );

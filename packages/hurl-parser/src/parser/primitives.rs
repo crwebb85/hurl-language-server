@@ -27,6 +27,27 @@ pub fn lt_parser() -> impl Parser<char, Lt, Error = Simple<char>> + Clone {
         .labelled("line terminator")
 }
 
+pub fn escaped_unicode_parser() -> impl Parser<char, char, Error = Simple<char>> + Clone {
+    just('\\')
+        .then(just('u'))
+        .then(just('{'))
+        .then(
+            filter(|c: &char| c.is_digit(16))
+                .repeated()
+                .at_least(1)
+                .collect::<String>()
+                .validate(|digits, span, emit| {
+                    char::from_u32(u32::from_str_radix(&digits, 16).unwrap()).unwrap_or_else(|| {
+                        emit(Simple::custom(span, "invalid unicode character"));
+                        '\u{FFFD}' // unicode replacement character
+                    })
+                }),
+        )
+        .then(just('}'))
+        .map(|((_, u), _)| u)
+        .labelled("escaped-unicode-char")
+}
+
 #[cfg(test)]
 mod sp_tests {
     use super::*;
@@ -197,6 +218,122 @@ mod lt_tests {
                     " this is a comment",
                 ),
             },
+        )
+        "#,
+        );
+    }
+}
+
+#[cfg(test)]
+mod unicode_parser_tests {
+
+    use super::*;
+    use insta::assert_debug_snapshot;
+
+    #[test]
+    fn it_parses_emoji() {
+        let test_str = r#"\u{1F600}"#;
+        assert_debug_snapshot!(
+        escaped_unicode_parser().then_ignore(end()).parse(test_str),
+            @r"
+        Ok(
+            '😀',
+        )
+        ",
+        );
+    }
+
+    #[test]
+    fn it_errors_invalid_unicode() {
+        let test_str = r#"\u{1F6000}"#;
+        assert_debug_snapshot!(
+        escaped_unicode_parser().then_ignore(end()).parse(test_str),
+            @r#"
+        Err(
+            [
+                Simple {
+                    span: 3..9,
+                    reason: Custom(
+                        "invalid unicode character",
+                    ),
+                    expected: {},
+                    found: None,
+                    label: Some(
+                        "escaped-unicode-char",
+                    ),
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_errors_unicode_missing_bracket() {
+        let test_str = r#"\u1F6000"#;
+        assert_debug_snapshot!(
+        escaped_unicode_parser().then_ignore(end()).parse(test_str),
+            @r#"
+        Err(
+            [
+                Simple {
+                    span: 2..3,
+                    reason: Unexpected,
+                    expected: {
+                        Some(
+                            '{',
+                        ),
+                    },
+                    found: Some(
+                        '1',
+                    ),
+                    label: Some(
+                        "escaped-unicode-char",
+                    ),
+                },
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_short_unicode() {
+        let test_str = r#"\u{1F6}"#;
+        assert_debug_snapshot!(
+        escaped_unicode_parser().then_ignore(end()).parse(test_str),
+            @r"
+        Ok(
+            'Ƕ',
+        )
+        ",
+        );
+    }
+
+    #[test]
+    fn it_errors_invalid_hex_digit_in_unicode() {
+        let test_str = r#"\u{FFFH}"#;
+        assert_debug_snapshot!(
+        escaped_unicode_parser().then_ignore(end()).parse(test_str),
+            @r#"
+        Err(
+            [
+                Simple {
+                    span: 6..7,
+                    reason: Unexpected,
+                    expected: {
+                        Some(
+                            '}',
+                        ),
+                    },
+                    found: Some(
+                        'H',
+                    ),
+                    label: Some(
+                        "escaped-unicode-char",
+                    ),
+                },
+            ],
         )
         "#,
         );

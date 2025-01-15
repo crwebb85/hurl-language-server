@@ -1,7 +1,7 @@
 use crate::parser::types::{InterpolatedString, InterpolatedStringPart};
 use chumsky::prelude::*;
 
-use super::{template::template_parser, types::Template};
+use super::{primitives::escaped_unicode_parser, template::template_parser, types::Template};
 
 /// This exists to decouple the template parser and the quoted string parser
 /// since the grammer for the too recursively depend on each other
@@ -26,21 +26,9 @@ pub fn generic_quoted_string_parser<T: Parser<char, Template, Error = Simple<cha
                 .or(just('f').to('\x0C'))
                 .or(just('n').to('\n'))
                 .or(just('r').to('\r'))
-                .or(just('t').to('\t'))
-                .or(just('u').ignore_then(
-                    filter(|c: &char| c.is_digit(16))
-                        .repeated()
-                        .exactly(4)
-                        .collect::<String>()
-                        .validate(|digits, span, emit| {
-                            char::from_u32(u32::from_str_radix(&digits, 16).unwrap())
-                                .unwrap_or_else(|| {
-                                    emit(Simple::custom(span, "invalid unicode character"));
-                                    '\u{FFFD}' // unicode replacement character
-                                })
-                        }),
-                )),
+                .or(just('t').to('\t')),
         )
+        .or(escaped_unicode_parser())
         .labelled("quoted_string_escaped_char");
 
     let quoted_str_part = filter::<_, _, Simple<char>>(|c: &char| c != &'"' && c != &'\\')
@@ -242,9 +230,8 @@ mod quoted_string_tests {
     }
 
     #[test]
-    fn it_parses_escaped_emoji_in_qouted_string() {
-        //TODO figure out if this is the correct handling for unicode characters
-        let test_str = "\"escapedemoji(\\u0001\\uF600)\"";
+    fn it_parses_escaped_emoji_in_quoted_string() {
+        let test_str = "\"escapedemoji(\\u{0001}\\u{F600})\"";
         assert_debug_snapshot!(
         quoted_string_parser().parse(test_str),
             @r#"
@@ -262,51 +249,27 @@ mod quoted_string_tests {
     }
 
     #[test]
-    fn it_errors_invalid_escaped_unicode_in_qouted_string() {
+    fn it_errors_invalid_escaped_unicode_in_quoted_string() {
         //unicode must include 4 hex digits to be valid. 'H' is not a valid hex digit.
-        let test_str = "\"escapedemoji(\\uFFFH)\"";
+        let test_str = "\"escapedemoji(\\u{FFFH})\"";
         assert_debug_snapshot!(
         quoted_string_parser().parse(test_str),
             @r#"
         Err(
             [
                 Simple {
-                    span: 19..20,
+                    span: 20..21,
                     reason: Unexpected,
-                    expected: {},
+                    expected: {
+                        Some(
+                            '}',
+                        ),
+                    },
                     found: Some(
                         'H',
                     ),
                     label: Some(
-                        "quoted_string_escaped_char",
-                    ),
-                },
-            ],
-        )
-        "#,
-        );
-    }
-
-    #[test]
-    fn it_errors_invalid_unicode_length_in_qouted_string() {
-        //TODO I would like better error handling in this test case so that
-        //it identifies the problem of the escaped unicode having fewer than
-        //for digits
-        let test_str = "\"\\uFFF\"";
-        assert_debug_snapshot!(
-        quoted_string_parser().parse(test_str),
-            @r#"
-        Err(
-            [
-                Simple {
-                    span: 6..7,
-                    reason: Unexpected,
-                    expected: {},
-                    found: Some(
-                        '"',
-                    ),
-                    label: Some(
-                        "quoted_string_escaped_char",
+                        "escaped-unicode-char",
                     ),
                 },
             ],
@@ -357,7 +320,7 @@ mod quoted_string_tests {
                         'g',
                     ),
                     label: Some(
-                        "quoted_string_escaped_char",
+                        "escaped-unicode-char",
                     ),
                 },
             ],

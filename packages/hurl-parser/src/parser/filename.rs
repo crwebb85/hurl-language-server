@@ -2,6 +2,8 @@ use crate::parser::template::template_parser;
 use crate::parser::types::{InterpolatedString, InterpolatedStringPart};
 use chumsky::prelude::*;
 
+use super::primitives::escaped_unicode_parser;
+
 /// Parses a file path
 ///
 /// Note: file paths cannot be files outside the root directory. Where
@@ -32,21 +34,9 @@ pub fn filename_parser() -> impl Parser<char, InterpolatedString, Error = Simple
                 .or(just(' ').to(' '))
                 .or(just('{').to('{'))
                 .or(just('}').to('}'))
-                .or(just(':').to(':'))
-                .or(just('u').ignore_then(
-                    filter(|c: &char| c.is_digit(16))
-                        .repeated()
-                        .exactly(4)
-                        .collect::<String>()
-                        .validate(|digits, span, emit| {
-                            char::from_u32(u32::from_str_radix(&digits, 16).unwrap())
-                                .unwrap_or_else(|| {
-                                    emit(Simple::custom(span, "invalid unicode character"));
-                                    '\u{FFFD}' // unicode replacement character
-                                })
-                        }),
-                )),
+                .or(just(':').to(':')),
         )
+        .or(escaped_unicode_parser())
         .labelled("filename-escaped-char");
 
     let filename_text = filter::<_, _, Simple<char>>(|c: &char| {

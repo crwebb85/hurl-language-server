@@ -518,7 +518,6 @@ mod tests {
 
     #[test]
     fn it_error_from_unescaped_backslash_in_header_value() {
-        //TODO improve error message and recovery from this type of error
         let test_str = "GET https://example.org\nkey: this\\valuehasanunescapedbackslash";
         assert_debug_snapshot!(
         ast_parser().parse(test_str),
@@ -558,7 +557,7 @@ mod tests {
                         'v',
                     ),
                     label: Some(
-                        "value-string-escaped-char",
+                        "escaped-unicode-char",
                     ),
                 },
             ],
