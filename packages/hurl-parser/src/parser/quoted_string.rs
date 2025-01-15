@@ -65,7 +65,7 @@ mod quoted_string_tests {
     use insta::assert_debug_snapshot;
 
     #[test]
-    fn it_parses_qouted_string() {
+    fn it_parses_quoted_string() {
         let test_str = "\"gb2312\"";
         assert_debug_snapshot!(
         quoted_string_parser().parse(test_str),
@@ -210,7 +210,7 @@ mod quoted_string_tests {
     }
 
     #[test]
-    fn it_parses_escape_sequences_in_qouted_string() {
+    fn it_parses_escape_sequences_in_quoted_string() {
         //TODO figure out if this is the correct handling for escape characters
         let test_str = "\"escapedchars(\\\", \\\\, \\b, \\f, \\r\\n, \\t)\"";
         assert_debug_snapshot!(
@@ -279,7 +279,7 @@ mod quoted_string_tests {
     }
 
     #[test]
-    fn it_errors_invalid_escape_char_in_qouted_string() {
+    fn it_errors_invalid_escape_char_in_quoted_string() {
         // g is not a valid character for escaping
         let test_str = "\"invalidescapechar:\\g\"";
         assert_debug_snapshot!(
