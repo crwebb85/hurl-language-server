@@ -1,15 +1,20 @@
-use super::{expr::expr_parser, quoted_string::generic_quoted_string_parser};
+use super::{
+    expr::expr_parser, primitives::sp_parser, quoted_string::generic_quoted_string_parser,
+};
 use crate::parser::types::Template;
 use chumsky::prelude::*;
 
 pub fn template_parser() -> impl Parser<char, Template, Error = Simple<char>> + Clone {
+    let sp = sp_parser();
     let template = recursive(|template| {
         let quoted_string = generic_quoted_string_parser(template);
         let expr = expr_parser(quoted_string);
         just("{")
             .ignored()
             .then_ignore(just("{"))
+            .then_ignore(sp.clone().repeated())
             .then(expr)
+            .then_ignore(sp.clone().repeated())
             .then_ignore(just("}"))
             .then_ignore(just("}"))
             .map(|(_, captured_expr)| Template {
@@ -30,6 +35,26 @@ mod template_tests {
     #[test]
     fn it_parses_template() {
         let test_str = "{{key}}";
+        assert_debug_snapshot!(
+        template_parser().parse(test_str),
+            @r#"
+        Ok(
+            Template {
+                expr: Expr {
+                    variable: VariableName(
+                        "key",
+                    ),
+                    filters: [],
+                },
+            },
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_template_with_extra_whitespace() {
+        let test_str = "{{   key  }}";
         assert_debug_snapshot!(
         template_parser().parse(test_str),
             @r#"
@@ -103,7 +128,7 @@ mod template_tests {
                         '1',
                     ),
                     label: Some(
-                        "variable_name",
+                        "template",
                     ),
                 },
             ],

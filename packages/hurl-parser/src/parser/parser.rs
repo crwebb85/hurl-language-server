@@ -30,7 +30,7 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
                 .then(value.clone())
                 .then_ignore(lt.clone())
                 .then(headers)
-                .then(request_section.repeated()) //TODO
+                .then(request_section.repeated())
                 .map(
                     |(((method_value, url_value_string), headers), request_sections)| Request {
                         method: method_value,

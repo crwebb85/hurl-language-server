@@ -570,8 +570,7 @@ mod tests {
     #[test]
     fn it_errors_header_key_with_empty_template() {
         //TODO make this a recoverable error that warns the user that they probably forgot to
-        //add the template contents (this warning can only be done for header templates since
-        //for other interpolated string locations the curly brackets are valid text
+        //add the template contents
         let test_str = "GET https://example.org\nkey-{{ }}: dummyvalue";
         assert_debug_snapshot!(
         ast_parser().parse(test_str),
@@ -579,14 +578,14 @@ mod tests {
         Err(
             [
                 Simple {
-                    span: 30..31,
+                    span: 31..32,
                     reason: Unexpected,
                     expected: {},
                     found: Some(
-                        ' ',
+                        '}',
                     ),
                     label: Some(
-                        "variable_name",
+                        "template",
                     ),
                 },
             ],
@@ -702,62 +701,8 @@ mod tests {
     }
 
     #[test]
-    fn it_parses_empty_header_value_template_as_string() {
-        let test_str = "GET https://example.org\nkey: dummyvalue-{{ }}";
-        assert_debug_snapshot!(
-        ast_parser().parse(test_str),
-            @r#"
-        Ok(
-            [
-                Entry {
-                    request: Request {
-                        method: Method {
-                            value: "GET",
-                        },
-                        url: InterpolatedString {
-                            parts: [
-                                Str(
-                                    "https://example.org",
-                                ),
-                            ],
-                        },
-                        header: [
-                            KeyValue {
-                                key: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "key",
-                                        ),
-                                    ],
-                                },
-                                value: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "dummyvalue-",
-                                        ),
-                                        Str(
-                                            "{{",
-                                        ),
-                                        Str(
-                                            " }}",
-                                        ),
-                                    ],
-                                },
-                            },
-                        ],
-                        request_sections: [],
-                    },
-                    response: None,
-                },
-            ],
-        )
-        "#,
-        );
-    }
-
-    #[test]
     fn it_parses_header_value_template_end_a_non_template_bracket() {
-        let test_str = "GET https://example.org\nkey: dummy{v}alue-{{ }}";
+        let test_str = "GET https://example.org\nkey: dummy{v}alue";
         assert_debug_snapshot!(
         ast_parser().parse(test_str),
             @r#"
@@ -787,19 +732,7 @@ mod tests {
                                 value: InterpolatedString {
                                     parts: [
                                         Str(
-                                            "dummy",
-                                        ),
-                                        Str(
-                                            "{",
-                                        ),
-                                        Str(
-                                            "v}alue-",
-                                        ),
-                                        Str(
-                                            "{{",
-                                        ),
-                                        Str(
-                                            " }}",
+                                            "dummy{v}alue",
                                         ),
                                     ],
                                 },
