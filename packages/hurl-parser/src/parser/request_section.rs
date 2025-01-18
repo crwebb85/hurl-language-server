@@ -9,12 +9,44 @@ use super::types::{
 };
 use chumsky::prelude::*;
 
+pub fn file_param_parser() -> impl Parser<char, FileKeyValue, Error = Simple<char>> + Clone {
+    let sp = sp_parser();
+    let key = key_parser();
+    let filename = filename_parser();
+
+    let file_content_type = filter::<_, _, Simple<char>>(|c: &char| {
+        c.is_ascii_alphanumeric() || c == &'/' || c == &'+' || c == &'-'
+    })
+    .repeated()
+    .at_least(1)
+    .collect::<String>()
+    .labelled("file_content_type");
+
+    let file_value = just("file,")
+        .then(filename.clone())
+        .then_ignore(just(';'))
+        .padded_by(sp.clone().repeated())
+        .then(file_content_type.or_not())
+        .map(|((_, filename), content_type)| FileValue {
+            filename,
+            content_type,
+        });
+
+    let file_param = key
+        .clone()
+        .padded_by(sp.clone().repeated())
+        .then_ignore(just(':'))
+        .padded_by(sp.clone().repeated())
+        .then(file_value)
+        .map(|(key, value)| FileKeyValue { key, value })
+        .labelled("file_key_value");
+    file_param
+}
+
 pub fn request_section_parser() -> impl Parser<char, RequestSection, Error = Simple<char>> + Clone {
     let sp = sp_parser();
     let lt = lt_parser();
-    let key = key_parser();
     let key_value = key_value_parser();
-    let filename = filename_parser();
     let option = option_parser();
     let key_values = key_value.clone().then_ignore(lt.clone()).repeated();
 
@@ -68,33 +100,10 @@ pub fn request_section_parser() -> impl Parser<char, RequestSection, Error = Sim
             })
         });
 
-    let file_content_type = filter::<_, _, Simple<char>>(|c: &char| {
-        c.is_ascii_alphanumeric() || c == &'/' || c == &'+' || c == &'-'
-    })
-    .repeated()
-    .at_least(1)
-    .collect::<String>()
-    .labelled("file_content_type");
-
-    let file_value = just("file,")
-        .then(filename.clone())
-        .then_ignore(just(';'))
-        .then(file_content_type.or_not())
-        .map(|((_, filename), content_type)| FileValue {
-            filename,
-            content_type,
-        });
-
-    let file_param = key
-        .clone()
-        .then_ignore(sp.clone().repeated())
-        .then_ignore(just(':'))
-        .then_ignore(sp.clone().repeated())
-        .then(file_value)
-        .map(|(key, value)| MultipartFormParam::FileParam(FileKeyValue { key, value }))
-        .labelled("file_key_value");
-
-    let multipart_form_param = file_param.or(key_value.map(MultipartFormParam::KeyValueParam));
+    let file_param = file_param_parser().map(MultipartFormParam::FileParam);
+    let multipart_form_param = file_param
+        .or(key_value.map(MultipartFormParam::KeyValueParam))
+        .then_ignore(lt.clone());
 
     let multipart_form_data_section = sp
         .clone()
@@ -276,6 +285,795 @@ mod request_section_tests {
                     ],
                 },
             ),
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_query_string_params_section() {
+        let test_str = "[QueryStringParams]\nsearch: {{my-search}}\norder: desc\ncount: 420";
+        assert_debug_snapshot!(
+        request_section_parser().then_ignore(end()).parse(test_str),
+            @r#"
+        Ok(
+            QueryStringParamsSection(
+                QueryStringParamsSection {
+                    queries: [
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "search",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Template(
+                                        Template {
+                                            expr: Expr {
+                                                variable: VariableName(
+                                                    "my-search",
+                                                ),
+                                                filters: [],
+                                            },
+                                        },
+                                    ),
+                                ],
+                            },
+                        },
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "order",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "desc",
+                                    ),
+                                ],
+                            },
+                        },
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "count",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "420",
+                                    ),
+                                ],
+                            },
+                        },
+                    ],
+                },
+            ),
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_query_string_params_section_with_section_alias() {
+        let test_str = "[Query]\nsearch: {{my-search}}\norder: desc\ncount: 420";
+        assert_debug_snapshot!(
+        request_section_parser().then_ignore(end()).parse(test_str),
+            @r#"
+        Ok(
+            QueryStringParamsSection(
+                QueryStringParamsSection {
+                    queries: [
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "search",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Template(
+                                        Template {
+                                            expr: Expr {
+                                                variable: VariableName(
+                                                    "my-search",
+                                                ),
+                                                filters: [],
+                                            },
+                                        },
+                                    ),
+                                ],
+                            },
+                        },
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "order",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "desc",
+                                    ),
+                                ],
+                            },
+                        },
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "count",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "420",
+                                    ),
+                                ],
+                            },
+                        },
+                    ],
+                },
+            ),
+        )
+        "#,
+        );
+    }
+
+    #[ignore]
+    #[test]
+    fn it_parses_query_string_params_section_with_extra_spaces_and_line_terminators() {
+        //TODO fix multiple line terminator parsing
+        //TODO fix multiple leading space parsing before key values
+        let test_str = "  [QueryStringParams]\n  search: {{my-search}}\n #we need descent\n   order: desc   \n\n\n#420 xD!\n count: 420";
+        assert_debug_snapshot!(
+        request_section_parser().then_ignore(end()).parse(test_str),
+            @r#"
+        Ok(
+            QueryStringParamsSection(
+                QueryStringParamsSection {
+                    queries: [
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "search",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Template(
+                                        Template {
+                                            expr: Expr {
+                                                variable: VariableName(
+                                                    "my-search",
+                                                ),
+                                                filters: [],
+                                            },
+                                        },
+                                    ),
+                                ],
+                            },
+                        },
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "order",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "desc",
+                                    ),
+                                ],
+                            },
+                        },
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "count",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "420",
+                                    ),
+                                ],
+                            },
+                        },
+                    ],
+                },
+            ),
+        )
+        "#,
+        );
+    }
+
+    #[ignore]
+    #[test]
+    fn it_parses_query_string_params_section_with_extra_spaces() {
+        //TODO fix multiple leading space parsing before key values
+        let test_str =
+            "  [QueryStringParams]\n  search: {{my-search}}\n    order: desc   \n count: 420";
+        assert_debug_snapshot!(
+        request_section_parser().then_ignore(end()).parse(test_str),
+            @r#"
+        Ok(
+            QueryStringParamsSection(
+                QueryStringParamsSection {
+                    queries: [
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "search",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Template(
+                                        Template {
+                                            expr: Expr {
+                                                variable: VariableName(
+                                                    "my-search",
+                                                ),
+                                                filters: [],
+                                            },
+                                        },
+                                    ),
+                                ],
+                            },
+                        },
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "order",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "desc",
+                                    ),
+                                ],
+                            },
+                        },
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "count",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "420",
+                                    ),
+                                ],
+                            },
+                        },
+                    ],
+                },
+            ),
+        )
+        "#,
+        );
+    }
+
+    #[ignore]
+    #[test]
+    fn it_parses_query_string_params_section_with_line_terminators() {
+        //TODO fix multiple line terminator parsing
+        let test_str = "[QueryStringParams]\nsearch: {{my-search}}\n #we need descent\norder: desc\n\n\n#420 xD!\ncount: 420";
+        assert_debug_snapshot!(
+        request_section_parser().then_ignore(end()).parse(test_str),
+            @r#"
+        Ok(
+            QueryStringParamsSection(
+                QueryStringParamsSection {
+                    queries: [
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "search",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Template(
+                                        Template {
+                                            expr: Expr {
+                                                variable: VariableName(
+                                                    "my-search",
+                                                ),
+                                                filters: [],
+                                            },
+                                        },
+                                    ),
+                                ],
+                            },
+                        },
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "order",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "desc",
+                                    ),
+                                ],
+                            },
+                        },
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "count",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "420",
+                                    ),
+                                ],
+                            },
+                        },
+                    ],
+                },
+            ),
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_form_params() {
+        let test_str = "[FormParams]\ntoken: {{token}}\nemail: john.smith@example.com\naccountNumber: {{accountNumber}}\nenabledEmailNotifications: true";
+        assert_debug_snapshot!(
+        request_section_parser().then_ignore(end()).parse(test_str),
+            @r#"
+        Ok(
+            FormParamsSection(
+                FormParamsSection {
+                    params: [
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "token",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Template(
+                                        Template {
+                                            expr: Expr {
+                                                variable: VariableName(
+                                                    "token",
+                                                ),
+                                                filters: [],
+                                            },
+                                        },
+                                    ),
+                                ],
+                            },
+                        },
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "email",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "john.smith@example.com",
+                                    ),
+                                ],
+                            },
+                        },
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "accountNumber",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Template(
+                                        Template {
+                                            expr: Expr {
+                                                variable: VariableName(
+                                                    "accountNumber",
+                                                ),
+                                                filters: [],
+                                            },
+                                        },
+                                    ),
+                                ],
+                            },
+                        },
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "enabledEmailNotifications",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "true",
+                                    ),
+                                ],
+                            },
+                        },
+                    ],
+                },
+            ),
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_form_params_with_section_alias() {
+        let test_str = "[Form]\ntoken: {{token}}\nemail: john.smith@example.com\naccountNumber: {{accountNumber}}\nenabledEmailNotifications: true";
+        assert_debug_snapshot!(
+        request_section_parser().then_ignore(end()).parse(test_str),
+            @r#"
+        Ok(
+            FormParamsSection(
+                FormParamsSection {
+                    params: [
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "token",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Template(
+                                        Template {
+                                            expr: Expr {
+                                                variable: VariableName(
+                                                    "token",
+                                                ),
+                                                filters: [],
+                                            },
+                                        },
+                                    ),
+                                ],
+                            },
+                        },
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "email",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "john.smith@example.com",
+                                    ),
+                                ],
+                            },
+                        },
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "accountNumber",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Template(
+                                        Template {
+                                            expr: Expr {
+                                                variable: VariableName(
+                                                    "accountNumber",
+                                                ),
+                                                filters: [],
+                                            },
+                                        },
+                                    ),
+                                ],
+                            },
+                        },
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "enabledEmailNotifications",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "true",
+                                    ),
+                                ],
+                            },
+                        },
+                    ],
+                },
+            ),
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_multipart_form_data() {
+        let test_str = "[MultipartFormData]\nfield1: value1\nfield2: file,example.txt;\nfield3: file,example.zip; application/zip";
+        assert_debug_snapshot!(
+        request_section_parser().then_ignore(end()).parse(test_str),
+            @r#"
+        Ok(
+            MultipartFormDataSection(
+                MultipartFormDataSection {
+                    params: [
+                        KeyValueParam(
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "field1",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "value1",
+                                        ),
+                                    ],
+                                },
+                            },
+                        ),
+                        FileParam(
+                            FileKeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "field2",
+                                        ),
+                                    ],
+                                },
+                                value: FileValue {
+                                    filename: InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "example.txt",
+                                            ),
+                                        ],
+                                    },
+                                    content_type: None,
+                                },
+                            },
+                        ),
+                        FileParam(
+                            FileKeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "field3",
+                                        ),
+                                    ],
+                                },
+                                value: FileValue {
+                                    filename: InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "example.zip",
+                                            ),
+                                        ],
+                                    },
+                                    content_type: Some(
+                                        "application/zip",
+                                    ),
+                                },
+                            },
+                        ),
+                    ],
+                },
+            ),
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_multipart_form_data_with_section_alias() {
+        let test_str = "[Multipart]\nfield1: value1\nfield2: file,example.txt;\nfield3: file,example.zip; application/zip";
+        assert_debug_snapshot!(
+        request_section_parser().then_ignore(end()).parse(test_str),
+            @r#"
+        Ok(
+            MultipartFormDataSection(
+                MultipartFormDataSection {
+                    params: [
+                        KeyValueParam(
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "field1",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "value1",
+                                        ),
+                                    ],
+                                },
+                            },
+                        ),
+                        FileParam(
+                            FileKeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "field2",
+                                        ),
+                                    ],
+                                },
+                                value: FileValue {
+                                    filename: InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "example.txt",
+                                            ),
+                                        ],
+                                    },
+                                    content_type: None,
+                                },
+                            },
+                        ),
+                        FileParam(
+                            FileKeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "field3",
+                                        ),
+                                    ],
+                                },
+                                value: FileValue {
+                                    filename: InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "example.zip",
+                                            ),
+                                        ],
+                                    },
+                                    content_type: Some(
+                                        "application/zip",
+                                    ),
+                                },
+                            },
+                        ),
+                    ],
+                },
+            ),
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_file_param() {
+        let test_str = "field2: file,example.txt;";
+        assert_debug_snapshot!(
+        file_param_parser().then_ignore(end()).parse(test_str),
+            @r#"
+        Ok(
+            FileKeyValue {
+                key: InterpolatedString {
+                    parts: [
+                        Str(
+                            "field2",
+                        ),
+                    ],
+                },
+                value: FileValue {
+                    filename: InterpolatedString {
+                        parts: [
+                            Str(
+                                "example.txt",
+                            ),
+                        ],
+                    },
+                    content_type: None,
+                },
+            },
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_file_param_with_content_type() {
+        let test_str = "field3: file,example.zip; application/zip";
+        assert_debug_snapshot!(
+        file_param_parser().then_ignore(end()).parse(test_str),
+            @r#"
+        Ok(
+            FileKeyValue {
+                key: InterpolatedString {
+                    parts: [
+                        Str(
+                            "field3",
+                        ),
+                    ],
+                },
+                value: FileValue {
+                    filename: InterpolatedString {
+                        parts: [
+                            Str(
+                                "example.zip",
+                            ),
+                        ],
+                    },
+                    content_type: Some(
+                        "application/zip",
+                    ),
+                },
+            },
         )
         "#,
         );
