@@ -1078,4 +1078,120 @@ mod request_section_tests {
         "#,
         );
     }
+
+    #[test]
+    fn it_parses_cookie_section() {
+        let test_str = "[Cookies]\ntheme: dark\nsessionToken: {{token}}";
+        assert_debug_snapshot!(
+        request_section_parser().then_ignore(end()).parse(test_str),
+            @r#"
+        Ok(
+            CookiesSection(
+                CookiesSection {
+                    cookies: [
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "theme",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "dark",
+                                    ),
+                                ],
+                            },
+                        },
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "sessionToken",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Template(
+                                        Template {
+                                            expr: Expr {
+                                                variable: VariableName(
+                                                    "token",
+                                                ),
+                                                filters: [],
+                                            },
+                                        },
+                                    ),
+                                ],
+                            },
+                        },
+                    ],
+                },
+            ),
+        )
+        "#,
+        );
+    }
+
+    #[ignore = "need to fix extra line terminator parsing"]
+    #[test]
+    fn it_parses_cookie_section_with_extra_withspace_and_line_terminators() {
+        let test_str =
+            " [Cookies]\n #dark mode is life \n theme: dark\n \n \nsessionToken: {{token}}";
+        assert_debug_snapshot!(
+        request_section_parser().then_ignore(end()).parse(test_str),
+            @r#"
+        Ok(
+            CookiesSection(
+                CookiesSection {
+                    cookies: [
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "theme",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "dark",
+                                    ),
+                                ],
+                            },
+                        },
+                        KeyValue {
+                            key: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "sessionToken",
+                                    ),
+                                ],
+                            },
+                            value: InterpolatedString {
+                                parts: [
+                                    Template(
+                                        Template {
+                                            expr: Expr {
+                                                variable: VariableName(
+                                                    "token",
+                                                ),
+                                                filters: [],
+                                            },
+                                        },
+                                    ),
+                                ],
+                            },
+                        },
+                    ],
+                },
+            ),
+        )
+        "#,
+        );
+    }
 }
