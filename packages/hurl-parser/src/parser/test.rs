@@ -1435,9 +1435,6 @@ mod tests {
         );
     }
 
-    // text::keyword("connect-timeout").to(RequestDurationOption::ConnectTimeout),
-    // text::keyword("delay").to(RequestDurationOption::Delay),
-    // text::keyword("retry-interval").to(RequestDurationOption::RetryInterval),
     #[test]
     fn it_parses_boolean_options() {
         let test_str = "GET https://example.com\n[Options]\ncompressed: true\nlocation: true\nlocation-trusted: true\nhttp1.0: false\nhttp1.1: false\nhttp2: false\nhttp3: true\ninsecure: false\nipv4: false\nipv6: true\nnetrc: true\nnetrc-optional: true\npath-as-is: true\nskip: false\nverbose: true\nvery-verbose: true";
