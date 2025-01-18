@@ -67,7 +67,7 @@ pub fn value_parser() -> impl Parser<char, InterpolatedString, Error = Simple<ch
                 .or(just('f').to('\x0C'))
                 .or(just('n').to('\n'))
                 .or(just('r').to('\r'))
-                .or(just('t').to('\t')), // .or(escaped_unicode_parser()),
+                .or(just('t').to('\t')),
         )
         .or(escaped_unicode_parser())
         .labelled("value-string-escaped-char");
