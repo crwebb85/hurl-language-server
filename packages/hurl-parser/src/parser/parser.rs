@@ -1,3 +1,4 @@
+use super::body::body_parser;
 use super::key_value::{key_value_parser, value_parser};
 use super::primitives::{lt_parser, sp_parser};
 use super::request_section::request_section_parser;
@@ -31,12 +32,16 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
                 .then_ignore(lt.clone())
                 .then(headers)
                 .then(request_section.repeated())
+                .then(body_parser().or_not())
                 .map(
-                    |(((method_value, url_value_string), headers), request_sections)| Request {
-                        method: method_value,
-                        url: url_value_string,
-                        header: headers,
-                        request_sections,
+                    |((((method_value, url_value_string), headers), request_sections), body)| {
+                        Request {
+                            method: method_value,
+                            url: url_value_string,
+                            header: headers,
+                            request_sections,
+                            body,
+                        }
                     },
                 ),
         )

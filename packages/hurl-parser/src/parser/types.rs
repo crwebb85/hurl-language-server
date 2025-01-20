@@ -1,5 +1,5 @@
 use ordered_float::OrderedFloat;
-use std::hash::Hash;
+use std::{collections::BTreeMap, hash::Hash};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Method {
@@ -282,7 +282,7 @@ pub struct Request {
     pub url: InterpolatedString,
     pub header: Vec<KeyValue>, //TODO rename to headers
     pub request_sections: Vec<RequestSection>,
-    // body: Body,
+    pub body: Option<Body>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -299,4 +299,41 @@ pub struct Entry {
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Lt {
     pub comment: Option<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum Bytes {
+    JsonValue(Json),
+    // XML,//TODO not yet implemented by hurl cli. Implement it here when that happens
+    MultilineString(MultiLineString),
+    OneLineString(InterpolatedString),
+    OneLineBase64(String),
+    OneLineFile(InterpolatedString),
+    OneLineHex(String),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Body {
+    pub bytes: Bytes,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum MultiLineString {
+    Base64(InterpolatedString),
+    Hex(InterpolatedString),
+    Json(InterpolatedString),
+    Xml(InterpolatedString),
+    Graphql(InterpolatedString),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum Json {
+    Invalid,
+    Object(BTreeMap<String, Json>),
+    Array(Vec<Json>),
+    Str(String),
+    InterpolatedString(InterpolatedString),
+    Num(OrderedFloat<f64>),
+    Bool(bool),
+    Null,
 }

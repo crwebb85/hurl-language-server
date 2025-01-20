@@ -2,6 +2,12 @@ use chumsky::prelude::*;
 
 use super::types::Lt;
 
+/// A parser that never matches. Used as a placeholder for parsers that
+/// I haven't yet implemented but plan to
+pub fn todo_parser() -> impl Parser<char, char, Error = Simple<char>> + Clone {
+    filter::<_, _, Simple<char>>(|_| false)
+}
+
 pub fn sp_parser() -> impl Parser<char, char, Error = Simple<char>> + Clone {
     filter(|c: &char| c.is_whitespace() && (c == &'\t' || c == &' ')).labelled("Space or tab")
 }
