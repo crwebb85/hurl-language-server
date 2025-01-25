@@ -5,7 +5,7 @@ use super::{
     types::{Body, Bytes, InterpolatedString, Json, MultiLineString},
 };
 
-pub fn bytes_parser() -> impl Parser<char, Bytes, Error = Simple<char>> + Clone {
+pub fn bytes_parser<'a>() -> impl Parser<'a, &'a str, Bytes, extra::Err<Rich<'a, char>>> + Clone {
     json_value_parser()
         .map(Bytes::JsonValue)
         // .or(xml_parser()) //TODO when hurl implements syntax for xml bytes
@@ -17,30 +17,35 @@ pub fn bytes_parser() -> impl Parser<char, Bytes, Error = Simple<char>> + Clone 
         .labelled("bytes")
 }
 
-fn json_value_parser() -> impl Parser<char, Json, Error = Simple<char>> + Clone {
+fn json_value_parser<'a>() -> impl Parser<'a, &'a str, Json, extra::Err<Rich<'a, char>>> + Clone {
     todo_parser().map(|_| Json::Invalid)
 }
 
-fn multiline_string_parser() -> impl Parser<char, MultiLineString, Error = Simple<char>> + Clone {
+fn multiline_string_parser<'a>(
+) -> impl Parser<'a, &'a str, MultiLineString, extra::Err<Rich<'a, char>>> + Clone {
     todo_parser().map(|_| MultiLineString::Json(InterpolatedString { parts: vec![] }))
 }
 
-fn one_line_string_parser() -> impl Parser<char, InterpolatedString, Error = Simple<char>> + Clone {
+fn one_line_string_parser<'a>(
+) -> impl Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone {
     todo_parser().map(|_| InterpolatedString { parts: vec![] })
 }
 
-fn one_line_base64_parser() -> impl Parser<char, String, Error = Simple<char>> + Clone {
+fn one_line_base64_parser<'a>(
+) -> impl Parser<'a, &'a str, String, extra::Err<Rich<'a, char>>> + Clone {
     todo_parser().map(|_| "TODO".to_string())
 }
 
-fn one_line_file_parser() -> impl Parser<char, InterpolatedString, Error = Simple<char>> + Clone {
+fn one_line_file_parser<'a>(
+) -> impl Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone {
     todo_parser().map(|_| InterpolatedString { parts: vec![] })
 }
 
-fn one_line_hex_parser() -> impl Parser<char, String, Error = Simple<char>> + Clone {
+fn one_line_hex_parser<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Rich<'a, char>>> + Clone
+{
     todo_parser().map(|_| "TODO".to_string())
 }
 
-pub fn body_parser() -> impl Parser<char, Body, Error = Simple<char>> + Clone {
+pub fn body_parser<'a>() -> impl Parser<'a, &'a str, Body, extra::Err<Rich<'a, char>>> + Clone {
     bytes_parser().map(|bytes| Body { bytes }).labelled("body")
 }

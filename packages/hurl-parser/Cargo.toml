@@ -6,6 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chumsky = "0.9.3"
+chumsky = { version = "=1.0.0-alpha.8", features = [] }
 insta = "1.41.1"
 ordered-float = "4.6.0"

@@ -1,49 +1,99 @@
-use chumsky::{error::Simple, prelude::{choice, filter, just}, text, Parser};
+use chumsky::prelude::*;
 
 use super::{primitives::sp_parser, types::{Expr, ExprValue, FilterFunction, InterpolatedString}};
 
-pub fn variable_name_parser() -> impl Parser<char, String, Error = Simple<char>> + Clone {
-    let variable_name = filter::<_, _, Simple<char>>(char::is_ascii_alphabetic)
-        .then(
-            filter::<_, _, Simple<char>>(|c: &char| {
-                c.is_ascii_alphanumeric() || c == &'_' || c == &'-'
-            })
-            .repeated()
-            .collect::<String>(),
-        )
-        .map(|(c, chars)| format!("{}{}", c, chars)).labelled("variable_name");
-    variable_name
+
+pub fn alphabetic_parser<'a>() -> impl Parser<'a, &'a str, char, extra::Err<Rich<'a, char>>> + Clone {
+
+        let ascii_alphabetic_char = custom::<'a, _, &'a str, char, extra::Err<Rich<'a, char>>>(|inp| {
+            
+            let before = inp.cursor();
+            let c = inp.next();
+            let span = inp.span_since(&before);
+            match c {
+                Some(c) => if c.is_ascii_alphabetic() {
+                    Ok(c)
+                } else {
+                    Err(Rich::custom(span, format!("expected an ascii alphabetic char but found {}", c)))
+                },
+                None => Err(Rich::custom(span, format!("expected an ascii alphabetic char but found end"))),
+            }
+            
+        });
+        ascii_alphabetic_char
+        .labelled("ascii-alphabetic-char")
 }
 
-pub fn expr_parser<T: Parser<char, InterpolatedString, Error = Simple<char>> + Clone>(
+
+pub fn alphanumeric_parser<'a>() -> impl Parser<'a, &'a str, char, extra::Err<Rich<'a, char>>> + Clone {
+
+        let ascii_alphanumeric_char = custom::<'a, _, &'a str, char, extra::Err<Rich<'a, char>>>(|inp| {
+            let before = inp.cursor();
+            let c = inp.next();
+            let span = inp.span_since(&before);
+            
+            match c {
+                Some(c) => if c.is_ascii_alphanumeric() {
+                    Ok(c)
+                } else {
+                    Err(Rich::custom(span, format!("expected an ascii alphanumeric char but found {}", c)))
+                },
+                None => Err(Rich::custom(span, format!("expected an ascii alphanumeric char but found end"))),
+            }
+        });
+        ascii_alphanumeric_char
+        .labelled("ascii-alphanumeric-char")
+}
+
+pub fn variable_name_parser<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Rich<'a, char>>> + Clone {
+
+    let variable_name = alphabetic_parser()
+        .labelled("ascii alphabetic char")
+        .then(
+            choice((
+                    one_of("_-"),
+                    alphanumeric_parser()
+            ))
+            .labelled("ascii alphanumeric char or underscore or dash")
+            .repeated()
+            .to_slice()
+        )
+        .to_slice()
+        .map(ToString::to_string);
+
+    variable_name
+        .labelled("variable-name")
+}
+
+pub fn expr_parser<'a, T: Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone>(
     quoted_string: T,
-    ) -> impl Parser<char, Expr, Error = Simple<char>> + Clone {
+) -> impl Parser<'a, &'a str, Expr, extra::Err<Rich<'a, char>>> + Clone {
 
     let sp = sp_parser();
     let variable_name = variable_name_parser();
-    let expr_function = choice::<_, Simple<char>>([
+    let expr_function = choice((
         text::keyword("getEnv").to(ExprValue::FunctionName("getEnv".to_owned())), 
         text::keyword("newDate").to(ExprValue::FunctionName("newDate".to_owned())),
         text::keyword("newUuid").to(ExprValue::FunctionName("newUuid".to_owned()))
-    ]);
+    ));
 
     let expr_variable = expr_function.or(variable_name.map(ExprValue::VariableName));
 
 
     let decode_filter_function = just("decode")
         .then_ignore(sp.clone())
-        .then(quoted_string.clone())
-        .map(|(_, s)| FilterFunction::Decode { encoding: s});
+        .ignore_then(quoted_string.clone())
+        .map(|s| FilterFunction::Decode { encoding: s});
 
     let format_filter_function = just("format")
         .then_ignore(sp.clone())
-        .then(quoted_string.clone())
-        .map(|(_, s)| FilterFunction::Format { fmt: s});
+        .ignore_then(quoted_string.clone())
+        .map(|s| FilterFunction::Format { fmt: s});
 
     let jsonpath_filter_function = just("jsonpath")
         .then_ignore(sp.clone())
-        .then(quoted_string.clone())
-        .map(|(_, s)| FilterFunction::JsonPath { expr: s });
+        .ignore_then(quoted_string.clone())
+        .map(|s| FilterFunction::JsonPath { expr: s });
 
     let nth_filter_function = just("nth")
         .then_ignore(sp.clone())
@@ -55,33 +105,33 @@ pub fn expr_parser<T: Parser<char, InterpolatedString, Error = Simple<char>> + C
 
     let regex_filter_function = just("regex")
         .then_ignore(sp.clone())
-        .then(quoted_string.clone())
-        .map(|(_, s)| FilterFunction::Regex { value: s });
+        .ignore_then(quoted_string.clone())
+        .map(|s| FilterFunction::Regex { value: s });
 
     let split_filter_function = just("split")
         .then_ignore(sp.clone())
-        .then(quoted_string.clone())
-        .map(|(_, s)| FilterFunction::Split { sep: s });
+        .ignore_then(quoted_string.clone())
+        .map(|s| FilterFunction::Split { sep: s });
         
     let replace_filter_function = just("replace")
         .then_ignore(sp.clone())
-        .then(quoted_string.clone())
+        .ignore_then(quoted_string.clone())
         .then_ignore(sp.clone())
         .then(quoted_string.clone())
-        .map(|((_, old), new)| FilterFunction::Replace { old_value: old, new_value: new });
+        .map(|(old, new)| FilterFunction::Replace { old_value: old, new_value: new });
 
     let todate_filter_function = just("toDate")
         .then_ignore(sp.clone())
-        .then(quoted_string.clone())
-        .map(|(_, s)| FilterFunction::ToDate { fmt: s });
+        .ignore_then(quoted_string.clone())
+        .map(|s| FilterFunction::ToDate { fmt: s });
 
     let xpath_filter_function = just("xpath")
         .then_ignore(sp.clone())
-        .then(quoted_string.clone())
-        .map(|(_, s)| FilterFunction::XPath { expr: s });
+        .ignore_then(quoted_string.clone())
+        .map(|s| FilterFunction::XPath { expr: s });
 
     //TODO detect type errors between inputs and outputs of filters
-    let filter_function = choice::<_, Simple<char>>([
+    let filters = choice((
         just("count").to(FilterFunction::Count), 
         just("daysAfterNow").to(FilterFunction::DaysAfterNow),
         just("daysBeforeNow").to(FilterFunction::DaysBeforeNow),
@@ -91,17 +141,18 @@ pub fn expr_parser<T: Parser<char, InterpolatedString, Error = Simple<char>> + C
         just("toInt").to(FilterFunction::ToInt),
         just("urlDecode").to(FilterFunction::UrlDecode),
         just("urlEncode").to(FilterFunction::UrlEncode),
-    ]).or(decode_filter_function)
-    .or(format_filter_function)
-    .or(jsonpath_filter_function)
-    .or(nth_filter_function)
-    .or(regex_filter_function)
-    .or(split_filter_function)
-    .or(replace_filter_function)
-    .or(todate_filter_function)
-    .or(xpath_filter_function);
-
-    let filters = filter_function.separated_by(sp.clone().repeated());
+        decode_filter_function,
+        format_filter_function,
+        jsonpath_filter_function,
+        nth_filter_function,
+        regex_filter_function,
+        split_filter_function,
+        replace_filter_function,
+        todate_filter_function,
+        xpath_filter_function,
+    )).then_ignore(sp.clone().repeated())
+        .repeated()
+        .collect::<Vec<FilterFunction>>();
 
     let expr = expr_variable
     .then_ignore(sp.clone().repeated())
@@ -109,7 +160,8 @@ pub fn expr_parser<T: Parser<char, InterpolatedString, Error = Simple<char>> + C
     .map( |(expr_var, filter_funcs)| Expr {
         variable: expr_var,
         filters: filter_funcs
-    }).labelled("expr");
+    })
+    .labelled("expr");
 
     expr
 }
@@ -126,9 +178,12 @@ mod variable_name_tests {
         assert_debug_snapshot!(
         variable_name_parser().parse(test_str),
             @r#"
-        Ok(
-            "key",
-        )
+        ParseResult {
+            output: Some(
+                "key",
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -140,9 +195,12 @@ mod variable_name_tests {
         assert_debug_snapshot!(
         variable_name_parser().parse(test_str),
             @r#"
-        Ok(
-            "api-key",
-        )
+        ParseResult {
+            output: Some(
+                "api-key",
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -153,9 +211,12 @@ mod variable_name_tests {
         assert_debug_snapshot!(
         variable_name_parser().parse(test_str),
             @r#"
-        Ok(
-            "api_key",
-        )
+        ParseResult {
+            output: Some(
+                "api_key",
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -165,23 +226,14 @@ mod variable_name_tests {
         let test_str = "1";
         assert_debug_snapshot!(
         variable_name_parser().parse(test_str),
-            @r#"
-        Err(
-            [
-                Simple {
-                    span: 0..1,
-                    reason: Unexpected,
-                    expected: {},
-                    found: Some(
-                        '1',
-                    ),
-                    label: Some(
-                        "variable_name",
-                    ),
-                },
+            @r"
+        ParseResult {
+            output: None,
+            errs: [
+                found end of input at 0..1 expected variable-name,
             ],
-        )
-        "#,
+        }
+        ",
         );
     }
 
@@ -191,23 +243,14 @@ mod variable_name_tests {
         let test_str = "-";
         assert_debug_snapshot!(
         variable_name_parser().parse(test_str),
-            @r#"
-        Err(
-            [
-                Simple {
-                    span: 0..1,
-                    reason: Unexpected,
-                    expected: {},
-                    found: Some(
-                        '-',
-                    ),
-                    label: Some(
-                        "variable_name",
-                    ),
-                },
+            @r"
+        ParseResult {
+            output: None,
+            errs: [
+                found end of input at 0..1 expected variable-name,
             ],
-        )
-        "#,
+        }
+        ",
         );
     }
 
@@ -216,23 +259,14 @@ mod variable_name_tests {
         let test_str = "_";
         assert_debug_snapshot!(
         variable_name_parser().parse(test_str),
-            @r#"
-        Err(
-            [
-                Simple {
-                    span: 0..1,
-                    reason: Unexpected,
-                    expected: {},
-                    found: Some(
-                        '_',
-                    ),
-                    label: Some(
-                        "variable_name",
-                    ),
-                },
+            @r"
+        ParseResult {
+            output: None,
+            errs: [
+                found end of input at 0..1 expected variable-name,
             ],
-        )
-        "#,
+        }
+        ",
         );
     }
 
@@ -253,14 +287,17 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "key",
-                ),
-                filters: [],
-            },
-        )
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "key",
+                    ),
+                    filters: [],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -273,14 +310,17 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "api-key",
-                ),
-                filters: [],
-            },
-        )
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "api-key",
+                    ),
+                    filters: [],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -292,14 +332,17 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "api_key",
-                ),
-                filters: [],
-            },
-        )
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "api_key",
+                    ),
+                    filters: [],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -310,23 +353,14 @@ mod expr_tests {
         let quoted_string = quoted_string_parser();
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
-            @r#"
-        Err(
-            [
-                Simple {
-                    span: 0..1,
-                    reason: Unexpected,
-                    expected: {},
-                    found: Some(
-                        '1',
-                    ),
-                    label: Some(
-                        "variable_name",
-                    ),
-                },
+            @r"
+        ParseResult {
+            output: None,
+            errs: [
+                found ''1'' at 0..1 expected expr,
             ],
-        )
-        "#,
+        }
+        ",
         );
     }
 
@@ -339,24 +373,27 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "api_key",
-                ),
-                filters: [
-                    Decode {
-                        encoding: InterpolatedString {
-                            parts: [
-                                Str(
-                                    "gb2312",
-                                ),
-                            ],
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "api_key",
+                    ),
+                    filters: [
+                        Decode {
+                            encoding: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "gb2312",
+                                    ),
+                                ],
+                            },
                         },
-                    },
-                ],
-            },
-        )
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -369,24 +406,27 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "creation_date",
-                ),
-                filters: [
-                    Format {
-                        fmt: InterpolatedString {
-                            parts: [
-                                Str(
-                                    "%a, %d %b %Y %H:%M:%S",
-                                ),
-                            ],
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "creation_date",
+                    ),
+                    filters: [
+                        Format {
+                            fmt: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "%a, %d %b %Y %H:%M:%S",
+                                    ),
+                                ],
+                            },
                         },
-                    },
-                ],
-            },
-        )
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -399,24 +439,27 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "input_data",
-                ),
-                filters: [
-                    JsonPath {
-                        expr: InterpolatedString {
-                            parts: [
-                                Str(
-                                    "$[0].last_name",
-                                ),
-                            ],
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "input_data",
+                    ),
+                    filters: [
+                        JsonPath {
+                            expr: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "$[0].last_name",
+                                    ),
+                                ],
+                            },
                         },
-                    },
-                ],
-            },
-        )
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -429,27 +472,30 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "input_data",
-                ),
-                filters: [
-                    JsonPath {
-                        expr: InterpolatedString {
-                            parts: [
-                                Str(
-                                    "$[0].names",
-                                ),
-                            ],
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "input_data",
+                    ),
+                    filters: [
+                        JsonPath {
+                            expr: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "$[0].names",
+                                    ),
+                                ],
+                            },
                         },
-                    },
-                    Nth {
-                        nth: 2,
-                    },
-                ],
-            },
-        )
+                        Nth {
+                            nth: 2,
+                        },
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -462,24 +508,27 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "id",
-                ),
-                filters: [
-                    Regex {
-                        value: InterpolatedString {
-                            parts: [
-                                Str(
-                                    "\\d{10}",
-                                ),
-                            ],
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "id",
+                    ),
+                    filters: [
+                        Regex {
+                            value: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "\\d{10}",
+                                    ),
+                                ],
+                            },
                         },
-                    },
-                ],
-            },
-        )
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -492,24 +541,27 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "names",
-                ),
-                filters: [
-                    Split {
-                        sep: InterpolatedString {
-                            parts: [
-                                Str(
-                                    ", ",
-                                ),
-                            ],
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "names",
+                    ),
+                    filters: [
+                        Split {
+                            sep: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        ", ",
+                                    ),
+                                ],
+                            },
                         },
-                    },
-                ],
-            },
-        )
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -522,31 +574,34 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "names",
-                ),
-                filters: [
-                    Replace {
-                        old_value: InterpolatedString {
-                            parts: [
-                                Str(
-                                    "; ",
-                                ),
-                            ],
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "names",
+                    ),
+                    filters: [
+                        Replace {
+                            old_value: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "; ",
+                                    ),
+                                ],
+                            },
+                            new_value: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        ",",
+                                    ),
+                                ],
+                            },
                         },
-                        new_value: InterpolatedString {
-                            parts: [
-                                Str(
-                                    ",",
-                                ),
-                            ],
-                        },
-                    },
-                ],
-            },
-        )
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -559,24 +614,27 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "creation_date",
-                ),
-                filters: [
-                    ToDate {
-                        fmt: InterpolatedString {
-                            parts: [
-                                Str(
-                                    "%a, %d %b %Y %H:%M:%S",
-                                ),
-                            ],
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "creation_date",
+                    ),
+                    filters: [
+                        ToDate {
+                            fmt: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "%a, %d %b %Y %H:%M:%S",
+                                    ),
+                                ],
+                            },
                         },
-                    },
-                ],
-            },
-        )
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -588,24 +646,27 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "document",
-                ),
-                filters: [
-                    XPath {
-                        expr: InterpolatedString {
-                            parts: [
-                                Str(
-                                    "string(//div)",
-                                ),
-                            ],
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "document",
+                    ),
+                    filters: [
+                        XPath {
+                            expr: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "string(//div)",
+                                    ),
+                                ],
+                            },
                         },
-                    },
-                ],
-            },
-        )
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -618,25 +679,28 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "response",
-                ),
-                filters: [
-                    JsonPath {
-                        expr: InterpolatedString {
-                            parts: [
-                                Str(
-                                    "$.names",
-                                ),
-                            ],
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "response",
+                    ),
+                    filters: [
+                        JsonPath {
+                            expr: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "$.names",
+                                    ),
+                                ],
+                            },
                         },
-                    },
-                    Count,
-                ],
-            },
-        )
+                        Count,
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -649,16 +713,19 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "expiration_date",
-                ),
-                filters: [
-                    DaysAfterNow,
-                ],
-            },
-        )
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "expiration_date",
+                    ),
+                    filters: [
+                        DaysAfterNow,
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -671,16 +738,19 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "expiration_date",
-                ),
-                filters: [
-                    DaysBeforeNow,
-                ],
-            },
-        )
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "expiration_date",
+                    ),
+                    filters: [
+                        DaysBeforeNow,
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -693,16 +763,19 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "document",
-                ),
-                filters: [
-                    HtmlEscape,
-                ],
-            },
-        )
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "document",
+                    ),
+                    filters: [
+                        HtmlEscape,
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -715,16 +788,19 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "escaped_document",
-                ),
-                filters: [
-                    HtmlUnescape,
-                ],
-            },
-        )
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "escaped_document",
+                    ),
+                    filters: [
+                        HtmlUnescape,
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -737,16 +813,19 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "inflation_rate",
-                ),
-                filters: [
-                    ToFloat,
-                ],
-            },
-        )
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "inflation_rate",
+                    ),
+                    filters: [
+                        ToFloat,
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -759,16 +838,19 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "id",
-                ),
-                filters: [
-                    ToInt,
-                ],
-            },
-        )
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "id",
+                    ),
+                    filters: [
+                        ToInt,
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -781,16 +863,19 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "encoded_url",
-                ),
-                filters: [
-                    UrlDecode,
-                ],
-            },
-        )
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "encoded_url",
+                    ),
+                    filters: [
+                        UrlDecode,
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -803,16 +888,19 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "url",
-                ),
-                filters: [
-                    UrlEncode,
-                ],
-            },
-        )
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "url",
+                    ),
+                    filters: [
+                        UrlEncode,
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -825,16 +913,19 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "url",
-                ),
-                filters: [
-                    UrlEncode,
-                ],
-            },
-        )
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "url",
+                    ),
+                    filters: [
+                        UrlEncode,
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -847,25 +938,28 @@ mod expr_tests {
         assert_debug_snapshot!(
         expr_parser(quoted_string).parse(test_str),
             @r#"
-        Ok(
-            Expr {
-                variable: VariableName(
-                    "response",
-                ),
-                filters: [
-                    JsonPath {
-                        expr: InterpolatedString {
-                            parts: [
-                                Str(
-                                    "$.names",
-                                ),
-                            ],
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "response",
+                    ),
+                    filters: [
+                        JsonPath {
+                            expr: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "$.names",
+                                    ),
+                                ],
+                            },
                         },
-                    },
-                    Count,
-                ],
-            },
-        )
+                        Count,
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
 

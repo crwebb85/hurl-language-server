@@ -4,20 +4,14 @@ use super::{
 use crate::parser::types::Template;
 use chumsky::prelude::*;
 
-pub fn template_parser() -> impl Parser<char, Template, Error = Simple<char>> + Clone {
-    let sp = sp_parser();
+pub fn template_parser<'a>(
+) -> impl Parser<'a, &'a str, Template, extra::Err<Rich<'a, char>>> + Clone {
     let template = recursive(|template| {
         let quoted_string = generic_quoted_string_parser(template);
         let expr = expr_parser(quoted_string);
-        just("{")
-            .ignored()
-            .then_ignore(just("{"))
-            .then_ignore(sp.clone().repeated())
-            .then(expr)
-            .then_ignore(sp.clone().repeated())
-            .then_ignore(just("}"))
-            .then_ignore(just("}"))
-            .map(|(_, captured_expr)| Template {
+        expr.padded_by(sp_parser().repeated())
+            .delimited_by(just("{{"), just("}}"))
+            .map(|captured_expr| Template {
                 expr: captured_expr,
             })
     })
@@ -38,16 +32,19 @@ mod template_tests {
         assert_debug_snapshot!(
         template_parser().parse(test_str),
             @r#"
-        Ok(
-            Template {
-                expr: Expr {
-                    variable: VariableName(
-                        "key",
-                    ),
-                    filters: [],
+        ParseResult {
+            output: Some(
+                Template {
+                    expr: Expr {
+                        variable: VariableName(
+                            "key",
+                        ),
+                        filters: [],
+                    },
                 },
-            },
-        )
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -58,16 +55,19 @@ mod template_tests {
         assert_debug_snapshot!(
         template_parser().parse(test_str),
             @r#"
-        Ok(
-            Template {
-                expr: Expr {
-                    variable: VariableName(
-                        "key",
-                    ),
-                    filters: [],
+        ParseResult {
+            output: Some(
+                Template {
+                    expr: Expr {
+                        variable: VariableName(
+                            "key",
+                        ),
+                        filters: [],
+                    },
                 },
-            },
-        )
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -78,16 +78,19 @@ mod template_tests {
         assert_debug_snapshot!(
         template_parser().parse(test_str),
             @r#"
-        Ok(
-            Template {
-                expr: Expr {
-                    variable: VariableName(
-                        "api-key",
-                    ),
-                    filters: [],
+        ParseResult {
+            output: Some(
+                Template {
+                    expr: Expr {
+                        variable: VariableName(
+                            "api-key",
+                        ),
+                        filters: [],
+                    },
                 },
-            },
-        )
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -98,16 +101,19 @@ mod template_tests {
         assert_debug_snapshot!(
         template_parser().parse(test_str),
             @r#"
-        Ok(
-            Template {
-                expr: Expr {
-                    variable: VariableName(
-                        "api_key",
-                    ),
-                    filters: [],
+        ParseResult {
+            output: Some(
+                Template {
+                    expr: Expr {
+                        variable: VariableName(
+                            "api_key",
+                        ),
+                        filters: [],
+                    },
                 },
-            },
-        )
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -117,23 +123,14 @@ mod template_tests {
         let test_str = "{{1}}";
         assert_debug_snapshot!(
         template_parser().parse(test_str),
-            @r#"
-        Err(
-            [
-                Simple {
-                    span: 2..3,
-                    reason: Unexpected,
-                    expected: {},
-                    found: Some(
-                        '1',
-                    ),
-                    label: Some(
-                        "template",
-                    ),
-                },
+            @r"
+        ParseResult {
+            output: None,
+            errs: [
+                found ''1'' at 2..3 expected spacing, or expr,
             ],
-        )
-        "#,
+        }
+        ",
         );
     }
 }

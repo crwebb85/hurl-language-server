@@ -1,8 +1,7 @@
+use super::primitives::escaped_unicode_parser;
 use crate::parser::template::template_parser;
 use crate::parser::types::{InterpolatedString, InterpolatedStringPart};
 use chumsky::prelude::*;
-
-use super::primitives::escaped_unicode_parser;
 
 /// Parses a file path
 ///
@@ -17,53 +16,42 @@ use super::primitives::escaped_unicode_parser;
 /// The filename parser
 ///
 /// ```
-pub fn filename_parser() -> impl Parser<char, InterpolatedString, Error = Simple<char>> + Clone {
-    let template = template_parser();
-
+pub fn filename_parser<'a>(
+) -> impl Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone {
     let filename_escape_char = just('\\')
-        .ignore_then(
-            just('\\')
-                .to('\\')
-                .or(just('b').to('\x08'))
-                .or(just('f').to('\x0C'))
-                .or(just('n').to('\n'))
-                .or(just('r').to('\r'))
-                .or(just('t').to('\t'))
-                .or(just('#').to('#'))
-                .or(just(';').to(';'))
-                .or(just(' ').to(' '))
-                .or(just('{').to('{'))
-                .or(just('}').to('}'))
-                .or(just(':').to(':')),
-        )
+        .ignore_then(choice((
+            just('\\').to('\\'),
+            just('b').to('\x08'),
+            just('f').to('\x0C'),
+            just('n').to('\n'),
+            just('r').to('\r'),
+            just('t').to('\t'),
+            just('#').to('#'),
+            just(';').to(';'),
+            just(' ').to(' '),
+            just('{').to('{'),
+            just('}').to('}'),
+            just(':').to(':'),
+        )))
         .or(escaped_unicode_parser())
         .labelled("filename-escaped-char");
 
-    let filename_text = filter::<_, _, Simple<char>>(|c: &char| {
-        // ~[#;{} \n\\]+
-        c != &'#' && c != &';' && c != &'{' && c != &'}' && c != &' ' && c != &'\n' && c != &'\\'
-    })
-    .labelled("filename-text");
-
-    let filename_content = filename_text
-        .or(filename_escape_char)
+    let filename_content = choice((none_of("#;{} \n\\"), filename_escape_char))
         .repeated()
         .at_least(1)
         .collect::<String>()
         .map(InterpolatedStringPart::Str)
         .labelled("filename-content");
 
-    let filename_template_part = template
-        .clone()
-        .map(|t| InterpolatedStringPart::Template(t))
-        .labelled("filename-template");
-
-    let filename = filename_content
-        .or(filename_template_part)
-        .repeated()
-        .at_least(1)
-        .map(|k| InterpolatedString { parts: k })
-        .labelled("filename");
+    let filename = choice((
+        filename_content,
+        template_parser().map(|t| InterpolatedStringPart::Template(t)),
+    ))
+    .repeated()
+    .at_least(1)
+    .collect::<Vec<InterpolatedStringPart>>()
+    .map(|k| InterpolatedString { parts: k })
+    .labelled("filename");
 
     filename
 }
@@ -80,15 +68,18 @@ mod expr_tests {
         assert_debug_snapshot!(
         filename_parser().parse(test_str),
             @r#"
-        Ok(
-            InterpolatedString {
-                parts: [
-                    Str(
-                        "example.txt",
-                    ),
-                ],
-            },
-        )
+        ParseResult {
+            output: Some(
+                InterpolatedString {
+                    parts: [
+                        Str(
+                            "example.txt",
+                        ),
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -99,22 +90,25 @@ mod expr_tests {
         assert_debug_snapshot!(
         filename_parser().parse(test_str),
             @r#"
-        Ok(
-            InterpolatedString {
-                parts: [
-                    Template(
-                        Template {
-                            expr: Expr {
-                                variable: VariableName(
-                                    "input_file",
-                                ),
-                                filters: [],
+        ParseResult {
+            output: Some(
+                InterpolatedString {
+                    parts: [
+                        Template(
+                            Template {
+                                expr: Expr {
+                                    variable: VariableName(
+                                        "input_file",
+                                    ),
+                                    filters: [],
+                                },
                             },
-                        },
-                    ),
-                ],
-            },
-        )
+                        ),
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -125,25 +119,28 @@ mod expr_tests {
         assert_debug_snapshot!(
         filename_parser().parse(test_str),
             @r#"
-        Ok(
-            InterpolatedString {
-                parts: [
-                    Str(
-                        "./tests/",
-                    ),
-                    Template(
-                        Template {
-                            expr: Expr {
-                                variable: VariableName(
-                                    "testFile1",
-                                ),
-                                filters: [],
+        ParseResult {
+            output: Some(
+                InterpolatedString {
+                    parts: [
+                        Str(
+                            "./tests/",
+                        ),
+                        Template(
+                            Template {
+                                expr: Expr {
+                                    variable: VariableName(
+                                        "testFile1",
+                                    ),
+                                    filters: [],
+                                },
                             },
-                        },
-                    ),
-                ],
-            },
-        )
+                        ),
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -154,15 +151,18 @@ mod expr_tests {
         assert_debug_snapshot!(
         filename_parser().parse(test_str),
             @r#"
-        Ok(
-            InterpolatedString {
-                parts: [
-                    Str(
-                        "./temp/example.txt",
-                    ),
-                ],
-            },
-        )
+        ParseResult {
+            output: Some(
+                InterpolatedString {
+                    parts: [
+                        Str(
+                            "./temp/example.txt",
+                        ),
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -173,15 +173,18 @@ mod expr_tests {
         assert_debug_snapshot!(
         filename_parser().parse(test_str),
             @r#"
-        Ok(
-            InterpolatedString {
-                parts: [
-                    Str(
-                        "./temp/../example.txt",
-                    ),
-                ],
-            },
-        )
+        ParseResult {
+            output: Some(
+                InterpolatedString {
+                    parts: [
+                        Str(
+                            "./temp/../example.txt",
+                        ),
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -192,15 +195,18 @@ mod expr_tests {
         assert_debug_snapshot!(
         filename_parser().parse(test_str),
             @r#"
-        Ok(
-            InterpolatedString {
-                parts: [
-                    Str(
-                        "./temp/../../example.txt",
-                    ),
-                ],
-            },
-        )
+        ParseResult {
+            output: Some(
+                InterpolatedString {
+                    parts: [
+                        Str(
+                            "./temp/../../example.txt",
+                        ),
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -211,15 +217,18 @@ mod expr_tests {
         assert_debug_snapshot!(
         filename_parser().parse(test_str),
             @r#"
-        Ok(
-            InterpolatedString {
-                parts: [
-                    Str(
-                        "../example/example.txt",
-                    ),
-                ],
-            },
-        )
+        ParseResult {
+            output: Some(
+                InterpolatedString {
+                    parts: [
+                        Str(
+                            "../example/example.txt",
+                        ),
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -231,15 +240,18 @@ mod expr_tests {
         assert_debug_snapshot!(
         filename_parser().parse(test_str),
             @r#"
-        Ok(
-            InterpolatedString {
-                parts: [
-                    Str(
-                        "C:/Users/myuser/Documents/projects/hurl-language-server/examples/example.txt",
-                    ),
-                ],
-            },
-        )
+        ParseResult {
+            output: Some(
+                InterpolatedString {
+                    parts: [
+                        Str(
+                            "C:/Users/myuser/Documents/projects/hurl-language-server/examples/example.txt",
+                        ),
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -250,15 +262,18 @@ mod expr_tests {
         assert_debug_snapshot!(
         filename_parser().parse(test_str),
             @r#"
-        Ok(
-            InterpolatedString {
-                parts: [
-                    Str(
-                        "C:\\Users\\myuser\\Documents\\projects\\hurl-language-server\\examples\\example.txt",
-                    ),
-                ],
-            },
-        )
+        ParseResult {
+            output: Some(
+                InterpolatedString {
+                    parts: [
+                        Str(
+                            "C:\\Users\\myuser\\Documents\\projects\\hurl-language-server\\examples\\example.txt",
+                        ),
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -268,30 +283,14 @@ mod expr_tests {
         let test_str = r#"#"#;
         assert_debug_snapshot!(
         filename_parser().parse(test_str),
-            @r#"
-        Err(
-            [
-                Simple {
-                    span: 0..1,
-                    reason: Unexpected,
-                    expected: {
-                        Some(
-                            '\\',
-                        ),
-                        Some(
-                            '{',
-                        ),
-                    },
-                    found: Some(
-                        '#',
-                    ),
-                    label: Some(
-                        "filename",
-                    ),
-                },
+            @r"
+        ParseResult {
+            output: None,
+            errs: [
+                found ''#'' at 0..1 expected filename,
             ],
-        )
-        "#,
+        }
+        ",
         );
     }
 
@@ -303,31 +302,14 @@ mod expr_tests {
         //the rest.
         assert_debug_snapshot!(
         filename_parser().then(end()).parse(test_str),
-            @r#"
-        Err(
-            [
-                Simple {
-                    span: 4..5,
-                    reason: Unexpected,
-                    expected: {
-                        None,
-                        Some(
-                            '\\',
-                        ),
-                        Some(
-                            '{',
-                        ),
-                    },
-                    found: Some(
-                        '#',
-                    ),
-                    label: Some(
-                        "filename",
-                    ),
-                },
+            @r"
+        ParseResult {
+            output: None,
+            errs: [
+                found ''#'' at 4..5 expected something else, filename-escaped-char, filename-content, template, or end of input,
             ],
-        )
-        "#,
+        }
+        ",
         );
     }
 
@@ -336,7 +318,7 @@ mod expr_tests {
         let test_strings = vec![r#"#"#, r#";"#, r#"{"#, r#"}"#, r#" "#, "\n", r#"\"#];
         for test_str in test_strings {
             assert!(
-                filename_parser().parse(test_str).is_err(),
+                filename_parser().parse(test_str).into_errors().len() > 0,
                 r#"The filename parser unexpectedly did not error for the string "{}""#,
                 test_str
             );

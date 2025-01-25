@@ -3,27 +3,25 @@ use super::key_value::{key_parser, key_value_parser};
 use super::options::option_parser;
 use super::primitives::{lt_parser, sp_parser};
 use super::types::{
-    BasicAuthSection, CookiesSection, FileKeyValue, FileValue, FormParamsSection,
-    MultipartFormDataSection, MultipartFormParam, QueryStringParamsSection, RequestOptionsSection,
-    RequestSection,
+    BasicAuthSection, CookiesSection, FileKeyValue, FileValue, FormParamsSection, KeyValue,
+    MultipartFormDataSection, MultipartFormParam, QueryStringParamsSection, RequestOption,
+    RequestOptionsSection, RequestSection,
 };
 use chumsky::prelude::*;
 
-pub fn file_param_parser() -> impl Parser<char, FileKeyValue, Error = Simple<char>> + Clone {
+pub fn file_param_parser<'a>(
+) -> impl Parser<'a, &'a str, FileKeyValue, extra::Err<Rich<'a, char>>> + Clone {
     let sp = sp_parser();
-    let key = key_parser();
-    let filename = filename_parser();
 
-    let file_content_type = filter::<_, _, Simple<char>>(|c: &char| {
-        c.is_ascii_alphanumeric() || c == &'/' || c == &'+' || c == &'-'
-    })
-    .repeated()
-    .at_least(1)
-    .collect::<String>()
-    .labelled("file_content_type");
+    let file_content_type = any()
+        .filter(|c: &char| c.is_ascii_alphanumeric() || c == &'/' || c == &'+' || c == &'-')
+        .repeated()
+        .at_least(1)
+        .collect::<String>()
+        .labelled("file_content_type");
 
     let file_value = just("file,")
-        .then(filename.clone())
+        .then(filename_parser())
         .then_ignore(just(';'))
         .padded_by(sp.clone().repeated())
         .then(file_content_type.or_not())
@@ -32,8 +30,7 @@ pub fn file_param_parser() -> impl Parser<char, FileKeyValue, Error = Simple<cha
             content_type,
         });
 
-    let file_param = key
-        .clone()
+    let file_param = key_parser()
         .padded_by(sp.clone().repeated())
         .then_ignore(just(':'))
         .padded_by(sp.clone().repeated())
@@ -43,12 +40,15 @@ pub fn file_param_parser() -> impl Parser<char, FileKeyValue, Error = Simple<cha
     file_param
 }
 
-pub fn request_section_parser() -> impl Parser<char, RequestSection, Error = Simple<char>> + Clone {
+pub fn request_section_parser<'a>(
+) -> impl Parser<'a, &'a str, RequestSection, extra::Err<Rich<'a, char>>> + Clone {
     let sp = sp_parser();
     let lt = lt_parser();
-    let key_value = key_value_parser();
     let option = option_parser();
-    let key_values = key_value.clone().then_ignore(lt.clone()).repeated();
+    let key_values = key_value_parser()
+        .then_ignore(lt.clone())
+        .repeated()
+        .collect::<Vec<KeyValue>>();
 
     let basic_auth_section = sp
         .clone()
@@ -57,10 +57,10 @@ pub fn request_section_parser() -> impl Parser<char, RequestSection, Error = Sim
         .then_ignore(just("[BasicAuth]"))
         .then_ignore(lt.clone().repeated())
         .then_ignore(sp.clone().repeated())
-        .then(key_values.clone().validate(|key_values, span, emit| {
+        .then(key_values.clone().validate(|key_values, e, emitter| {
             if key_values.len() > 1 {
-                emit(Simple::custom(
-                    span,
+                emitter.emit(Rich::custom(
+                    e.span(),
                     "Basic Auth can only be defined for one user.",
                 ));
             }
@@ -102,7 +102,7 @@ pub fn request_section_parser() -> impl Parser<char, RequestSection, Error = Sim
 
     let file_param = file_param_parser().map(MultipartFormParam::FileParam);
     let multipart_form_param = file_param
-        .or(key_value.map(MultipartFormParam::KeyValueParam))
+        .or(key_value_parser().map(MultipartFormParam::KeyValueParam))
         .then_ignore(lt.clone());
 
     let multipart_form_data_section = sp
@@ -112,7 +112,11 @@ pub fn request_section_parser() -> impl Parser<char, RequestSection, Error = Sim
         .then_ignore(just("[MultipartFormData]").or(just("[Multipart]")))
         .then_ignore(lt.clone().repeated())
         .then_ignore(sp.clone().repeated())
-        .then(multipart_form_param.repeated())
+        .then(
+            multipart_form_param
+                .repeated()
+                .collect::<Vec<MultipartFormParam>>(),
+        )
         .map(|(_, file_params)| {
             RequestSection::MultipartFormDataSection(MultipartFormDataSection {
                 params: file_params,
@@ -140,7 +144,7 @@ pub fn request_section_parser() -> impl Parser<char, RequestSection, Error = Sim
         .then_ignore(just("[Options]"))
         .then_ignore(lt.clone().repeated())
         .then_ignore(sp.clone().repeated())
-        .then(option.repeated())
+        .then(option.repeated().collect::<Vec<RequestOption>>())
         .map(|(_, options)| RequestSection::OptionsSection(RequestOptionsSection { options }));
 
     let request_section = basic_auth_section
@@ -170,30 +174,33 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            BasicAuthSection(
-                BasicAuthSection {
-                    key_values: [
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "joe",
-                                    ),
-                                ],
+        ParseResult {
+            output: Some(
+                BasicAuthSection(
+                    BasicAuthSection {
+                        key_values: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "joe",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "secret",
+                                        ),
+                                    ],
+                                },
                             },
-                            value: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "secret",
-                                    ),
-                                ],
-                            },
-                        },
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         "#,
         );
     }
@@ -205,19 +212,51 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Err(
-            [
-                Simple {
-                    span: 12..36,
-                    reason: Custom(
-                        "Basic Auth can only be defined for one user.",
-                    ),
-                    expected: {},
-                    found: None,
-                    label: None,
-                },
+        ParseResult {
+            output: Some(
+                BasicAuthSection(
+                    BasicAuthSection {
+                        key_values: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "joe",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "secret",
+                                        ),
+                                    ],
+                                },
+                            },
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "alice",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "secret",
+                                        ),
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                ),
+            ),
+            errs: [
+                Basic Auth can only be defined for one user. at 12..36,
             ],
-        )
+        }
         "#,
         );
     }
@@ -228,30 +267,33 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            BasicAuthSection(
-                BasicAuthSection {
-                    key_values: [
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "joe",
-                                    ),
-                                ],
+        ParseResult {
+            output: Some(
+                BasicAuthSection(
+                    BasicAuthSection {
+                        key_values: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "joe",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "secret",
+                                        ),
+                                    ],
+                                },
                             },
-                            value: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "secret",
-                                    ),
-                                ],
-                            },
-                        },
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         "#,
         );
     }
@@ -262,30 +304,33 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            BasicAuthSection(
-                BasicAuthSection {
-                    key_values: [
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "joe",
-                                    ),
-                                ],
+        ParseResult {
+            output: Some(
+                BasicAuthSection(
+                    BasicAuthSection {
+                        key_values: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "joe",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "secret",
+                                        ),
+                                    ],
+                                },
                             },
-                            value: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "secret",
-                                    ),
-                                ],
-                            },
-                        },
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         "#,
         );
     }
@@ -296,69 +341,72 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            QueryStringParamsSection(
-                QueryStringParamsSection {
-                    queries: [
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "search",
-                                    ),
-                                ],
-                            },
-                            value: InterpolatedString {
-                                parts: [
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "my-search",
-                                                ),
-                                                filters: [],
+        ParseResult {
+            output: Some(
+                QueryStringParamsSection(
+                    QueryStringParamsSection {
+                        queries: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "search",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "my-search",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                ],
+                                        ),
+                                    ],
+                                },
                             },
-                        },
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "order",
-                                    ),
-                                ],
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "order",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "desc",
+                                        ),
+                                    ],
+                                },
                             },
-                            value: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "desc",
-                                    ),
-                                ],
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "count",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "420",
+                                        ),
+                                    ],
+                                },
                             },
-                        },
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "count",
-                                    ),
-                                ],
-                            },
-                            value: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "420",
-                                    ),
-                                ],
-                            },
-                        },
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         "#,
         );
     }
@@ -369,69 +417,72 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            QueryStringParamsSection(
-                QueryStringParamsSection {
-                    queries: [
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "search",
-                                    ),
-                                ],
-                            },
-                            value: InterpolatedString {
-                                parts: [
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "my-search",
-                                                ),
-                                                filters: [],
+        ParseResult {
+            output: Some(
+                QueryStringParamsSection(
+                    QueryStringParamsSection {
+                        queries: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "search",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "my-search",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                ],
+                                        ),
+                                    ],
+                                },
                             },
-                        },
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "order",
-                                    ),
-                                ],
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "order",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "desc",
+                                        ),
+                                    ],
+                                },
                             },
-                            value: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "desc",
-                                    ),
-                                ],
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "count",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "420",
+                                        ),
+                                    ],
+                                },
                             },
-                        },
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "count",
-                                    ),
-                                ],
-                            },
-                            value: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "420",
-                                    ),
-                                ],
-                            },
-                        },
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         "#,
         );
     }
@@ -669,92 +720,95 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            FormParamsSection(
-                FormParamsSection {
-                    params: [
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "token",
-                                    ),
-                                ],
-                            },
-                            value: InterpolatedString {
-                                parts: [
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "token",
-                                                ),
-                                                filters: [],
+        ParseResult {
+            output: Some(
+                FormParamsSection(
+                    FormParamsSection {
+                        params: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "token",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "token",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                ],
+                                        ),
+                                    ],
+                                },
                             },
-                        },
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "email",
-                                    ),
-                                ],
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "email",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "john.smith@example.com",
+                                        ),
+                                    ],
+                                },
                             },
-                            value: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "john.smith@example.com",
-                                    ),
-                                ],
-                            },
-                        },
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "accountNumber",
-                                    ),
-                                ],
-                            },
-                            value: InterpolatedString {
-                                parts: [
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "accountNumber",
-                                                ),
-                                                filters: [],
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "accountNumber",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "accountNumber",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                ],
+                                        ),
+                                    ],
+                                },
                             },
-                        },
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "enabledEmailNotifications",
-                                    ),
-                                ],
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "enabledEmailNotifications",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "true",
+                                        ),
+                                    ],
+                                },
                             },
-                            value: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "true",
-                                    ),
-                                ],
-                            },
-                        },
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         "#,
         );
     }
@@ -765,92 +819,95 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            FormParamsSection(
-                FormParamsSection {
-                    params: [
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "token",
-                                    ),
-                                ],
-                            },
-                            value: InterpolatedString {
-                                parts: [
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "token",
-                                                ),
-                                                filters: [],
+        ParseResult {
+            output: Some(
+                FormParamsSection(
+                    FormParamsSection {
+                        params: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "token",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "token",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                ],
+                                        ),
+                                    ],
+                                },
                             },
-                        },
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "email",
-                                    ),
-                                ],
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "email",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "john.smith@example.com",
+                                        ),
+                                    ],
+                                },
                             },
-                            value: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "john.smith@example.com",
-                                    ),
-                                ],
-                            },
-                        },
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "accountNumber",
-                                    ),
-                                ],
-                            },
-                            value: InterpolatedString {
-                                parts: [
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "accountNumber",
-                                                ),
-                                                filters: [],
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "accountNumber",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "accountNumber",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                ],
+                                        ),
+                                    ],
+                                },
                             },
-                        },
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "enabledEmailNotifications",
-                                    ),
-                                ],
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "enabledEmailNotifications",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "true",
+                                        ),
+                                    ],
+                                },
                             },
-                            value: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "true",
-                                    ),
-                                ],
-                            },
-                        },
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         "#,
         );
     }
@@ -861,76 +918,79 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            MultipartFormDataSection(
-                MultipartFormDataSection {
-                    params: [
-                        KeyValueParam(
-                            KeyValue {
-                                key: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "field1",
-                                        ),
-                                    ],
-                                },
-                                value: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "value1",
-                                        ),
-                                    ],
-                                },
-                            },
-                        ),
-                        FileParam(
-                            FileKeyValue {
-                                key: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "field2",
-                                        ),
-                                    ],
-                                },
-                                value: FileValue {
-                                    filename: InterpolatedString {
+        ParseResult {
+            output: Some(
+                MultipartFormDataSection(
+                    MultipartFormDataSection {
+                        params: [
+                            KeyValueParam(
+                                KeyValue {
+                                    key: InterpolatedString {
                                         parts: [
                                             Str(
-                                                "example.txt",
+                                                "field1",
                                             ),
                                         ],
                                     },
-                                    content_type: None,
-                                },
-                            },
-                        ),
-                        FileParam(
-                            FileKeyValue {
-                                key: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "field3",
-                                        ),
-                                    ],
-                                },
-                                value: FileValue {
-                                    filename: InterpolatedString {
+                                    value: InterpolatedString {
                                         parts: [
                                             Str(
-                                                "example.zip",
+                                                "value1",
                                             ),
                                         ],
                                     },
-                                    content_type: Some(
-                                        "application/zip",
-                                    ),
                                 },
-                            },
-                        ),
-                    ],
-                },
+                            ),
+                            FileParam(
+                                FileKeyValue {
+                                    key: InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "field2",
+                                            ),
+                                        ],
+                                    },
+                                    value: FileValue {
+                                        filename: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "example.txt",
+                                                ),
+                                            ],
+                                        },
+                                        content_type: None,
+                                    },
+                                },
+                            ),
+                            FileParam(
+                                FileKeyValue {
+                                    key: InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "field3",
+                                            ),
+                                        ],
+                                    },
+                                    value: FileValue {
+                                        filename: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "example.zip",
+                                                ),
+                                            ],
+                                        },
+                                        content_type: Some(
+                                            "application/zip",
+                                        ),
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         "#,
         );
     }
@@ -941,76 +1001,79 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            MultipartFormDataSection(
-                MultipartFormDataSection {
-                    params: [
-                        KeyValueParam(
-                            KeyValue {
-                                key: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "field1",
-                                        ),
-                                    ],
-                                },
-                                value: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "value1",
-                                        ),
-                                    ],
-                                },
-                            },
-                        ),
-                        FileParam(
-                            FileKeyValue {
-                                key: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "field2",
-                                        ),
-                                    ],
-                                },
-                                value: FileValue {
-                                    filename: InterpolatedString {
+        ParseResult {
+            output: Some(
+                MultipartFormDataSection(
+                    MultipartFormDataSection {
+                        params: [
+                            KeyValueParam(
+                                KeyValue {
+                                    key: InterpolatedString {
                                         parts: [
                                             Str(
-                                                "example.txt",
+                                                "field1",
                                             ),
                                         ],
                                     },
-                                    content_type: None,
-                                },
-                            },
-                        ),
-                        FileParam(
-                            FileKeyValue {
-                                key: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "field3",
-                                        ),
-                                    ],
-                                },
-                                value: FileValue {
-                                    filename: InterpolatedString {
+                                    value: InterpolatedString {
                                         parts: [
                                             Str(
-                                                "example.zip",
+                                                "value1",
                                             ),
                                         ],
                                     },
-                                    content_type: Some(
-                                        "application/zip",
-                                    ),
                                 },
-                            },
-                        ),
-                    ],
-                },
+                            ),
+                            FileParam(
+                                FileKeyValue {
+                                    key: InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "field2",
+                                            ),
+                                        ],
+                                    },
+                                    value: FileValue {
+                                        filename: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "example.txt",
+                                                ),
+                                            ],
+                                        },
+                                        content_type: None,
+                                    },
+                                },
+                            ),
+                            FileParam(
+                                FileKeyValue {
+                                    key: InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "field3",
+                                            ),
+                                        ],
+                                    },
+                                    value: FileValue {
+                                        filename: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "example.zip",
+                                                ),
+                                            ],
+                                        },
+                                        content_type: Some(
+                                            "application/zip",
+                                        ),
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         "#,
         );
     }
@@ -1021,27 +1084,30 @@ mod request_section_tests {
         assert_debug_snapshot!(
         file_param_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            FileKeyValue {
-                key: InterpolatedString {
-                    parts: [
-                        Str(
-                            "field2",
-                        ),
-                    ],
-                },
-                value: FileValue {
-                    filename: InterpolatedString {
+        ParseResult {
+            output: Some(
+                FileKeyValue {
+                    key: InterpolatedString {
                         parts: [
                             Str(
-                                "example.txt",
+                                "field2",
                             ),
                         ],
                     },
-                    content_type: None,
+                    value: FileValue {
+                        filename: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "example.txt",
+                                ),
+                            ],
+                        },
+                        content_type: None,
+                    },
                 },
-            },
-        )
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -1052,29 +1118,32 @@ mod request_section_tests {
         assert_debug_snapshot!(
         file_param_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            FileKeyValue {
-                key: InterpolatedString {
-                    parts: [
-                        Str(
-                            "field3",
-                        ),
-                    ],
-                },
-                value: FileValue {
-                    filename: InterpolatedString {
+        ParseResult {
+            output: Some(
+                FileKeyValue {
+                    key: InterpolatedString {
                         parts: [
                             Str(
-                                "example.zip",
+                                "field3",
                             ),
                         ],
                     },
-                    content_type: Some(
-                        "application/zip",
-                    ),
+                    value: FileValue {
+                        filename: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "example.zip",
+                                ),
+                            ],
+                        },
+                        content_type: Some(
+                            "application/zip",
+                        ),
+                    },
                 },
-            },
-        )
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -1085,53 +1154,56 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            CookiesSection(
-                CookiesSection {
-                    cookies: [
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "theme",
-                                    ),
-                                ],
+        ParseResult {
+            output: Some(
+                CookiesSection(
+                    CookiesSection {
+                        cookies: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "theme",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "dark",
+                                        ),
+                                    ],
+                                },
                             },
-                            value: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "dark",
-                                    ),
-                                ],
-                            },
-                        },
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "sessionToken",
-                                    ),
-                                ],
-                            },
-                            value: InterpolatedString {
-                                parts: [
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "token",
-                                                ),
-                                                filters: [],
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "sessionToken",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "token",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                ],
+                                        ),
+                                    ],
+                                },
                             },
-                        },
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         "#,
         );
     }
@@ -1201,36 +1273,39 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            OptionsSection(
-                RequestOptionsSection {
-                    options: [
-                        Variable(
-                            VariableDefinitionOption {
-                                name: "host",
-                                value: String(
-                                    InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "example.net",
-                                            ),
-                                        ],
-                                    },
-                                ),
-                            },
-                        ),
-                        Variable(
-                            VariableDefinitionOption {
-                                name: "id",
-                                value: Integer(
-                                    1234,
-                                ),
-                            },
-                        ),
-                    ],
-                },
+        ParseResult {
+            output: Some(
+                OptionsSection(
+                    RequestOptionsSection {
+                        options: [
+                            Variable(
+                                VariableDefinitionOption {
+                                    name: "host",
+                                    value: String(
+                                        InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "example.net",
+                                                ),
+                                            ],
+                                        },
+                                    ),
+                                },
+                            ),
+                            Variable(
+                                VariableDefinitionOption {
+                                    name: "id",
+                                    value: Integer(
+                                        1234,
+                                    ),
+                                },
+                            ),
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         "#,
         );
     }
@@ -1241,94 +1316,97 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r"
-        Ok(
-            OptionsSection(
-                RequestOptionsSection {
-                    options: [
-                        Compressed(
-                            Literal(
-                                true,
+        ParseResult {
+            output: Some(
+                OptionsSection(
+                    RequestOptionsSection {
+                        options: [
+                            Compressed(
+                                Literal(
+                                    true,
+                                ),
                             ),
-                        ),
-                        Location(
-                            Literal(
-                                true,
+                            Location(
+                                Literal(
+                                    true,
+                                ),
                             ),
-                        ),
-                        LocationTrusted(
-                            Literal(
-                                true,
+                            LocationTrusted(
+                                Literal(
+                                    true,
+                                ),
                             ),
-                        ),
-                        Http10(
-                            Literal(
-                                false,
+                            Http10(
+                                Literal(
+                                    false,
+                                ),
                             ),
-                        ),
-                        Http11(
-                            Literal(
-                                false,
+                            Http11(
+                                Literal(
+                                    false,
+                                ),
                             ),
-                        ),
-                        Http2(
-                            Literal(
-                                false,
+                            Http2(
+                                Literal(
+                                    false,
+                                ),
                             ),
-                        ),
-                        Http3(
-                            Literal(
-                                true,
+                            Http3(
+                                Literal(
+                                    true,
+                                ),
                             ),
-                        ),
-                        Insecure(
-                            Literal(
-                                false,
+                            Insecure(
+                                Literal(
+                                    false,
+                                ),
                             ),
-                        ),
-                        Ipv4(
-                            Literal(
-                                false,
+                            Ipv4(
+                                Literal(
+                                    false,
+                                ),
                             ),
-                        ),
-                        Ipv6(
-                            Literal(
-                                true,
+                            Ipv6(
+                                Literal(
+                                    true,
+                                ),
                             ),
-                        ),
-                        Netrc(
-                            Literal(
-                                true,
+                            Netrc(
+                                Literal(
+                                    true,
+                                ),
                             ),
-                        ),
-                        NetrcOptional(
-                            Literal(
-                                true,
+                            NetrcOptional(
+                                Literal(
+                                    true,
+                                ),
                             ),
-                        ),
-                        PathAsIs(
-                            Literal(
-                                true,
+                            PathAsIs(
+                                Literal(
+                                    true,
+                                ),
                             ),
-                        ),
-                        Skip(
-                            Literal(
-                                false,
+                            Skip(
+                                Literal(
+                                    false,
+                                ),
                             ),
-                        ),
-                        Verbose(
-                            Literal(
-                                true,
+                            Verbose(
+                                Literal(
+                                    true,
+                                ),
                             ),
-                        ),
-                        VeryVerbose(
-                            Literal(
-                                true,
+                            VeryVerbose(
+                                Literal(
+                                    true,
+                                ),
                             ),
-                        ),
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         ",
         );
     }
@@ -1340,50 +1418,53 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            OptionsSection(
-                RequestOptionsSection {
-                    options: [
-                        ConnectTimeout(
-                            Template(
-                                Template {
-                                    expr: Expr {
-                                        variable: VariableName(
-                                            "connectTimeout",
-                                        ),
-                                        filters: [],
+        ParseResult {
+            output: Some(
+                OptionsSection(
+                    RequestOptionsSection {
+                        options: [
+                            ConnectTimeout(
+                                Template(
+                                    Template {
+                                        expr: Expr {
+                                            variable: VariableName(
+                                                "connectTimeout",
+                                            ),
+                                            filters: [],
+                                        },
                                     },
-                                },
+                                ),
                             ),
-                        ),
-                        Delay(
-                            Template(
-                                Template {
-                                    expr: Expr {
-                                        variable: VariableName(
-                                            "delay",
-                                        ),
-                                        filters: [],
+                            Delay(
+                                Template(
+                                    Template {
+                                        expr: Expr {
+                                            variable: VariableName(
+                                                "delay",
+                                            ),
+                                            filters: [],
+                                        },
                                     },
-                                },
+                                ),
                             ),
-                        ),
-                        RetryInterval(
-                            Template(
-                                Template {
-                                    expr: Expr {
-                                        variable: VariableName(
-                                            "retryInterval",
-                                        ),
-                                        filters: [],
+                            RetryInterval(
+                                Template(
+                                    Template {
+                                        expr: Expr {
+                                            variable: VariableName(
+                                                "retryInterval",
+                                            ),
+                                            filters: [],
+                                        },
                                     },
-                                },
+                                ),
                             ),
-                        ),
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         "#,
         );
     }
@@ -1394,38 +1475,41 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r"
-        Ok(
-            OptionsSection(
-                RequestOptionsSection {
-                    options: [
-                        ConnectTimeout(
-                            Literal(
-                                Duration {
-                                    duration: 5,
-                                    unit: None,
-                                },
+        ParseResult {
+            output: Some(
+                OptionsSection(
+                    RequestOptionsSection {
+                        options: [
+                            ConnectTimeout(
+                                Literal(
+                                    Duration {
+                                        duration: 5,
+                                        unit: None,
+                                    },
+                                ),
                             ),
-                        ),
-                        Delay(
-                            Literal(
-                                Duration {
-                                    duration: 4,
-                                    unit: None,
-                                },
+                            Delay(
+                                Literal(
+                                    Duration {
+                                        duration: 4,
+                                        unit: None,
+                                    },
+                                ),
                             ),
-                        ),
-                        RetryInterval(
-                            Literal(
-                                Duration {
-                                    duration: 500,
-                                    unit: None,
-                                },
+                            RetryInterval(
+                                Literal(
+                                    Duration {
+                                        duration: 500,
+                                        unit: None,
+                                    },
+                                ),
                             ),
-                        ),
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         ",
         );
     }
@@ -1436,44 +1520,47 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r"
-        Ok(
-            OptionsSection(
-                RequestOptionsSection {
-                    options: [
-                        ConnectTimeout(
-                            Literal(
-                                Duration {
-                                    duration: 5,
-                                    unit: Some(
-                                        Second,
-                                    ),
-                                },
+        ParseResult {
+            output: Some(
+                OptionsSection(
+                    RequestOptionsSection {
+                        options: [
+                            ConnectTimeout(
+                                Literal(
+                                    Duration {
+                                        duration: 5,
+                                        unit: Some(
+                                            Second,
+                                        ),
+                                    },
+                                ),
                             ),
-                        ),
-                        Delay(
-                            Literal(
-                                Duration {
-                                    duration: 4,
-                                    unit: Some(
-                                        Second,
-                                    ),
-                                },
+                            Delay(
+                                Literal(
+                                    Duration {
+                                        duration: 4,
+                                        unit: Some(
+                                            Second,
+                                        ),
+                                    },
+                                ),
                             ),
-                        ),
-                        RetryInterval(
-                            Literal(
-                                Duration {
-                                    duration: 500,
-                                    unit: Some(
-                                        Second,
-                                    ),
-                                },
+                            RetryInterval(
+                                Literal(
+                                    Duration {
+                                        duration: 500,
+                                        unit: Some(
+                                            Second,
+                                        ),
+                                    },
+                                ),
                             ),
-                        ),
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         ",
         );
     }
@@ -1484,44 +1571,47 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r"
-        Ok(
-            OptionsSection(
-                RequestOptionsSection {
-                    options: [
-                        ConnectTimeout(
-                            Literal(
-                                Duration {
-                                    duration: 5,
-                                    unit: Some(
-                                        Millisecond,
-                                    ),
-                                },
+        ParseResult {
+            output: Some(
+                OptionsSection(
+                    RequestOptionsSection {
+                        options: [
+                            ConnectTimeout(
+                                Literal(
+                                    Duration {
+                                        duration: 5,
+                                        unit: Some(
+                                            Millisecond,
+                                        ),
+                                    },
+                                ),
                             ),
-                        ),
-                        Delay(
-                            Literal(
-                                Duration {
-                                    duration: 4,
-                                    unit: Some(
-                                        Millisecond,
-                                    ),
-                                },
+                            Delay(
+                                Literal(
+                                    Duration {
+                                        duration: 4,
+                                        unit: Some(
+                                            Millisecond,
+                                        ),
+                                    },
+                                ),
                             ),
-                        ),
-                        RetryInterval(
-                            Literal(
-                                Duration {
-                                    duration: 500,
-                                    unit: Some(
-                                        Millisecond,
-                                    ),
-                                },
+                            RetryInterval(
+                                Literal(
+                                    Duration {
+                                        duration: 500,
+                                        unit: Some(
+                                            Millisecond,
+                                        ),
+                                    },
+                                ),
                             ),
-                        ),
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         ",
         );
     }
@@ -1532,44 +1622,47 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r"
-        Ok(
-            OptionsSection(
-                RequestOptionsSection {
-                    options: [
-                        ConnectTimeout(
-                            Literal(
-                                Duration {
-                                    duration: 5,
-                                    unit: Some(
-                                        Minute,
-                                    ),
-                                },
+        ParseResult {
+            output: Some(
+                OptionsSection(
+                    RequestOptionsSection {
+                        options: [
+                            ConnectTimeout(
+                                Literal(
+                                    Duration {
+                                        duration: 5,
+                                        unit: Some(
+                                            Minute,
+                                        ),
+                                    },
+                                ),
                             ),
-                        ),
-                        Delay(
-                            Literal(
-                                Duration {
-                                    duration: 4,
-                                    unit: Some(
-                                        Minute,
-                                    ),
-                                },
+                            Delay(
+                                Literal(
+                                    Duration {
+                                        duration: 4,
+                                        unit: Some(
+                                            Minute,
+                                        ),
+                                    },
+                                ),
                             ),
-                        ),
-                        RetryInterval(
-                            Literal(
-                                Duration {
-                                    duration: 500,
-                                    unit: Some(
-                                        Minute,
-                                    ),
-                                },
+                            RetryInterval(
+                                Literal(
+                                    Duration {
+                                        duration: 500,
+                                        unit: Some(
+                                            Minute,
+                                        ),
+                                    },
+                                ),
                             ),
-                        ),
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         ",
         );
     }
@@ -1580,22 +1673,25 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r"
-        Ok(
-            OptionsSection(
-                RequestOptionsSection {
-                    options: [
-                        RetryInterval(
-                            Literal(
-                                Duration {
-                                    duration: 500,
-                                    unit: None,
-                                },
+        ParseResult {
+            output: Some(
+                OptionsSection(
+                    RequestOptionsSection {
+                        options: [
+                            RetryInterval(
+                                Literal(
+                                    Duration {
+                                        duration: 500,
+                                        unit: None,
+                                    },
+                                ),
                             ),
-                        ),
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         ",
         );
     }
@@ -1606,22 +1702,25 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r"
-        Ok(
-            OptionsSection(
-                RequestOptionsSection {
-                    options: [
-                        Delay(
-                            Literal(
-                                Duration {
-                                    duration: 4,
-                                    unit: None,
-                                },
+        ParseResult {
+            output: Some(
+                OptionsSection(
+                    RequestOptionsSection {
+                        options: [
+                            Delay(
+                                Literal(
+                                    Duration {
+                                        duration: 4,
+                                        unit: None,
+                                    },
+                                ),
                             ),
-                        ),
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         ",
         );
     }
@@ -1632,34 +1731,37 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r"
-        Ok(
-            OptionsSection(
-                RequestOptionsSection {
-                    options: [
-                        LimitRate(
-                            Literal(
-                                59,
+        ParseResult {
+            output: Some(
+                OptionsSection(
+                    RequestOptionsSection {
+                        options: [
+                            LimitRate(
+                                Literal(
+                                    59,
+                                ),
                             ),
-                        ),
-                        MaxRedirs(
-                            Literal(
-                                109,
+                            MaxRedirs(
+                                Literal(
+                                    109,
+                                ),
                             ),
-                        ),
-                        Repeat(
-                            Literal(
-                                10,
+                            Repeat(
+                                Literal(
+                                    10,
+                                ),
                             ),
-                        ),
-                        Retry(
-                            Literal(
-                                5,
+                            Retry(
+                                Literal(
+                                    5,
+                                ),
                             ),
-                        ),
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         ",
         );
     }
@@ -1669,21 +1771,24 @@ mod request_section_tests {
     fn it_parses_largest_valid_integer_option_for_usize_64() {
         let test_str = format!("[Options]\nlimit-rate: {}", u64::MAX,);
         assert_debug_snapshot!(
-        request_section_parser().then_ignore(end()).parse(test_str),
+        request_section_parser().then_ignore(end()).parse(&test_str),
             @r"
-        Ok(
-            OptionsSection(
-                RequestOptionsSection {
-                    options: [
-                        LimitRate(
-                            Literal(
-                                18446744073709551615,
+        ParseResult {
+            output: Some(
+                OptionsSection(
+                    RequestOptionsSection {
+                        options: [
+                            LimitRate(
+                                Literal(
+                                    18446744073709551615,
+                                ),
                             ),
-                        ),
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         ",
         );
     }
@@ -1696,19 +1801,22 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            OptionsSection(
-                RequestOptionsSection {
-                    options: [
-                        LimitRate(
-                            BigInteger(
-                                "18446744073709551616",
+        ParseResult {
+            output: Some(
+                OptionsSection(
+                    RequestOptionsSection {
+                        options: [
+                            LimitRate(
+                                BigInteger(
+                                    "18446744073709551616",
+                                ),
                             ),
-                        ),
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         "#,
         );
     }
@@ -1718,21 +1826,24 @@ mod request_section_tests {
     fn it_parses_largest_valid_integer_option_for_usize_32() {
         let test_str = format!("[Options]\nlimit-rate: {}", u32::MAX,);
         assert_debug_snapshot!(
-        request_section_parser().then_ignore(end()).parse(test_str),
+        request_section_parser().then_ignore(end()).parse(&test_str),
             @r"
-        Ok(
-            OptionsSection(
-                RequestOptionsSection {
-                    options: [
-                        LimitRate(
-                            Literal(
-                                4294967295,
+        ParseResult {
+            output: Some(
+                OptionsSection(
+                    RequestOptionsSection {
+                        options: [
+                            LimitRate(
+                                Literal(
+                                    4294967295,
+                                ),
                             ),
-                        ),
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         ",
         );
     }
@@ -1743,77 +1854,80 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            OptionsSection(
-                RequestOptionsSection {
-                    options: [
-                        AwsSigv4(
-                            InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "aws:amz:eu-central-1:sts",
-                                    ),
-                                ],
-                            },
-                        ),
-                        ConnectTo(
-                            InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "example.com:8000:127.0.0.1:8080",
-                                    ),
-                                ],
-                            },
-                        ),
-                        NetrcFile(
-                            InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "~/.netrc",
-                                    ),
-                                ],
-                            },
-                        ),
-                        Proxy(
-                            InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "example.proxy:8050",
-                                    ),
-                                ],
-                            },
-                        ),
-                        Resolve(
-                            InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "example.com:8000:127.0.0.1",
-                                    ),
-                                ],
-                            },
-                        ),
-                        UnixSocket(
-                            InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "sock",
-                                    ),
-                                ],
-                            },
-                        ),
-                        User(
-                            InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "joe=secret",
-                                    ),
-                                ],
-                            },
-                        ),
-                    ],
-                },
+        ParseResult {
+            output: Some(
+                OptionsSection(
+                    RequestOptionsSection {
+                        options: [
+                            AwsSigv4(
+                                InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "aws:amz:eu-central-1:sts",
+                                        ),
+                                    ],
+                                },
+                            ),
+                            ConnectTo(
+                                InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "example.com:8000:127.0.0.1:8080",
+                                        ),
+                                    ],
+                                },
+                            ),
+                            NetrcFile(
+                                InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "~/.netrc",
+                                        ),
+                                    ],
+                                },
+                            ),
+                            Proxy(
+                                InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "example.proxy:8050",
+                                        ),
+                                    ],
+                                },
+                            ),
+                            Resolve(
+                                InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "example.com:8000:127.0.0.1",
+                                        ),
+                                    ],
+                                },
+                            ),
+                            UnixSocket(
+                                InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "sock",
+                                        ),
+                                    ],
+                                },
+                            ),
+                            User(
+                                InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "joe=secret",
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         "#,
         );
     }
@@ -1824,174 +1938,177 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            OptionsSection(
-                RequestOptionsSection {
-                    options: [
-                        AwsSigv4(
-                            InterpolatedString {
-                                parts: [
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "aws",
-                                                ),
-                                                filters: [],
+        ParseResult {
+            output: Some(
+                OptionsSection(
+                    RequestOptionsSection {
+                        options: [
+                            AwsSigv4(
+                                InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "aws",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                ],
-                            },
-                        ),
-                        ConnectTo(
-                            InterpolatedString {
-                                parts: [
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "host",
-                                                ),
-                                                filters: [],
+                                        ),
+                                    ],
+                                },
+                            ),
+                            ConnectTo(
+                                InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "host",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                    Str(
-                                        ":",
-                                    ),
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "port",
-                                                ),
-                                                filters: [],
+                                        ),
+                                        Str(
+                                            ":",
+                                        ),
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "port",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                    Str(
-                                        ":127.0.0.1:8080",
-                                    ),
-                                ],
-                            },
-                        ),
-                        NetrcFile(
-                            InterpolatedString {
-                                parts: [
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "filepath",
-                                                ),
-                                                filters: [],
+                                        ),
+                                        Str(
+                                            ":127.0.0.1:8080",
+                                        ),
+                                    ],
+                                },
+                            ),
+                            NetrcFile(
+                                InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "filepath",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                ],
-                            },
-                        ),
-                        Proxy(
-                            InterpolatedString {
-                                parts: [
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "proxyhost",
-                                                ),
-                                                filters: [],
+                                        ),
+                                    ],
+                                },
+                            ),
+                            Proxy(
+                                InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "proxyhost",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                    Str(
-                                        ":8050",
-                                    ),
-                                ],
-                            },
-                        ),
-                        Resolve(
-                            InterpolatedString {
-                                parts: [
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "host",
-                                                ),
-                                                filters: [],
+                                        ),
+                                        Str(
+                                            ":8050",
+                                        ),
+                                    ],
+                                },
+                            ),
+                            Resolve(
+                                InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "host",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                    Str(
-                                        ":",
-                                    ),
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "port",
-                                                ),
-                                                filters: [],
+                                        ),
+                                        Str(
+                                            ":",
+                                        ),
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "port",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                    Str(
-                                        ":127.0.0.1",
-                                    ),
-                                ],
-                            },
-                        ),
-                        UnixSocket(
-                            InterpolatedString {
-                                parts: [
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "socket",
-                                                ),
-                                                filters: [],
+                                        ),
+                                        Str(
+                                            ":127.0.0.1",
+                                        ),
+                                    ],
+                                },
+                            ),
+                            UnixSocket(
+                                InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "socket",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                ],
-                            },
-                        ),
-                        User(
-                            InterpolatedString {
-                                parts: [
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "user",
-                                                ),
-                                                filters: [],
+                                        ),
+                                    ],
+                                },
+                            ),
+                            User(
+                                InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "user",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                    Str(
-                                        "=",
-                                    ),
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "password",
-                                                ),
-                                                filters: [],
+                                        ),
+                                        Str(
+                                            "=",
+                                        ),
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "password",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                ],
-                            },
-                        ),
-                    ],
-                },
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         "#,
         );
     }
@@ -2002,41 +2119,44 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            OptionsSection(
-                RequestOptionsSection {
-                    options: [
-                        Cacert(
-                            InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "/etc/cert.pem",
-                                    ),
-                                ],
-                            },
-                        ),
-                        Key(
-                            InterpolatedString {
-                                parts: [
-                                    Str(
-                                        ".ssh/id_rsa.pub",
-                                    ),
-                                ],
-                            },
-                        ),
-                        Output(
-                            InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "./myreport",
-                                    ),
-                                ],
-                            },
-                        ),
-                    ],
-                },
+        ParseResult {
+            output: Some(
+                OptionsSection(
+                    RequestOptionsSection {
+                        options: [
+                            Cacert(
+                                InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "/etc/cert.pem",
+                                        ),
+                                    ],
+                                },
+                            ),
+                            Key(
+                                InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            ".ssh/id_rsa.pub",
+                                        ),
+                                    ],
+                                },
+                            ),
+                            Output(
+                                InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "./myreport",
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         "#,
         );
     }
@@ -2048,62 +2168,65 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            OptionsSection(
-                RequestOptionsSection {
-                    options: [
-                        Cacert(
-                            InterpolatedString {
-                                parts: [
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "certfilepath",
-                                                ),
-                                                filters: [],
+        ParseResult {
+            output: Some(
+                OptionsSection(
+                    RequestOptionsSection {
+                        options: [
+                            Cacert(
+                                InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "certfilepath",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                ],
-                            },
-                        ),
-                        Key(
-                            InterpolatedString {
-                                parts: [
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "keyfilepath",
-                                                ),
-                                                filters: [],
+                                        ),
+                                    ],
+                                },
+                            ),
+                            Key(
+                                InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "keyfilepath",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                ],
-                            },
-                        ),
-                        Output(
-                            InterpolatedString {
-                                parts: [
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "reportfilepath",
-                                                ),
-                                                filters: [],
+                                        ),
+                                    ],
+                                },
+                            ),
+                            Output(
+                                InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "reportfilepath",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                ],
-                            },
-                        ),
-                    ],
-                },
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         "#,
         );
     }
