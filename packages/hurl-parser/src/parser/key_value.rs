@@ -3,8 +3,8 @@ use super::types::{InterpolatedString, InterpolatedStringPart, KeyValue};
 use super::{primitives::sp_parser, template::template_parser};
 use chumsky::prelude::*;
 
-pub fn key_parser<'a>(
-) -> impl Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone {
+fn key_string_escaped_char_parser<'a>(
+) -> impl Parser<'a, &'a str, char, extra::Err<Rich<'a, char>>> + Clone {
     let key_string_escaped_char = just('\\')
         .ignore_then(choice((
             just('\\').to('\\'),
@@ -18,11 +18,15 @@ pub fn key_parser<'a>(
         )))
         .or(escaped_unicode_parser())
         .labelled("key-string-escaped-char");
+    key_string_escaped_char
+}
 
+pub fn key_parser<'a>(
+) -> impl Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone {
     let key_string_content = choice((
         any().filter(char::is_ascii_alphanumeric),
         one_of("_-.[]@$"),
-        key_string_escaped_char,
+        key_string_escaped_char_parser(),
     ))
     .repeated()
     .at_least(1)
@@ -44,8 +48,8 @@ pub fn key_parser<'a>(
     key_string
 }
 
-pub fn value_parser<'a>(
-) -> impl Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone {
+fn value_string_escaped_char_parser<'a>(
+) -> impl Parser<'a, &'a str, char, extra::Err<Rich<'a, char>>> + Clone {
     let value_string_escaped_char = just('\\')
         .ignore_then(choice((
             just('\\').to('\\'),
@@ -58,10 +62,14 @@ pub fn value_parser<'a>(
         )))
         .or(escaped_unicode_parser())
         .labelled("value-string-escaped-char");
+    value_string_escaped_char
+}
 
+pub fn value_parser<'a>(
+) -> impl Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone {
     let value_string_content = choice((
         none_of("#\n\\{"),
-        value_string_escaped_char,
+        value_string_escaped_char_parser(),
         //opening curly brackes are valid as long as they are not followed by a
         //second curly bracket since two denote the start of a template
         //(this observation isn't explicit in the grammer but was determined
@@ -90,12 +98,9 @@ pub fn value_parser<'a>(
 
 pub fn key_value_parser<'a>(
 ) -> impl Parser<'a, &'a str, KeyValue, extra::Err<Rich<'a, char>>> + Clone {
-    let sp = sp_parser();
-
     let key_value = key_parser()
-        .then_ignore(sp.clone().repeated())
-        .then_ignore(just(':'))
-        .then_ignore(sp.repeated())
+        .padded_by(sp_parser().repeated())
+        .then_ignore(just(':').padded_by(sp_parser().repeated()))
         .then(value_parser())
         .map(|(key, value)| KeyValue { key, value })
         .labelled("key-value");

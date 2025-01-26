@@ -12,18 +12,50 @@ pub fn sp_parser<'a>() -> impl Parser<'a, &'a str, char, extra::Err<Rich<'a, cha
     one_of("\t ").labelled("spacing")
 }
 
-pub fn lt_parser<'a>() -> impl Parser<'a, &'a str, Lt, extra::Err<Rich<'a, char>>> + Clone {
-    let sp = sp_parser();
-
+pub fn comment_parser<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Rich<'a, char>>> + Clone
+{
     let comment = just('#')
         .ignore_then(none_of('\n').repeated().collect::<String>())
         .labelled("comment");
+    comment
+}
 
-    sp.repeated()
-        .ignore_then(comment.or_not())
-        .then_ignore(text::newline().or(end()))
+pub fn lt_not_end_parser<'a>() -> impl Parser<'a, &'a str, Lt, extra::Err<Rich<'a, char>>> + Clone {
+    sp_parser()
+        .repeated()
+        .ignore_then(comment_parser().or_not())
+        .then_ignore(text::newline())
         .map(|comment| Lt { comment })
         .labelled("line terminator")
+}
+
+pub fn lt_at_end_parser<'a>() -> impl Parser<'a, &'a str, Lt, extra::Err<Rich<'a, char>>> + Clone {
+    sp_parser()
+        .repeated()
+        .ignore_then(comment_parser().or_not())
+        .then_ignore(end())
+        .map(|comment| Lt { comment })
+        .labelled("line terminator")
+}
+
+pub fn lt_parser<'a>() -> impl Parser<'a, &'a str, Vec<Lt>, extra::Err<Rich<'a, char>>> + Clone {
+    //TODO this looks really stupid but since the old lt consumes the end() token doing
+    //lt.repeated() would cause a crash. I want to refactor this so it doesn't look so stupid
+    choice((
+        lt_not_end_parser()
+            .repeated()
+            .at_least(1)
+            .collect::<Vec<_>>()
+            .then(lt_at_end_parser().or_not())
+            .map(|(mut lts, optional_lt)| {
+                match optional_lt {
+                    Some(l) => lts.push(l),
+                    None => (),
+                };
+                lts
+            }),
+        lt_at_end_parser().map(|lt| vec![lt]),
+    ))
 }
 
 pub fn escaped_unicode_parser<'a>(
@@ -110,9 +142,14 @@ mod lt_tests {
             @r"
         ParseResult {
             output: Some(
-                Lt {
-                    comment: None,
-                },
+                [
+                    Lt {
+                        comment: None,
+                    },
+                    Lt {
+                        comment: None,
+                    },
+                ],
             ),
             errs: [],
         }
@@ -128,9 +165,14 @@ mod lt_tests {
             @r"
         ParseResult {
             output: Some(
-                Lt {
-                    comment: None,
-                },
+                [
+                    Lt {
+                        comment: None,
+                    },
+                    Lt {
+                        comment: None,
+                    },
+                ],
             ),
             errs: [],
         }
@@ -146,9 +188,11 @@ mod lt_tests {
             @r"
         ParseResult {
             output: Some(
-                Lt {
-                    comment: None,
-                },
+                [
+                    Lt {
+                        comment: None,
+                    },
+                ],
             ),
             errs: [],
         }
@@ -164,11 +208,13 @@ mod lt_tests {
             @r#"
         ParseResult {
             output: Some(
-                Lt {
-                    comment: Some(
-                        " this is another comment",
-                    ),
-                },
+                [
+                    Lt {
+                        comment: Some(
+                            " this is another comment",
+                        ),
+                    },
+                ],
             ),
             errs: [],
         }
@@ -200,9 +246,14 @@ mod lt_tests {
             @r"
         ParseResult {
             output: Some(
-                Lt {
-                    comment: None,
-                },
+                [
+                    Lt {
+                        comment: None,
+                    },
+                    Lt {
+                        comment: None,
+                    },
+                ],
             ),
             errs: [],
         }
@@ -218,11 +269,16 @@ mod lt_tests {
             @r#"
         ParseResult {
             output: Some(
-                Lt {
-                    comment: Some(
-                        " this is a comment",
-                    ),
-                },
+                [
+                    Lt {
+                        comment: Some(
+                            " this is a comment",
+                        ),
+                    },
+                    Lt {
+                        comment: None,
+                    },
+                ],
             ),
             errs: [],
         }

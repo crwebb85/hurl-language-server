@@ -1371,14 +1371,19 @@ mod tests {
         );
     }
 
-    #[ignore]
     #[test]
-    fn it_parse_invalid_unicode_in_header_key() {
+    fn it_errors_invalid_unicode_in_header_key() {
         let test_str = "GET https://example.org\nkey\\uFFFT: thisshoulderror";
         assert_debug_snapshot!(
         ast_parser().parse(test_str),
-            @r#"
-        "#,
+            @r"
+        ParseResult {
+            output: None,
+            errs: [
+                found ''F'' at 29..30 expected ''{'',
+            ],
+        }
+        ",
         );
     }
 
@@ -2837,6 +2842,160 @@ mod tests {
                                                     ],
                                                 },
                                             },
+                                        ],
+                                    },
+                                ),
+                            ],
+                            body: None,
+                        },
+                        response: None,
+                    },
+                ],
+            ),
+            errs: [],
+        }
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_large_example() {
+        let test_str = r#"
+            GET https://example.com
+            [Options]
+            cacert: {{certfilepath}}
+            key: {{keyfilepath}}
+            output: {{reportfilepath}}
+            connect-to: {{host}}:{{port}}:127.0.0.1:8080
+            variable: host=example.net
+            variable: id = 1234
+        "#;
+
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r#"
+        ParseResult {
+            output: Some(
+                [
+                    Entry {
+                        request: Request {
+                            method: Method {
+                                value: "GET",
+                            },
+                            url: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "https://example.com",
+                                    ),
+                                ],
+                            },
+                            header: [],
+                            request_sections: [
+                                OptionsSection(
+                                    RequestOptionsSection {
+                                        options: [
+                                            Cacert(
+                                                InterpolatedString {
+                                                    parts: [
+                                                        Template(
+                                                            Template {
+                                                                expr: Expr {
+                                                                    variable: VariableName(
+                                                                        "certfilepath",
+                                                                    ),
+                                                                    filters: [],
+                                                                },
+                                                            },
+                                                        ),
+                                                    ],
+                                                },
+                                            ),
+                                            Key(
+                                                InterpolatedString {
+                                                    parts: [
+                                                        Template(
+                                                            Template {
+                                                                expr: Expr {
+                                                                    variable: VariableName(
+                                                                        "keyfilepath",
+                                                                    ),
+                                                                    filters: [],
+                                                                },
+                                                            },
+                                                        ),
+                                                    ],
+                                                },
+                                            ),
+                                            Output(
+                                                InterpolatedString {
+                                                    parts: [
+                                                        Template(
+                                                            Template {
+                                                                expr: Expr {
+                                                                    variable: VariableName(
+                                                                        "reportfilepath",
+                                                                    ),
+                                                                    filters: [],
+                                                                },
+                                                            },
+                                                        ),
+                                                    ],
+                                                },
+                                            ),
+                                            ConnectTo(
+                                                InterpolatedString {
+                                                    parts: [
+                                                        Template(
+                                                            Template {
+                                                                expr: Expr {
+                                                                    variable: VariableName(
+                                                                        "host",
+                                                                    ),
+                                                                    filters: [],
+                                                                },
+                                                            },
+                                                        ),
+                                                        Str(
+                                                            ":",
+                                                        ),
+                                                        Template(
+                                                            Template {
+                                                                expr: Expr {
+                                                                    variable: VariableName(
+                                                                        "port",
+                                                                    ),
+                                                                    filters: [],
+                                                                },
+                                                            },
+                                                        ),
+                                                        Str(
+                                                            ":127.0.0.1:8080",
+                                                        ),
+                                                    ],
+                                                },
+                                            ),
+                                            Variable(
+                                                VariableDefinitionOption {
+                                                    name: "host",
+                                                    value: String(
+                                                        InterpolatedString {
+                                                            parts: [
+                                                                Str(
+                                                                    "example.net",
+                                                                ),
+                                                            ],
+                                                        },
+                                                    ),
+                                                },
+                                            ),
+                                            Variable(
+                                                VariableDefinitionOption {
+                                                    name: "id",
+                                                    value: Integer(
+                                                        1234,
+                                                    ),
+                                                },
+                                            ),
                                         ],
                                     },
                                 ),

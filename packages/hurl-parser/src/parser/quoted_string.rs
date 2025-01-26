@@ -3,8 +3,8 @@ use chumsky::prelude::*;
 
 use super::{primitives::escaped_unicode_parser, template::template_parser, types::Template};
 
-pub fn quoted_str_part_parser<'a>(
-) -> impl Parser<'a, &'a str, InterpolatedStringPart, extra::Err<Rich<'a, char>>> + Clone {
+fn quoted_string_escaped_char_parser<'a>(
+) -> impl Parser<'a, &'a str, char, extra::Err<Rich<'a, char>>> + Clone {
     let quoted_string_escaped_char = just('\\')
         .ignore_then(choice((
             just('\\').to('\\'),
@@ -17,8 +17,12 @@ pub fn quoted_str_part_parser<'a>(
         )))
         .or(escaped_unicode_parser())
         .labelled("quoted_string_escaped_char");
+    quoted_string_escaped_char
+}
 
-    let quoted_str_part = choice((quoted_string_escaped_char, none_of("\"\\")))
+fn quoted_str_part_parser<'a>(
+) -> impl Parser<'a, &'a str, InterpolatedStringPart, extra::Err<Rich<'a, char>>> + Clone {
+    let quoted_str_part = choice((quoted_string_escaped_char_parser(), none_of("\"\\")))
         .repeated()
         .at_least(1)
         .collect::<String>()

@@ -11,8 +11,6 @@ use chumsky::prelude::*;
 
 pub fn file_param_parser<'a>(
 ) -> impl Parser<'a, &'a str, FileKeyValue, extra::Err<Rich<'a, char>>> + Clone {
-    let sp = sp_parser();
-
     let file_content_type = any()
         .filter(|c: &char| c.is_ascii_alphanumeric() || c == &'/' || c == &'+' || c == &'-')
         .repeated()
@@ -20,10 +18,11 @@ pub fn file_param_parser<'a>(
         .collect::<String>()
         .labelled("file_content_type");
 
+    //TODO determine where I need add padding to this
     let file_value = just("file,")
         .then(filename_parser())
         .then_ignore(just(';'))
-        .padded_by(sp.clone().repeated())
+        .padded_by(sp_parser().repeated())
         .then(file_content_type.or_not())
         .map(|((_, filename), content_type)| FileValue {
             filename,
@@ -31,9 +30,8 @@ pub fn file_param_parser<'a>(
         });
 
     let file_param = key_parser()
-        .padded_by(sp.clone().repeated())
-        .then_ignore(just(':'))
-        .padded_by(sp.clone().repeated())
+        .padded_by(sp_parser().repeated())
+        .then_ignore(just(':').padded_by(sp_parser().repeated()))
         .then(file_value)
         .map(|(key, value)| FileKeyValue { key, value })
         .labelled("file_key_value");
@@ -42,21 +40,14 @@ pub fn file_param_parser<'a>(
 
 pub fn request_section_parser<'a>(
 ) -> impl Parser<'a, &'a str, RequestSection, extra::Err<Rich<'a, char>>> + Clone {
-    let sp = sp_parser();
-    let lt = lt_parser();
-    let option = option_parser();
     let key_values = key_value_parser()
-        .then_ignore(lt.clone())
+        .then_ignore(lt_parser())
         .repeated()
         .collect::<Vec<KeyValue>>();
 
-    let basic_auth_section = sp
-        .clone()
-        .repeated()
-        .ignored()
-        .then_ignore(just("[BasicAuth]"))
-        .then_ignore(lt.clone().repeated())
-        .then_ignore(sp.clone().repeated())
+    let basic_auth_section = just("[BasicAuth]")
+        .padded_by(sp_parser().repeated())
+        .then_ignore(lt_parser())
         .then(key_values.clone().validate(|key_values, e, emitter| {
             if key_values.len() > 1 {
                 emitter.emit(Rich::custom(
@@ -72,13 +63,9 @@ pub fn request_section_parser<'a>(
             })
         });
 
-    let query_string_params_section = sp
-        .clone()
-        .repeated()
-        .ignored()
-        .then_ignore(just("[QueryStringParams]").or(just("[Query]")))
-        .then_ignore(lt.clone().repeated())
-        .then_ignore(sp.clone().repeated())
+    let query_string_params_section = choice((just("[QueryStringParams]"), just("[Query]")))
+        .padded_by(sp_parser().repeated())
+        .then_ignore(lt_parser())
         .then(key_values.clone())
         .map(|(_, query_key_values)| {
             RequestSection::QueryStringParamsSection(QueryStringParamsSection {
@@ -86,13 +73,9 @@ pub fn request_section_parser<'a>(
             })
         });
 
-    let form_params_section = sp
-        .clone()
-        .repeated()
-        .ignored()
-        .then_ignore(just("[FormParams]").or(just("[Form]")))
-        .then_ignore(lt.clone().repeated())
-        .then_ignore(sp.clone().repeated())
+    let form_params_section = choice((just("[FormParams]"), just("[Form]")))
+        .padded_by(sp_parser().repeated())
+        .then_ignore(lt_parser())
         .then(key_values.clone())
         .map(|(_, form_params)| {
             RequestSection::FormParamsSection(FormParamsSection {
@@ -103,15 +86,11 @@ pub fn request_section_parser<'a>(
     let file_param = file_param_parser().map(MultipartFormParam::FileParam);
     let multipart_form_param = file_param
         .or(key_value_parser().map(MultipartFormParam::KeyValueParam))
-        .then_ignore(lt.clone());
+        .then_ignore(lt_parser());
 
-    let multipart_form_data_section = sp
-        .clone()
-        .repeated()
-        .ignored()
-        .then_ignore(just("[MultipartFormData]").or(just("[Multipart]")))
-        .then_ignore(lt.clone().repeated())
-        .then_ignore(sp.clone().repeated())
+    let multipart_form_data_section = choice((just("[MultipartFormData]"), just("[Multipart]")))
+        .padded_by(sp_parser().repeated())
+        .then_ignore(lt_parser())
         .then(
             multipart_form_param
                 .repeated()
@@ -123,13 +102,9 @@ pub fn request_section_parser<'a>(
             })
         });
 
-    let cookies_section = sp
-        .clone()
-        .repeated()
-        .ignored()
-        .then_ignore(just("[Cookies]"))
-        .then_ignore(lt.clone().repeated())
-        .then_ignore(sp.clone().repeated())
+    let cookies_section = just("[Cookies]")
+        .padded_by(sp_parser().repeated())
+        .then_ignore(lt_parser())
         .then(key_values.clone())
         .map(|(_, cookies_key_value)| {
             RequestSection::CookiesSection(CookiesSection {
@@ -137,14 +112,12 @@ pub fn request_section_parser<'a>(
             })
         });
 
-    let options_section = sp
-        .clone()
-        .repeated()
-        .ignored()
-        .then_ignore(just("[Options]"))
-        .then_ignore(lt.clone().repeated())
-        .then_ignore(sp.clone().repeated())
-        .then(option.repeated().collect::<Vec<RequestOption>>())
+    let options = option_parser().repeated().collect::<Vec<RequestOption>>();
+
+    let options_section = just("[Options]")
+        .padded_by(sp_parser().repeated())
+        .then_ignore(lt_parser())
+        .then(options)
         .map(|(_, options)| RequestSection::OptionsSection(RequestOptionsSection { options }));
 
     let request_section = basic_auth_section
@@ -300,7 +273,7 @@ mod request_section_tests {
 
     #[test]
     fn it_parses_basic_auth_with_extra_spacing_before_section() {
-        let test_str = "  [BasicAuth] joe: secret";
+        let test_str = "  [BasicAuth] \n joe: secret";
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
@@ -487,229 +460,231 @@ mod request_section_tests {
         );
     }
 
-    #[ignore]
     #[test]
     fn it_parses_query_string_params_section_with_extra_spaces_and_line_terminators() {
-        //TODO fix multiple line terminator parsing
-        //TODO fix multiple leading space parsing before key values
         let test_str = "  [QueryStringParams]\n  search: {{my-search}}\n #we need descent\n   order: desc   \n\n\n#420 xD!\n count: 420";
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            QueryStringParamsSection(
-                QueryStringParamsSection {
-                    queries: [
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "search",
-                                    ),
-                                ],
-                            },
-                            value: InterpolatedString {
-                                parts: [
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "my-search",
-                                                ),
-                                                filters: [],
+        ParseResult {
+            output: Some(
+                QueryStringParamsSection(
+                    QueryStringParamsSection {
+                        queries: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "search",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "my-search",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                ],
+                                        ),
+                                    ],
+                                },
                             },
-                        },
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "order",
-                                    ),
-                                ],
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "order",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "desc   ",
+                                        ),
+                                    ],
+                                },
                             },
-                            value: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "desc",
-                                    ),
-                                ],
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "count",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "420",
+                                        ),
+                                    ],
+                                },
                             },
-                        },
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "count",
-                                    ),
-                                ],
-                            },
-                            value: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "420",
-                                    ),
-                                ],
-                            },
-                        },
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         "#,
         );
     }
 
-    #[ignore]
     #[test]
     fn it_parses_query_string_params_section_with_extra_spaces() {
-        //TODO fix multiple leading space parsing before key values
         let test_str =
             "  [QueryStringParams]\n  search: {{my-search}}\n    order: desc   \n count: 420";
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            QueryStringParamsSection(
-                QueryStringParamsSection {
-                    queries: [
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "search",
-                                    ),
-                                ],
-                            },
-                            value: InterpolatedString {
-                                parts: [
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "my-search",
-                                                ),
-                                                filters: [],
+        ParseResult {
+            output: Some(
+                QueryStringParamsSection(
+                    QueryStringParamsSection {
+                        queries: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "search",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "my-search",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                ],
+                                        ),
+                                    ],
+                                },
                             },
-                        },
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "order",
-                                    ),
-                                ],
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "order",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "desc   ",
+                                        ),
+                                    ],
+                                },
                             },
-                            value: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "desc",
-                                    ),
-                                ],
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "count",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "420",
+                                        ),
+                                    ],
+                                },
                             },
-                        },
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "count",
-                                    ),
-                                ],
-                            },
-                            value: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "420",
-                                    ),
-                                ],
-                            },
-                        },
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         "#,
         );
     }
 
-    #[ignore]
     #[test]
     fn it_parses_query_string_params_section_with_line_terminators() {
-        //TODO fix multiple line terminator parsing
         let test_str = "[QueryStringParams]\nsearch: {{my-search}}\n #we need descent\norder: desc\n\n\n#420 xD!\ncount: 420";
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            QueryStringParamsSection(
-                QueryStringParamsSection {
-                    queries: [
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "search",
-                                    ),
-                                ],
-                            },
-                            value: InterpolatedString {
-                                parts: [
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "my-search",
-                                                ),
-                                                filters: [],
+        ParseResult {
+            output: Some(
+                QueryStringParamsSection(
+                    QueryStringParamsSection {
+                        queries: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "search",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "my-search",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                ],
+                                        ),
+                                    ],
+                                },
                             },
-                        },
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "order",
-                                    ),
-                                ],
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "order",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "desc",
+                                        ),
+                                    ],
+                                },
                             },
-                            value: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "desc",
-                                    ),
-                                ],
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "count",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "420",
+                                        ),
+                                    ],
+                                },
                             },
-                        },
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "count",
-                                    ),
-                                ],
-                            },
-                            value: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "420",
-                                    ),
-                                ],
-                            },
-                        },
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         "#,
         );
     }
@@ -1208,7 +1183,6 @@ mod request_section_tests {
         );
     }
 
-    #[ignore = "need to fix extra line terminator parsing"]
     #[test]
     fn it_parses_cookie_section_with_extra_withspace_and_line_terminators() {
         let test_str =
@@ -1216,53 +1190,56 @@ mod request_section_tests {
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
             @r#"
-        Ok(
-            CookiesSection(
-                CookiesSection {
-                    cookies: [
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "theme",
-                                    ),
-                                ],
+        ParseResult {
+            output: Some(
+                CookiesSection(
+                    CookiesSection {
+                        cookies: [
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "theme",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "dark",
+                                        ),
+                                    ],
+                                },
                             },
-                            value: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "dark",
-                                    ),
-                                ],
-                            },
-                        },
-                        KeyValue {
-                            key: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "sessionToken",
-                                    ),
-                                ],
-                            },
-                            value: InterpolatedString {
-                                parts: [
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "token",
-                                                ),
-                                                filters: [],
+                            KeyValue {
+                                key: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "sessionToken",
+                                        ),
+                                    ],
+                                },
+                                value: InterpolatedString {
+                                    parts: [
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "token",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                ],
+                                        ),
+                                    ],
+                                },
                             },
-                        },
-                    ],
-                },
+                        ],
+                    },
+                ),
             ),
-        )
+            errs: [],
+        }
         "#,
         );
     }

@@ -16,7 +16,6 @@ use ordered_float::OrderedFloat;
 fn integer_option_parser<'a>(
     option_identifier: &'a str,
 ) -> impl Parser<'a, &'a str, IntegerOption, extra::Err<Rich<'a, char>>> + Clone {
-    let sp = sp_parser();
     let integer_option = text::int(10)
         .to_slice()
         .map(|v: &str| match v.parse::<usize>() {
@@ -25,9 +24,8 @@ fn integer_option_parser<'a>(
         });
 
     let option = just(option_identifier)
-        .then_ignore(sp.clone().repeated())
-        .then_ignore(just(":"))
-        .then_ignore(sp.clone().repeated())
+        .padded_by(sp_parser().repeated())
+        .then_ignore(just(":").padded_by(sp_parser().repeated()))
         .then(integer_option)
         .then_ignore(lt_parser())
         .map(|(_, o)| o);
@@ -37,7 +35,6 @@ fn integer_option_parser<'a>(
 fn boolean_option_parser<'a>(
     option_identifier: &'a str,
 ) -> impl Parser<'a, &'a str, BooleanOption, extra::Err<Rich<'a, char>>> + Clone {
-    let sp = sp_parser();
     let template = template_parser();
 
     let boolean_option = choice((
@@ -47,9 +44,8 @@ fn boolean_option_parser<'a>(
     ));
 
     let option = just(option_identifier)
-        .then_ignore(sp.clone().repeated())
-        .then_ignore(just(":"))
-        .then_ignore(sp.clone().repeated())
+        .padded_by(sp_parser().repeated())
+        .then_ignore(just(":").padded_by(sp_parser().repeated()))
         .then(boolean_option)
         .then_ignore(lt_parser())
         .map(|(_, o)| o);
@@ -59,9 +55,6 @@ fn boolean_option_parser<'a>(
 fn duration_option_parser<'a>(
     option_identifier: &'a str,
 ) -> impl Parser<'a, &'a str, DurationOption, extra::Err<Rich<'a, char>>> + Clone {
-    let sp = sp_parser();
-    let template = template_parser();
-
     let duration_literal = text::int(10)
         .to_slice()
         .then(
@@ -80,15 +73,13 @@ fn duration_option_parser<'a>(
             })
         });
 
-    let duration_option = template
-        .clone()
+    let duration_option = template_parser()
         .map(DurationOption::Template)
         .or(duration_literal);
 
     let option = just(option_identifier)
-        .then_ignore(sp.clone().repeated())
-        .then_ignore(just(":"))
-        .then_ignore(sp.clone().repeated())
+        .padded_by(sp_parser().repeated())
+        .then_ignore(just(":").padded_by(sp_parser().repeated()))
         .then(duration_option)
         .then_ignore(lt_parser())
         .map(|(_, o)| o);
@@ -98,12 +89,9 @@ fn duration_option_parser<'a>(
 fn value_string_option_parser<'a>(
     option_identifier: &'a str,
 ) -> impl Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone {
-    let sp = sp_parser();
-
     let option = just(option_identifier)
-        .then_ignore(sp.clone().repeated())
-        .then_ignore(just(":"))
-        .then_ignore(sp.clone().repeated())
+        .padded_by(sp_parser().repeated())
+        .then_ignore(just(":").padded_by(sp_parser().repeated()))
         .then(value_parser())
         .then_ignore(lt_parser())
         .map(|(_, o)| o);
@@ -114,12 +102,9 @@ fn value_string_option_parser<'a>(
 fn filename_option_parser<'a>(
     option_identifier: &'a str,
 ) -> impl Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone {
-    let sp = sp_parser();
-
     let option = just(option_identifier)
-        .then_ignore(sp.clone().repeated())
-        .then_ignore(just(":"))
-        .then_ignore(sp.clone().repeated())
+        .padded_by(sp_parser().repeated())
+        .then_ignore(just(":").padded_by(sp_parser().repeated()))
         .then(filename_parser())
         .then_ignore(lt_parser())
         .map(|(_, o)| o);
@@ -127,11 +112,8 @@ fn filename_option_parser<'a>(
     option
 }
 
-fn filename_password_option_parser<'a>(
-    option_identifier: &'a str,
-) -> impl Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone {
-    let sp = sp_parser();
-
+fn filename_password_string_escaped_char_parser<'a>(
+) -> impl Parser<'a, &'a str, char, extra::Err<Rich<'a, char>>> + Clone {
     let filename_password_string_escaped_char = just('\\')
         .ignore_then(choice((
             just('\\').to('\\'),
@@ -148,7 +130,12 @@ fn filename_password_option_parser<'a>(
             just(':').to(':'),
         )))
         .or(escaped_unicode_parser());
+    filename_password_string_escaped_char
+}
 
+fn filename_password_option_parser<'a>(
+    option_identifier: &'a str,
+) -> impl Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone {
     let filename_password_str_part = any()
         .filter(|c| {
             // ~[#;{} \n\\]+
@@ -160,7 +147,7 @@ fn filename_password_option_parser<'a>(
                 && c != &'\n'
                 && c != &'\\'
         })
-        .or(filename_password_string_escaped_char)
+        .or(filename_password_string_escaped_char_parser())
         .repeated()
         .at_least(1)
         .collect::<String>()
@@ -179,9 +166,8 @@ fn filename_password_option_parser<'a>(
         .labelled("filename_password");
 
     let option = just(option_identifier)
-        .then_ignore(sp.clone().repeated())
-        .then_ignore(just(":"))
-        .then_ignore(sp.clone().repeated())
+        .padded_by(sp_parser().repeated())
+        .then_ignore(just(":").padded_by(sp_parser().repeated()))
         .then(filename_password)
         .then_ignore(lt_parser())
         .map(|(_, o)| o);
@@ -191,8 +177,6 @@ fn filename_password_option_parser<'a>(
 
 fn variable_option_parser<'a>(
 ) -> impl Parser<'a, &'a str, VariableDefinitionOption, extra::Err<Rich<'a, char>>> + Clone {
-    let sp = sp_parser();
-
     let float = text::int(10)
         .then(just('.'))
         .then(text::digits(10))
@@ -218,16 +202,13 @@ fn variable_option_parser<'a>(
     ));
 
     let variable_definition = variable_name_parser()
-        .then_ignore(sp.clone().repeated())
-        .then_ignore(just("="))
-        .then_ignore(sp.clone().repeated())
+        .then_ignore(just("=").padded_by(sp_parser().repeated()))
         .then(variable_value)
         .map(|(name, value)| VariableDefinitionOption { name, value });
 
     let option = just("variable")
-        .then_ignore(sp.clone().repeated())
-        .then_ignore(just(":"))
-        .then_ignore(sp.clone().repeated())
+        .padded_by(sp_parser().repeated())
+        .then_ignore(just(":").padded_by(sp_parser().repeated()))
         .then(variable_definition)
         .then_ignore(lt_parser())
         .map(|(_, o)| o);
@@ -345,6 +326,35 @@ mod option_tests {
                         },
                     ),
                 ],
+            ),
+            errs: [],
+        }
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_option_variable_with_extra_spaces() {
+        let test_str = " variable   : host  =  example.net";
+        assert_debug_snapshot!(
+        option_parser().parse(test_str),
+            @r#"
+        ParseResult {
+            output: Some(
+                Variable(
+                    VariableDefinitionOption {
+                        name: "host",
+                        value: String(
+                            InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "example.net",
+                                    ),
+                                ],
+                            },
+                        ),
+                    },
+                ),
             ),
             errs: [],
         }

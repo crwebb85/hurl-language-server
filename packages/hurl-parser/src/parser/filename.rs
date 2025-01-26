@@ -3,21 +3,8 @@ use crate::parser::template::template_parser;
 use crate::parser::types::{InterpolatedString, InterpolatedStringPart};
 use chumsky::prelude::*;
 
-/// Parses a file path
-///
-/// Note: file paths cannot be files outside the root directory. Where
-/// the root directory is by default files directory the hurl file is in. This can
-/// be changed withe the hurl --file-root option.
-/// TODO: Add LSP Diagnostics for is the file does not exist or if the file is
-/// outside the root directory
-///
-///
-/// # Returns
-/// The filename parser
-///
-/// ```
-pub fn filename_parser<'a>(
-) -> impl Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone {
+fn filename_escape_char_parser<'a>(
+) -> impl Parser<'a, &'a str, char, extra::Err<Rich<'a, char>>> + Clone {
     let filename_escape_char = just('\\')
         .ignore_then(choice((
             just('\\').to('\\'),
@@ -35,8 +22,25 @@ pub fn filename_parser<'a>(
         )))
         .or(escaped_unicode_parser())
         .labelled("filename-escaped-char");
+    filename_escape_char
+}
 
-    let filename_content = choice((none_of("#;{} \n\\"), filename_escape_char))
+/// Parses a file path
+///
+/// Note: file paths cannot be files outside the root directory. Where
+/// the root directory is by default files directory the hurl file is in. This can
+/// be changed withe the hurl --file-root option.
+/// TODO: Add LSP Diagnostics for is the file does not exist or if the file is
+/// outside the root directory
+///
+///
+/// # Returns
+/// The filename parser
+///
+/// ```
+pub fn filename_parser<'a>(
+) -> impl Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone {
+    let filename_content = choice((none_of("#;{} \n\\"), filename_escape_char_parser()))
         .repeated()
         .at_least(1)
         .collect::<String>()

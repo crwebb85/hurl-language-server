@@ -15,15 +15,12 @@ pub fn ast_parser<'a>() -> impl Parser<'a, &'a str, Vec<Entry>, extra::Err<Rich<
         .map(|value| Method { value })
         .padded();
 
-    let lt = lt_parser();
+    let header_line = key_value_parser().then_ignore(lt_parser());
 
-    let header_line = key_value_parser().then_ignore(lt.clone());
-
-    let request = sp_parser()
-        .repeated()
-        .ignore_then(method)
+    let request = method
+        .padded_by(sp_parser().repeated())
         .then(value_parser())
-        .then_ignore(lt.clone())
+        .then_ignore(lt_parser())
         .then(header_line.repeated().collect::<Vec<KeyValue>>())
         .then(
             request_section_parser()
@@ -49,9 +46,5 @@ pub fn ast_parser<'a>() -> impl Parser<'a, &'a str, Vec<Entry>, extra::Err<Rich<
         })
         .labelled("entry");
 
-    entry
-        .repeated()
-        .collect::<Vec<Entry>>()
-        .then_ignore(lt.clone().or_not()) //TODO fix so that any number of line terminators can
-                                          //follow the entry
+    entry.repeated().collect::<Vec<Entry>>()
 }

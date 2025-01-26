@@ -69,34 +69,31 @@ pub fn expr_parser<'a, T: Parser<'a, &'a str, InterpolatedString, extra::Err<Ric
     quoted_string: T,
 ) -> impl Parser<'a, &'a str, Expr, extra::Err<Rich<'a, char>>> + Clone {
 
-    let sp = sp_parser();
-    let variable_name = variable_name_parser();
     let expr_function = choice((
         text::keyword("getEnv").to(ExprValue::FunctionName("getEnv".to_owned())), 
         text::keyword("newDate").to(ExprValue::FunctionName("newDate".to_owned())),
         text::keyword("newUuid").to(ExprValue::FunctionName("newUuid".to_owned()))
     ));
 
-    let expr_variable = expr_function.or(variable_name.map(ExprValue::VariableName));
-
+    let expr_variable = expr_function.or(variable_name_parser().map(ExprValue::VariableName));
 
     let decode_filter_function = just("decode")
-        .then_ignore(sp.clone())
+        .delimited_by(sp_parser().repeated(), sp_parser().repeated().at_least(1))
         .ignore_then(quoted_string.clone())
         .map(|s| FilterFunction::Decode { encoding: s});
 
     let format_filter_function = just("format")
-        .then_ignore(sp.clone())
+        .delimited_by(sp_parser().repeated(), sp_parser().repeated().at_least(1))
         .ignore_then(quoted_string.clone())
         .map(|s| FilterFunction::Format { fmt: s});
 
     let jsonpath_filter_function = just("jsonpath")
-        .then_ignore(sp.clone())
+        .delimited_by(sp_parser().repeated(), sp_parser().repeated().at_least(1))
         .ignore_then(quoted_string.clone())
         .map(|s| FilterFunction::JsonPath { expr: s });
 
     let nth_filter_function = just("nth")
-        .then_ignore(sp.clone())
+        .delimited_by(sp_parser().repeated(), sp_parser().repeated().at_least(1))
         .then(text::int(10))
         .map(|(_, n)| FilterFunction::Nth { 
             nth: n.parse::<u64>()
@@ -104,29 +101,29 @@ pub fn expr_parser<'a, T: Parser<'a, &'a str, InterpolatedString, extra::Err<Ric
         });
 
     let regex_filter_function = just("regex")
-        .then_ignore(sp.clone())
+        .delimited_by(sp_parser().repeated(), sp_parser().repeated().at_least(1))
         .ignore_then(quoted_string.clone())
         .map(|s| FilterFunction::Regex { value: s });
 
     let split_filter_function = just("split")
-        .then_ignore(sp.clone())
+        .delimited_by(sp_parser().repeated(), sp_parser().repeated().at_least(1))
         .ignore_then(quoted_string.clone())
         .map(|s| FilterFunction::Split { sep: s });
         
     let replace_filter_function = just("replace")
-        .then_ignore(sp.clone())
+        .delimited_by(sp_parser().repeated(), sp_parser().repeated().at_least(1))
         .ignore_then(quoted_string.clone())
-        .then_ignore(sp.clone())
+        .then_ignore(sp_parser().repeated().at_least(1))
         .then(quoted_string.clone())
         .map(|(old, new)| FilterFunction::Replace { old_value: old, new_value: new });
 
     let todate_filter_function = just("toDate")
-        .then_ignore(sp.clone())
+        .delimited_by(sp_parser().repeated(), sp_parser().repeated().at_least(1))
         .ignore_then(quoted_string.clone())
         .map(|s| FilterFunction::ToDate { fmt: s });
 
     let xpath_filter_function = just("xpath")
-        .then_ignore(sp.clone())
+        .delimited_by(sp_parser().repeated(), sp_parser().repeated().at_least(1))
         .ignore_then(quoted_string.clone())
         .map(|s| FilterFunction::XPath { expr: s });
 
@@ -150,12 +147,11 @@ pub fn expr_parser<'a, T: Parser<'a, &'a str, InterpolatedString, extra::Err<Ric
         replace_filter_function,
         todate_filter_function,
         xpath_filter_function,
-    )).then_ignore(sp.clone().repeated())
-        .repeated()
+    )).separated_by(sp_parser().repeated().at_least(1))
         .collect::<Vec<FilterFunction>>();
 
     let expr = expr_variable
-    .then_ignore(sp.clone().repeated())
+    .padded_by(sp_parser().repeated())
     .then(filters)
     .map( |(expr_var, filter_funcs)| Expr {
         variable: expr_var,
@@ -705,6 +701,22 @@ mod expr_tests {
         );
     }
 
+    #[test]
+    fn it_errors_expr_with_filters_missing_space_delimeter() {
+        let test_str = r#"response jsonpath "$.names"count"#;
+        let quoted_string = quoted_string_parser();
+        assert_debug_snapshot!(
+        expr_parser(quoted_string).parse(test_str),
+            @r"
+        ParseResult {
+            output: None,
+            errs: [
+                found ''c'' at 27..28 expected spacing, or end of input,
+            ],
+        }
+        ",
+        );
+    }
 
     #[test]
     fn it_parses_expr_with_days_after_now_filter() {
