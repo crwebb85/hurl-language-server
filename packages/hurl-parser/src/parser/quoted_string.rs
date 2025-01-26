@@ -3,6 +3,29 @@ use chumsky::prelude::*;
 
 use super::{primitives::escaped_unicode_parser, template::template_parser, types::Template};
 
+pub fn quoted_str_part_parser<'a>(
+) -> impl Parser<'a, &'a str, InterpolatedStringPart, extra::Err<Rich<'a, char>>> + Clone {
+    let quoted_string_escaped_char = just('\\')
+        .ignore_then(choice((
+            just('\\').to('\\'),
+            just('\"').to('\"'),
+            just('b').to('\x08'),
+            just('f').to('\x0C'),
+            just('n').to('\n'),
+            just('r').to('\r'),
+            just('t').to('\t'),
+        )))
+        .or(escaped_unicode_parser())
+        .labelled("quoted_string_escaped_char");
+
+    let quoted_str_part = choice((quoted_string_escaped_char, none_of("\"\\")))
+        .repeated()
+        .at_least(1)
+        .collect::<String>()
+        .map(InterpolatedStringPart::Str);
+    quoted_str_part
+}
+
 /// This exists to decouple the template parser and the quoted string parser
 /// since the grammer for the too recursively depend on each other
 ///
@@ -14,46 +37,28 @@ use super::{primitives::escaped_unicode_parser, template::template_parser, types
 /// The quoted string parser based on the given template parser
 ///
 /// ```
-pub fn generic_quoted_string_parser<T: Parser<char, Template, Error = Simple<char>> + Clone>(
+pub fn generic_quoted_string_parser<
+    'a,
+    T: Parser<'a, &'a str, Template, extra::Err<Rich<'a, char>>> + Clone,
+>(
     template: T,
-) -> impl Parser<char, InterpolatedString, Error = Simple<char>> + Clone {
-    let quoted_string_escaped_char = just('\\')
-        .ignore_then(
-            just('\\')
-                .to('\\')
-                .or(just('\"').to('\"'))
-                .or(just('b').to('\x08'))
-                .or(just('f').to('\x0C'))
-                .or(just('n').to('\n'))
-                .or(just('r').to('\r'))
-                .or(just('t').to('\t')),
-        )
-        .or(escaped_unicode_parser())
-        .labelled("quoted_string_escaped_char");
+) -> impl Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone {
+    let template_part = template.map(InterpolatedStringPart::Template);
 
-    let quoted_str_part = filter::<_, _, Simple<char>>(|c: &char| c != &'"' && c != &'\\')
-        .or(quoted_string_escaped_char)
+    let parts = choice((template_part, quoted_str_part_parser()))
         .repeated()
-        .at_least(1)
-        .collect::<String>()
-        .map(InterpolatedStringPart::Str);
+        .collect::<Vec<InterpolatedStringPart>>()
+        .map(|v| InterpolatedString { parts: v });
 
-    let quoted_template_part = template.map(|t| InterpolatedStringPart::Template(t));
-
-    let quoted_part = quoted_template_part.or(quoted_str_part);
-
-    let quoted_string = just("\"")
-        .ignored()
-        .then(quoted_part.repeated())
-        .then_ignore(just("\""))
-        .map(|(_, v)| InterpolatedString { parts: v })
+    let quoted_string = parts
+        .delimited_by(just("\""), just("\""))
         .labelled("quoted_string");
 
     quoted_string
 }
 
-pub fn quoted_string_parser() -> impl Parser<char, InterpolatedString, Error = Simple<char>> + Clone
-{
+pub fn quoted_string_parser<'a>(
+) -> impl Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone {
     let template_parser = template_parser();
     generic_quoted_string_parser(template_parser)
 }
@@ -70,15 +75,18 @@ mod quoted_string_tests {
         assert_debug_snapshot!(
         quoted_string_parser().parse(test_str),
             @r#"
-        Ok(
-            InterpolatedString {
-                parts: [
-                    Str(
-                        "gb2312",
-                    ),
-                ],
-            },
-        )
+        ParseResult {
+            output: Some(
+                InterpolatedString {
+                    parts: [
+                        Str(
+                            "gb2312",
+                        ),
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -89,11 +97,14 @@ mod quoted_string_tests {
         assert_debug_snapshot!(
         quoted_string_parser().parse(test_str),
             @r"
-        Ok(
-            InterpolatedString {
-                parts: [],
-            },
-        )
+        ParseResult {
+            output: Some(
+                InterpolatedString {
+                    parts: [],
+                },
+            ),
+            errs: [],
+        }
         ",
         );
     }
@@ -104,29 +115,12 @@ mod quoted_string_tests {
         assert_debug_snapshot!(
         quoted_string_parser().parse(test_str),
             @r#"
-        Err(
-            [
-                Simple {
-                    span: 1..1,
-                    reason: Unexpected,
-                    expected: {
-                        Some(
-                            '\\',
-                        ),
-                        Some(
-                            '"',
-                        ),
-                        Some(
-                            '{',
-                        ),
-                    },
-                    found: None,
-                    label: Some(
-                        "quoted_string",
-                    ),
-                },
+        ParseResult {
+            output: None,
+            errs: [
+                found end of input at 1..1 expected template, quoted_string_escaped_char, something else, or ''"'',
             ],
-        )
+        }
         "#,
         );
     }
@@ -137,48 +131,34 @@ mod quoted_string_tests {
         assert_debug_snapshot!(
         quoted_string_parser().parse(test_str),
             @r#"
-        Err(
-            [
-                Simple {
-                    span: 6..6,
-                    reason: Unexpected,
-                    expected: {
-                        Some(
-                            '\\',
-                        ),
-                        Some(
-                            '"',
-                        ),
-                        Some(
-                            '{',
-                        ),
-                    },
-                    found: None,
-                    label: Some(
-                        "quoted_string",
-                    ),
-                },
+        ParseResult {
+            output: None,
+            errs: [
+                found end of input at 6..6 expected quoted_string_escaped_char, something else, template, or ''"'',
             ],
-        )
+        }
         "#,
         );
     }
 
     #[test]
     fn it_parses_quoted_string_escaped_quotes() {
-        let test_str = "\"\\\"I'm in qoutes\\\"\"";
+        let test_str = "\"\\\"I'm in quotes\\\"\"";
         assert_debug_snapshot!(
         quoted_string_parser().parse(test_str),
             @r#"
-        Ok(
-            InterpolatedString {
-                parts: [
-                    Str(
-                        "\"I'm in qoutes\"",
-                    ),
-                ],
-            },
-        )
+        ParseResult {
+            output: Some(
+                InterpolatedString {
+                    parts: [
+                        Str(
+                            "\"I'm in quotes\"",
+                        ),
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -189,42 +169,47 @@ mod quoted_string_tests {
         assert_debug_snapshot!(
         quoted_string_parser().parse(test_str),
             @r#"
-        Ok(
-            InterpolatedString {
-                parts: [
-                    Template(
-                        Template {
-                            expr: Expr {
-                                variable: VariableName(
-                                    "seperator",
-                                ),
-                                filters: [],
+        ParseResult {
+            output: Some(
+                InterpolatedString {
+                    parts: [
+                        Template(
+                            Template {
+                                expr: Expr {
+                                    variable: VariableName(
+                                        "seperator",
+                                    ),
+                                    filters: [],
+                                },
                             },
-                        },
-                    ),
-                ],
-            },
-        )
+                        ),
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
 
     #[test]
     fn it_parses_escape_sequences_in_quoted_string() {
-        //TODO figure out if this is the correct handling for escape characters
-        let test_str = "\"escapedchars(\\\", \\\\, \\b, \\f, \\r\\n, \\t)\"";
+        let test_str = r#""escapedchars(\", \\, \b, \f, \r\n, \t)""#;
         assert_debug_snapshot!(
         quoted_string_parser().parse(test_str),
             @r#"
-        Ok(
-            InterpolatedString {
-                parts: [
-                    Str(
-                        "escapedchars(\", \\, \u{8}, \u{c}, \r\n, \t)",
-                    ),
-                ],
-            },
-        )
+        ParseResult {
+            output: Some(
+                InterpolatedString {
+                    parts: [
+                        Str(
+                            "escapedchars(\", \\, \u{8}, \u{c}, \r\n, \t)",
+                        ),
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -235,15 +220,18 @@ mod quoted_string_tests {
         assert_debug_snapshot!(
         quoted_string_parser().parse(test_str),
             @r#"
-        Ok(
-            InterpolatedString {
-                parts: [
-                    Str(
-                        "escapedemoji(\u{1}\u{f600})",
-                    ),
-                ],
-            },
-        )
+        ParseResult {
+            output: Some(
+                InterpolatedString {
+                    parts: [
+                        Str(
+                            "escapedemoji(\u{1}\u{f600})",
+                        ),
+                    ],
+                },
+            ),
+            errs: [],
+        }
         "#,
         );
     }
@@ -254,27 +242,14 @@ mod quoted_string_tests {
         let test_str = "\"escapedemoji(\\u{FFFH})\"";
         assert_debug_snapshot!(
         quoted_string_parser().parse(test_str),
-            @r#"
-        Err(
-            [
-                Simple {
-                    span: 20..21,
-                    reason: Unexpected,
-                    expected: {
-                        Some(
-                            '}',
-                        ),
-                    },
-                    found: Some(
-                        'H',
-                    ),
-                    label: Some(
-                        "escaped-unicode-char",
-                    ),
-                },
+            @r"
+        ParseResult {
+            output: None,
+            errs: [
+                found ''H'' at 20..21 expected digit, or ''}'',
             ],
-        )
-        "#,
+        }
+        ",
         );
     }
 
@@ -285,46 +260,12 @@ mod quoted_string_tests {
         assert_debug_snapshot!(
         quoted_string_parser().parse(test_str),
             @r#"
-        Err(
-            [
-                Simple {
-                    span: 20..21,
-                    reason: Unexpected,
-                    expected: {
-                        Some(
-                            'r',
-                        ),
-                        Some(
-                            'n',
-                        ),
-                        Some(
-                            'b',
-                        ),
-                        Some(
-                            '"',
-                        ),
-                        Some(
-                            't',
-                        ),
-                        Some(
-                            '\\',
-                        ),
-                        Some(
-                            'u',
-                        ),
-                        Some(
-                            'f',
-                        ),
-                    },
-                    found: Some(
-                        'g',
-                    ),
-                    label: Some(
-                        "escaped-unicode-char",
-                    ),
-                },
+        ParseResult {
+            output: None,
+            errs: [
+                found ''g'' at 20..21 expected ''\\'', ''"'', ''b'', ''f'', ''n'', ''r'', ''t'', or ''u'',
             ],
-        )
+        }
         "#,
         );
     }

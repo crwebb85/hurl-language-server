@@ -2,48 +2,43 @@ use super::body::body_parser;
 use super::key_value::{key_value_parser, value_parser};
 use super::primitives::{lt_parser, sp_parser};
 use super::request_section::request_section_parser;
-use super::types::{Entry, Method, Request};
+use super::types::{Entry, KeyValue, Method, Request, RequestSection};
 use chumsky::prelude::*;
 
-pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
-    let method = filter::<_, _, Simple<char>>(char::is_ascii_uppercase)
+pub fn ast_parser<'a>() -> impl Parser<'a, &'a str, Vec<Entry>, extra::Err<Rich<'a, char>>> + Clone
+{
+    let method = any()
+        .filter(char::is_ascii_uppercase)
         .repeated()
         .at_least(1)
         .collect::<String>()
         .map(|value| Method { value })
         .padded();
 
-    let sp = sp_parser();
     let lt = lt_parser();
-    let key_value = key_value_parser();
-    let value = value_parser();
-    let request_section = request_section_parser();
 
-    let key_values = key_value.clone().then_ignore(lt.clone()).repeated();
+    let header_line = key_value_parser().then_ignore(lt.clone());
 
-    let headers = key_values.clone();
-
-    let request = sp
-        .clone()
+    let request = sp_parser()
         .repeated()
-        .ignore_then(
-            method
-                .then(value.clone())
-                .then_ignore(lt.clone())
-                .then(headers)
-                .then(request_section.repeated())
-                .then(body_parser().or_not())
-                .map(
-                    |((((method_value, url_value_string), headers), request_sections), body)| {
-                        Request {
-                            method: method_value,
-                            url: url_value_string,
-                            header: headers,
-                            request_sections,
-                            body,
-                        }
-                    },
-                ),
+        .ignore_then(method)
+        .then(value_parser())
+        .then_ignore(lt.clone())
+        .then(header_line.repeated().collect::<Vec<KeyValue>>())
+        .then(
+            request_section_parser()
+                .repeated()
+                .collect::<Vec<RequestSection>>(),
+        )
+        .then(body_parser().or_not())
+        .map(
+            |((((method_value, url_value_string), headers), request_sections), body)| Request {
+                method: method_value,
+                url: url_value_string,
+                header: headers,
+                request_sections,
+                body,
+            },
         )
         .labelled("request");
 
@@ -54,5 +49,9 @@ pub fn ast_parser() -> impl Parser<char, Vec<Entry>, Error = Simple<char>> {
         })
         .labelled("entry");
 
-    entry.repeated().then_ignore(lt.clone())
+    entry
+        .repeated()
+        .collect::<Vec<Entry>>()
+        .then_ignore(lt.clone().or_not()) //TODO fix so that any number of line terminators can
+                                          //follow the entry
 }
