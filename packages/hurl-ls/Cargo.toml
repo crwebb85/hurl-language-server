@@ -1,9 +1,8 @@
 [package]
-name = "hurl-ls"
+name = "hurl-language-server"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+build = "build.rs"
 
 [dependencies]
 env_logger = "0.11.5"
@@ -14,3 +13,7 @@ log = "0.4.22"
 dashmap = "6.1.0"
 ropey = "1.6.1"
 hurl-parser = { path = "../hurl-parser" }
+pico-args = "0.5.0"
+
+[build-dependencies]
+chrono = "0.4.39"

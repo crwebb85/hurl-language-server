@@ -1,7 +1,7 @@
 use dashmap::DashMap;
 use env_logger::Env;
-use hurl_ls::completion::completion;
-use hurl_ls::utils::offset_to_position;
+use hurl_language_server::completion::{completion, ImCompleteCompletionItem};
+use hurl_language_server::utils::offset_to_position;
 use hurl_parser::parser::types::{Ast, Rich};
 use log::debug;
 use ropey::Rope;
@@ -9,6 +9,16 @@ use serde_json::Value;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
+
+pub const HELP: &str = "USAGE:
+    hurl-language-server [OPTIONS]
+
+To start the language server run without any arguments.
+
+OPTIONS:
+    -v, --version                   Print version info and exit
+    -h, --help                      Prints help information
+";
 
 #[derive(Debug)]
 struct Backend {
@@ -126,7 +136,7 @@ impl LanguageServer for Backend {
             let mut ret = Vec::with_capacity(completions.len());
             for (_, item) in completions {
                 match item {
-                    hurl_ls::completion::ImCompleteCompletionItem::Keyword(var) => {
+                    ImCompleteCompletionItem::Keyword(var) => {
                         ret.push(CompletionItem {
                             label: var.clone(),
                             insert_text: Some(var.clone()),
@@ -135,7 +145,7 @@ impl LanguageServer for Backend {
                             ..Default::default()
                         });
                     }
-                    hurl_ls::completion::ImCompleteCompletionItem::Snippet(var, snippet_text) => {
+                    ImCompleteCompletionItem::Snippet(var, snippet_text) => {
                         ret.push(CompletionItem {
                             label: var.clone(),
                             kind: Some(CompletionItemKind::SNIPPET),
@@ -218,9 +228,23 @@ impl Backend {
     }
 }
 
+const VERSION_STRING: &'static str = env!("VERSION_STRING");
+
 #[tokio::main]
 async fn main() {
     env_logger::Builder::from_env(Env::default().default_filter_or("debug")).init();
+
+    let mut args = pico_args::Arguments::from_env();
+
+    if args.contains(["-v", "--version"]) {
+        println!("version: {}", VERSION_STRING);
+        return;
+    }
+
+    if args.contains(["-h", "--help"]) {
+        println!("{}", HELP);
+        return;
+    }
 
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
