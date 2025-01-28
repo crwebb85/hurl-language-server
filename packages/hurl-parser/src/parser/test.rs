@@ -2136,9 +2136,8 @@ mod tests {
         );
     }
 
-    #[cfg(target_pointer_width = "64")]
     #[test]
-    fn it_parses_largest_valid_integer_option_for_usize_64() {
+    fn it_parses_largest_valid_integer_option_for_u64() {
         let test_str = format!(
             "GET https://example.com\n[Options]\nlimit-rate: {}",
             u64::MAX,
@@ -2188,10 +2187,9 @@ mod tests {
         );
     }
 
-    #[cfg(any(target_pointer_width = "64", target_pointer_width = "32"))]
     #[test]
-    fn it_parses_big_integer_option_usize_64() {
-        //18446744073709551616 is just outside the range of numbers for usize 64
+    fn it_parses_big_integer_option_u64() {
+        //18446744073709551616 is just outside the range of numbers for u64
         let test_str = "GET https://example.com\n[Options]\nlimit-rate: 18446744073709551616";
 
         assert_debug_snapshot!(
@@ -2232,15 +2230,16 @@ mod tests {
                     },
                 ],
             ),
-            errs: [],
+            errs: [
+                The integer value is larger than 18446744073709551615 and is not valid for 64bit version of hurl at 46..66,
+            ],
         }
         "#,
         );
     }
 
-    #[cfg(any(target_pointer_width = "64", target_pointer_width = "32"))]
     #[test]
-    fn it_parses_largest_valid_integer_option_for_usize_32() {
+    fn it_parses_largest_valid_integer_option_for_u32() {
         let test_str = format!(
             "GET https://example.com\n[Options]\nlimit-rate: {}",
             u32::MAX,

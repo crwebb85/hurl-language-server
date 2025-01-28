@@ -9,6 +9,7 @@ mod quoted_string;
 mod request_section;
 mod template;
 mod types;
+mod variable;
 
 #[cfg(test)]
 mod test;

@@ -60,18 +60,15 @@ pub fn lt_parser<'a>() -> impl Parser<'a, &'a str, Vec<Lt>, extra::Err<Rich<'a, 
 
 pub fn escaped_unicode_parser<'a>(
 ) -> impl Parser<'a, &'a str, char, extra::Err<Rich<'a, char>>> + Clone {
-    just('\\')
-        .ignored()
-        .then_ignore(just('u'))
-        .then_ignore(just('{'))
-        .then(text::digits(16).to_slice().validate(|digits, e, emitter| {
+    text::digits(16)
+        .to_slice()
+        .validate(|digits, e, emitter| {
             char::from_u32(u32::from_str_radix(digits, 16).unwrap()).unwrap_or_else(|| {
                 emitter.emit(Rich::custom(e.span(), "invalid unicode character"));
                 '\u{FFFD}' // unicode replacement character
             })
-        }))
-        .then_ignore(just('}'))
-        .map(|(_, v)| v)
+        })
+        .delimited_by(just(r#"\u{"#), just("}"))
         .labelled("escaped-unicode-char")
 }
 

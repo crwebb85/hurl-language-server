@@ -1,11 +1,11 @@
 use super::filename::filename_parser;
 use super::key_value::{key_parser, key_value_parser};
-use super::options::option_parser;
+use super::options::options_parser;
 use super::primitives::{lt_parser, sp_parser};
 use super::types::{
     BasicAuthSection, CookiesSection, FileKeyValue, FileValue, FormParamsSection, KeyValue,
-    MultipartFormDataSection, MultipartFormParam, QueryStringParamsSection, RequestOption,
-    RequestOptionsSection, RequestSection,
+    MultipartFormDataSection, MultipartFormParam, QueryStringParamsSection, RequestOptionsSection,
+    RequestSection,
 };
 use chumsky::prelude::*;
 
@@ -112,12 +112,10 @@ pub fn request_section_parser<'a>(
             })
         });
 
-    let options = option_parser().repeated().collect::<Vec<RequestOption>>();
-
     let options_section = just("[Options]")
         .padded_by(sp_parser().repeated())
         .then_ignore(lt_parser())
-        .then(options)
+        .then(options_parser())
         .map(|(_, options)| RequestSection::OptionsSection(RequestOptionsSection { options }));
 
     let request_section = basic_auth_section
@@ -1743,9 +1741,8 @@ mod request_section_tests {
         );
     }
 
-    #[cfg(target_pointer_width = "64")]
     #[test]
-    fn it_parses_largest_valid_integer_option_for_usize_64() {
+    fn it_parses_largest_valid_integer_option_for_u64() {
         let test_str = format!("[Options]\nlimit-rate: {}", u64::MAX,);
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(&test_str),
@@ -1770,10 +1767,9 @@ mod request_section_tests {
         );
     }
 
-    #[cfg(any(target_pointer_width = "64", target_pointer_width = "32"))]
     #[test]
-    fn it_parses_big_integer_option_usize_64() {
-        //18446744073709551616 is just outside the range of numbers for usize 64
+    fn it_parses_big_integer_option_u64() {
+        //18446744073709551616 is just outside the range of numbers for u64
         let test_str = "[Options]\nlimit-rate: 18446744073709551616";
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(test_str),
@@ -1792,15 +1788,16 @@ mod request_section_tests {
                     },
                 ),
             ),
-            errs: [],
+            errs: [
+                The integer value is larger than 18446744073709551615 and is not valid for 64bit version of hurl at 22..42,
+            ],
         }
         "#,
         );
     }
 
-    #[cfg(any(target_pointer_width = "64", target_pointer_width = "32"))]
     #[test]
-    fn it_parses_largest_valid_integer_option_for_usize_32() {
+    fn it_parses_largest_valid_integer_option_for_u32() {
         let test_str = format!("[Options]\nlimit-rate: {}", u32::MAX,);
         assert_debug_snapshot!(
         request_section_parser().then_ignore(end()).parse(&test_str),

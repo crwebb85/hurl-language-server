@@ -188,7 +188,8 @@ pub enum DurationOption {
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum IntegerOption {
-    Literal(usize),
+    Literal(u64), // Hurl uses usize but since hurl is only released in the 64bit mode I will only
+    // support 64bit numbers
     Template(Template),
     BigInteger(String), //TODO add a diagnostic error when integer is too large
 }
@@ -201,6 +202,7 @@ pub enum VariableValue {
     Float(OrderedFloat<f64>),
     BigInteger(String),
     String(InterpolatedString),
+    Invalid,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

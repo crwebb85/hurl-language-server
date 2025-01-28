@@ -2,26 +2,37 @@ use crate::parser::expr::variable_name_parser;
 use crate::parser::primitives::escaped_unicode_parser;
 
 use super::filename::filename_parser;
-use super::key_value::{key_parser, value_parser};
+use super::key_value::value_parser;
 use super::primitives::{lt_parser, sp_parser};
-use super::quoted_string::quoted_string_parser;
 use super::template::template_parser;
 use super::types::{
     BooleanOption, Duration, DurationOption, DurationUnit, IntegerOption, InterpolatedString,
-    InterpolatedStringPart, RequestOption, VariableDefinitionOption, VariableValue,
+    InterpolatedStringPart, RequestOption, VariableDefinitionOption,
 };
+use super::variable::variable_value_parser;
 use chumsky::prelude::*;
-use ordered_float::OrderedFloat;
 
 fn integer_option_parser<'a>(
     option_identifier: &'a str,
 ) -> impl Parser<'a, &'a str, IntegerOption, extra::Err<Rich<'a, char>>> + Clone {
-    let integer_option = text::int(10)
-        .to_slice()
-        .map(|v: &str| match v.parse::<usize>() {
-            Ok(n) => IntegerOption::Literal(n),
-            Err(_) => IntegerOption::BigInteger(v.to_string()),
-        });
+    let integer_option = choice((
+        text::int(10).to_slice().validate(|v: &str, e, emitter| {
+            match v.parse::<u64>() {
+                Ok(n) => IntegerOption::Literal(n),
+                Err(_) => {
+                    emitter.emit(Rich::custom(
+                        e.span(),
+                        format!(
+                            "The integer value is larger than {} and is not valid for 64bit version of hurl",
+                            u64::MAX
+                        ),
+                    ));
+                    IntegerOption::BigInteger(v.to_string())
+                }
+            }
+        }),
+        template_parser().map(IntegerOption::Template)
+    ));
 
     let option = just(option_identifier)
         .padded_by(sp_parser().repeated())
@@ -35,12 +46,10 @@ fn integer_option_parser<'a>(
 fn boolean_option_parser<'a>(
     option_identifier: &'a str,
 ) -> impl Parser<'a, &'a str, BooleanOption, extra::Err<Rich<'a, char>>> + Clone {
-    let template = template_parser();
-
     let boolean_option = choice((
         just("false").to(BooleanOption::Literal(false)),
         just("true").to(BooleanOption::Literal(true)),
-        template.clone().map(|t| BooleanOption::Template(t)),
+        template_parser().map(|t| BooleanOption::Template(t)),
     ));
 
     let option = just(option_identifier)
@@ -73,9 +82,10 @@ fn duration_option_parser<'a>(
             })
         });
 
-    let duration_option = template_parser()
-        .map(DurationOption::Template)
-        .or(duration_literal);
+    let duration_option = choice((
+        template_parser().map(DurationOption::Template),
+        duration_literal,
+    ));
 
     let option = just(option_identifier)
         .padded_by(sp_parser().repeated())
@@ -136,23 +146,15 @@ fn filename_password_string_escaped_char_parser<'a>(
 fn filename_password_option_parser<'a>(
     option_identifier: &'a str,
 ) -> impl Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone {
-    let filename_password_str_part = any()
-        .filter(|c| {
-            // ~[#;{} \n\\]+
-            c != &'#'
-                && c != &';'
-                && c != &'{'
-                && c != &'}'
-                && c != &' '
-                && c != &'\n'
-                && c != &'\\'
-        })
-        .or(filename_password_string_escaped_char_parser())
-        .repeated()
-        .at_least(1)
-        .collect::<String>()
-        .map(InterpolatedStringPart::Str)
-        .labelled("filename_password_str");
+    let filename_password_str_part = choice((
+        none_of("#;{} \n\\"),
+        filename_password_string_escaped_char_parser(),
+    ))
+    .repeated()
+    .at_least(1)
+    .collect::<String>()
+    .map(InterpolatedStringPart::Str)
+    .labelled("filename_password_str");
 
     let filename_password_template_part = template_parser()
         .map(|t| InterpolatedStringPart::Template(t))
@@ -177,33 +179,9 @@ fn filename_password_option_parser<'a>(
 
 fn variable_option_parser<'a>(
 ) -> impl Parser<'a, &'a str, VariableDefinitionOption, extra::Err<Rich<'a, char>>> + Clone {
-    let float = text::int(10)
-        .then(just('.'))
-        .then(text::digits(10))
-        .to_slice()
-        .map(|number: &str| {
-            let value: f64 = number.parse().unwrap();
-
-            VariableValue::Float(OrderedFloat::<f64>::from(value))
-        });
-
-    let variable_value = choice((
-        just("null").to(VariableValue::Null),
-        just("true").to(VariableValue::Boolean(true)),
-        just("false").to(VariableValue::Boolean(false)),
-        just("false").to(VariableValue::Boolean(false)),
-        text::int(10)
-            .from_str::<i64>()
-            .unwrapped()
-            .map(VariableValue::Integer),
-        float,
-        key_parser().map(VariableValue::String),
-        quoted_string_parser().map(VariableValue::String),
-    ));
-
     let variable_definition = variable_name_parser()
         .then_ignore(just("=").padded_by(sp_parser().repeated()))
-        .then(variable_value)
+        .then(variable_value_parser())
         .map(|(name, value)| VariableDefinitionOption { name, value });
 
     let option = just("variable")
@@ -288,6 +266,12 @@ pub fn option_parser<'a>(
     option
 }
 
+pub fn options_parser<'a>(
+) -> impl Parser<'a, &'a str, Vec<RequestOption>, extra::Err<Rich<'a, char>>> + Clone {
+    let options = option_parser().repeated().collect::<Vec<RequestOption>>();
+    options
+}
+
 #[cfg(test)]
 mod option_tests {
 
@@ -298,7 +282,7 @@ mod option_tests {
     fn it_parses_option_variables() {
         let test_str = "variable: host=example.net\nvariable: id=1234";
         assert_debug_snapshot!(
-        option_parser().repeated().collect::<Vec<RequestOption>>().parse(test_str),
+        options_parser().parse(test_str),
             @r#"
         ParseResult {
             output: Some(
@@ -366,7 +350,7 @@ mod option_tests {
     fn it_parses_boolean_options() {
         let test_str = "compressed: true\nlocation: true\nlocation-trusted: true\nhttp1.0: false\nhttp1.1: false\nhttp2: false\nhttp3: true\ninsecure: false\nipv4: false\nipv6: true\nnetrc: true\nnetrc-optional: true\npath-as-is: true\nskip: false\nverbose: true\nvery-verbose: true";
         assert_debug_snapshot!(
-        option_parser().repeated().collect::<Vec<RequestOption>>().parse(test_str),
+        options_parser().parse(test_str),
             @r"
         ParseResult {
             output: Some(
@@ -464,7 +448,7 @@ mod option_tests {
         let test_str =
             "connect-timeout: {{connectTimeout}}\ndelay: {{delay}}\nretry-interval: {{retryInterval}}";
         assert_debug_snapshot!(
-        option_parser().repeated().collect::<Vec<RequestOption>>().parse(test_str),
+        options_parser().parse(test_str),
             @r#"
         ParseResult {
             output: Some(
@@ -517,7 +501,7 @@ mod option_tests {
     fn it_parses_duration_options_with_default_unit() {
         let test_str = "connect-timeout: 5\ndelay: 4\nretry-interval: 500";
         assert_debug_snapshot!(
-        option_parser().repeated().collect::<Vec<RequestOption>>().parse(test_str),
+        options_parser().parse(test_str),
             @r"
         ParseResult {
             output: Some(
@@ -558,7 +542,7 @@ mod option_tests {
     fn it_parses_duration_options_with_default_s_unit() {
         let test_str = "connect-timeout: 5s\ndelay: 4s\nretry-interval: 500s";
         assert_debug_snapshot!(
-        option_parser().repeated().collect::<Vec<RequestOption>>().parse(test_str),
+        options_parser().parse(test_str),
             @r"
         ParseResult {
             output: Some(
@@ -605,7 +589,7 @@ mod option_tests {
     fn it_parses_duration_options_with_default_ms_unit() {
         let test_str = "connect-timeout: 5ms\ndelay: 4ms\nretry-interval: 500ms";
         assert_debug_snapshot!(
-        option_parser().repeated().collect::<Vec<RequestOption>>().parse(test_str),
+        options_parser().parse(test_str),
             @r"
         ParseResult {
             output: Some(
@@ -649,10 +633,27 @@ mod option_tests {
     }
 
     #[test]
+    //TODO I might want to detect this and have a code action to fix it
+    fn it_errors_duration_option_from_whitespace_left_padded_unit() {
+        let test_str = "connect-timeout: 5 ms";
+        assert_debug_snapshot!(
+        option_parser().parse(test_str),
+            @r"
+        ParseResult {
+            output: None,
+            errs: [
+                found ''m'' at 19..20 expected spacing, comment, newline, or end of input,
+            ],
+        }
+        ",
+        );
+    }
+
+    #[test]
     fn it_parses_duration_options_with_default_m_unit() {
         let test_str = "connect-timeout: 5m\ndelay: 4m\nretry-interval: 500m";
         assert_debug_snapshot!(
-        option_parser().repeated().collect::<Vec<RequestOption>>().parse(test_str),
+        options_parser().parse(test_str),
             @r"
         ParseResult {
             output: Some(
@@ -745,7 +746,7 @@ mod option_tests {
     fn it_parses_integer_options() {
         let test_str = "limit-rate: 59\nmax-redirs: 109\nrepeat: 10\nretry: 5";
         assert_debug_snapshot!(
-        option_parser().repeated().collect::<Vec<RequestOption>>().parse(test_str),
+        options_parser().parse(test_str),
             @r"
         ParseResult {
             output: Some(
@@ -778,9 +779,91 @@ mod option_tests {
         );
     }
 
-    #[cfg(target_pointer_width = "64")]
     #[test]
-    fn it_parses_largest_valid_integer_option_for_usize_64() {
+    fn it_parses_integer_options_with_templates() {
+        let test_str = "limit-rate: {{limit_retry}}\nmax-redirs: {{max_retries}}\nrepeat: {{repeat}}\nretry: {{retry}}";
+        assert_debug_snapshot!(
+        options_parser().parse(test_str),
+            @r#"
+        ParseResult {
+            output: Some(
+                [
+                    LimitRate(
+                        Template(
+                            Template {
+                                expr: Expr {
+                                    variable: VariableName(
+                                        "limit_retry",
+                                    ),
+                                    filters: [],
+                                },
+                            },
+                        ),
+                    ),
+                    MaxRedirs(
+                        Template(
+                            Template {
+                                expr: Expr {
+                                    variable: VariableName(
+                                        "max_retries",
+                                    ),
+                                    filters: [],
+                                },
+                            },
+                        ),
+                    ),
+                    Repeat(
+                        Template(
+                            Template {
+                                expr: Expr {
+                                    variable: VariableName(
+                                        "repeat",
+                                    ),
+                                    filters: [],
+                                },
+                            },
+                        ),
+                    ),
+                    Retry(
+                        Template(
+                            Template {
+                                expr: Expr {
+                                    variable: VariableName(
+                                        "retry",
+                                    ),
+                                    filters: [],
+                                },
+                            },
+                        ),
+                    ),
+                ],
+            ),
+            errs: [],
+        }
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_errors_integer_option_with_partial_template() {
+        //Integer options must be either an integer or a template. They
+        //cannot be a mix of both
+        let test_str = "limit-rate: 5{{magnitude}}";
+        assert_debug_snapshot!(
+        option_parser().then_ignore(end()).parse(&test_str),
+            @r"
+        ParseResult {
+            output: None,
+            errs: [
+                found ''{'' at 13..14 expected digit, or line terminator,
+            ],
+        }
+        ",
+        );
+    }
+
+    #[test]
+    fn it_parses_largest_valid_integer_option_for_u64() {
         let test_str = format!("limit-rate: {}", u64::MAX,);
         assert_debug_snapshot!(
         option_parser().then_ignore(end()).parse(&test_str),
@@ -799,10 +882,9 @@ mod option_tests {
         );
     }
 
-    #[cfg(any(target_pointer_width = "64", target_pointer_width = "32"))]
     #[test]
-    fn it_parses_big_integer_option_usize_64() {
-        //18446744073709551616 is just outside the range of numbers for usize 64
+    fn it_parses_big_integer_option_u64() {
+        //18446744073709551616 is just outside the range of numbers for u64
         let test_str = "limit-rate: 18446744073709551616";
         assert_debug_snapshot!(
         option_parser().then_ignore(end()).parse(test_str),
@@ -815,15 +897,16 @@ mod option_tests {
                     ),
                 ),
             ),
-            errs: [],
+            errs: [
+                The integer value is larger than 18446744073709551615 and is not valid for 64bit version of hurl at 12..32,
+            ],
         }
         "#,
         );
     }
 
-    #[cfg(any(target_pointer_width = "64", target_pointer_width = "32"))]
     #[test]
-    fn it_parses_largest_valid_integer_option_for_usize_32() {
+    fn it_parses_largest_valid_integer_option_for_u32() {
         let test_str = format!("limit-rate: {}", u32::MAX,);
         assert_debug_snapshot!(
         option_parser().then_ignore(end()).parse(&test_str),
@@ -846,7 +929,7 @@ mod option_tests {
     fn it_parses_value_string_options() {
         let test_str = "aws-sigv4: aws:amz:eu-central-1:sts\nconnect-to: example.com:8000:127.0.0.1:8080\nnetrc-file: ~/.netrc\nproxy: example.proxy:8050\nresolve: example.com:8000:127.0.0.1\nunix-socket: sock\nuser: joe=secret";
         assert_debug_snapshot!(
-        option_parser().repeated().collect::<Vec<RequestOption>>().parse(test_str),
+        options_parser().parse(test_str),
             @r#"
         ParseResult {
             output: Some(
@@ -926,7 +1009,7 @@ mod option_tests {
     fn it_parses_value_string_options_with_templates() {
         let test_str = "aws-sigv4: {{aws}}\nconnect-to: {{host}}:{{port}}:127.0.0.1:8080\nnetrc-file: {{filepath}}\nproxy: {{proxyhost}}:8050\nresolve: {{host}}:{{port}}:127.0.0.1\nunix-socket: {{socket}}\nuser: {{user}}={{password}}";
         assert_debug_snapshot!(
-        option_parser().repeated().collect::<Vec<RequestOption>>().parse(test_str),
+        options_parser().parse(test_str),
             @r#"
         ParseResult {
             output: Some(
@@ -1103,7 +1186,7 @@ mod option_tests {
     fn it_parses_filename_options() {
         let test_str = "cacert: /etc/cert.pem\nkey: .ssh/id_rsa.pub\noutput: ./myreport";
         assert_debug_snapshot!(
-        option_parser().repeated().collect::<Vec<RequestOption>>().parse(test_str),
+        options_parser().parse(test_str),
             @r#"
         ParseResult {
             output: Some(
@@ -1147,7 +1230,7 @@ mod option_tests {
     fn it_parses_filename_options_with_templates() {
         let test_str = "cacert: {{certfilepath}}\nkey: {{keyfilepath}}\noutput: {{reportfilepath}}";
         assert_debug_snapshot!(
-        option_parser().repeated().collect::<Vec<RequestOption>>().parse(test_str),
+        options_parser().parse(test_str),
             @r#"
         ParseResult {
             output: Some(
