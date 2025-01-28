@@ -17,7 +17,7 @@ fn quoted_string_escaped_char_parser<'a>(
         )))
         .or(escaped_unicode_parser())
         .labelled("quoted_string_escaped_char");
-    quoted_string_escaped_char
+    quoted_string_escaped_char.boxed()
 }
 
 fn quoted_str_part_parser<'a>(
@@ -27,7 +27,7 @@ fn quoted_str_part_parser<'a>(
         .at_least(1)
         .collect::<String>()
         .map(InterpolatedStringPart::Str);
-    quoted_str_part
+    quoted_str_part.boxed()
 }
 
 /// This exists to decouple the template parser and the quoted string parser
@@ -64,7 +64,7 @@ pub fn generic_quoted_string_parser<
 pub fn quoted_string_parser<'a>(
 ) -> impl Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone {
     let template_parser = template_parser();
-    generic_quoted_string_parser(template_parser)
+    generic_quoted_string_parser(template_parser).boxed()
 }
 
 #[cfg(test)]

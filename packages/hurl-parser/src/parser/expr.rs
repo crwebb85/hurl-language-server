@@ -22,6 +22,7 @@ pub fn alphabetic_parser<'a>() -> impl Parser<'a, &'a str, char, extra::Err<Rich
         });
         ascii_alphabetic_char
         .labelled("ascii-alphabetic-char")
+        .boxed()
 }
 
 
@@ -43,6 +44,7 @@ pub fn alphanumeric_parser<'a>() -> impl Parser<'a, &'a str, char, extra::Err<Ri
         });
         ascii_alphanumeric_char
         .labelled("ascii-alphanumeric-char")
+        .boxed()
 }
 
 pub fn variable_name_parser<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Rich<'a, char>>> + Clone {
@@ -63,6 +65,7 @@ pub fn variable_name_parser<'a>() -> impl Parser<'a, &'a str, String, extra::Err
 
     variable_name
         .labelled("variable-name")
+        .boxed()
 }
 
 pub fn expr_parser<'a, T: Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone>(

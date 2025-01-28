@@ -40,7 +40,7 @@ fn integer_option_parser<'a>(
         .then(integer_option)
         .then_ignore(lt_parser())
         .map(|(_, o)| o);
-    option
+    option.boxed()
 }
 
 fn boolean_option_parser<'a>(
@@ -58,7 +58,7 @@ fn boolean_option_parser<'a>(
         .then(boolean_option)
         .then_ignore(lt_parser())
         .map(|(_, o)| o);
-    option
+    option.boxed()
 }
 
 fn duration_option_parser<'a>(
@@ -93,7 +93,7 @@ fn duration_option_parser<'a>(
         .then(duration_option)
         .then_ignore(lt_parser())
         .map(|(_, o)| o);
-    option
+    option.boxed()
 }
 
 fn value_string_option_parser<'a>(
@@ -106,7 +106,7 @@ fn value_string_option_parser<'a>(
         .then_ignore(lt_parser())
         .map(|(_, o)| o);
 
-    option
+    option.boxed()
 }
 
 fn filename_option_parser<'a>(
@@ -119,7 +119,7 @@ fn filename_option_parser<'a>(
         .then_ignore(lt_parser())
         .map(|(_, o)| o);
 
-    option
+    option.boxed()
 }
 
 fn filename_password_string_escaped_char_parser<'a>(
@@ -140,7 +140,7 @@ fn filename_password_string_escaped_char_parser<'a>(
             just(':').to(':'),
         )))
         .or(escaped_unicode_parser());
-    filename_password_string_escaped_char
+    filename_password_string_escaped_char.boxed()
 }
 
 fn filename_password_option_parser<'a>(
@@ -174,7 +174,7 @@ fn filename_password_option_parser<'a>(
         .then_ignore(lt_parser())
         .map(|(_, o)| o);
 
-    option
+    option.boxed()
 }
 
 fn variable_option_parser<'a>(
@@ -191,7 +191,7 @@ fn variable_option_parser<'a>(
         .then_ignore(lt_parser())
         .map(|(_, o)| o);
 
-    option
+    option.boxed()
 }
 
 pub fn option_parser<'a>(
@@ -263,13 +263,13 @@ pub fn option_parser<'a>(
     ))
     .labelled("option");
 
-    option
+    option.boxed()
 }
 
 pub fn options_parser<'a>(
 ) -> impl Parser<'a, &'a str, Vec<RequestOption>, extra::Err<Rich<'a, char>>> + Clone {
     let options = option_parser().repeated().collect::<Vec<RequestOption>>();
-    options
+    options.boxed()
 }
 
 #[cfg(test)]

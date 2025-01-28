@@ -17,7 +17,7 @@ pub fn template_parser<'a>(
     })
     .labelled("template");
 
-    template
+    template.boxed()
 }
 
 #[cfg(test)]

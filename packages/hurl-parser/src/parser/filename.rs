@@ -22,7 +22,7 @@ fn filename_escape_char_parser<'a>(
         )))
         .or(escaped_unicode_parser())
         .labelled("filename-escaped-char");
-    filename_escape_char
+    filename_escape_char.boxed()
 }
 
 /// Parses a file path
@@ -57,7 +57,7 @@ pub fn filename_parser<'a>(
     .map(|k| InterpolatedString { parts: k })
     .labelled("filename");
 
-    filename
+    filename.boxed()
 }
 
 #[cfg(test)]

@@ -1,5 +1,10 @@
+use dashmap::DashMap;
+use env_logger::Env;
 use hurl_ls::completion::completion;
+use hurl_ls::utils::offset_to_position;
+use hurl_parser::parser::types::{Ast, Rich};
 use log::debug;
+use ropey::Rope;
 use serde_json::Value;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
@@ -8,6 +13,8 @@ use tower_lsp::{Client, LanguageServer, LspService, Server};
 #[derive(Debug)]
 struct Backend {
     client: Client,
+    ast_map: DashMap<String, Option<hurl_parser::parser::types::Ast>>,
+    document_map: DashMap<String, Rope>,
 }
 
 #[tower_lsp::async_trait]
@@ -41,6 +48,16 @@ impl LanguageServer for Backend {
                     }),
                     file_operations: None,
                 }),
+                diagnostic_provider: Some(DiagnosticServerCapabilities::Options(
+                    DiagnosticOptions {
+                        identifier: None,
+                        inter_file_dependencies: false,
+                        workspace_diagnostics: true,
+                        work_done_progress_options: WorkDoneProgressOptions {
+                            work_done_progress: Some(false),
+                        },
+                    },
+                )),
                 ..ServerCapabilities::default()
             },
         })
@@ -169,19 +186,62 @@ struct TextDocumentItem<'a> {
 }
 
 impl Backend {
-    async fn on_change<'a>(&self, _params: TextDocumentItem<'a>) {
-        //TODO parse document
+    async fn on_change<'a>(&self, params: TextDocumentItem<'a>) {
+        dbg!(&params.version);
+        let rope = ropey::Rope::from_str(params.text);
+        self.document_map
+            .insert(params.uri.to_string(), rope.clone());
+        debug!("about to parse document");
+        debug!("document: {}", params.text);
+
+        let mut diagnostics: Vec<Diagnostic> = vec![];
+        let (ast, errs): (Option<Ast>, Vec<Rich<'_, char>>) =
+            hurl_parser::parser::parser::parse_ast(params.text);
+
+        self.ast_map.insert(params.uri.to_string(), ast);
+        for err in errs {
+            let span = err.span();
+            let start_position = offset_to_position(span.start, &rope);
+            let end_position = offset_to_position(span.end, &rope);
+            let diag = start_position
+                .and_then(|start| end_position.map(|end| (start, end)))
+                .map(|(start, end)| {
+                    Diagnostic::new_simple(Range::new(start, end), format!("{:?}", err))
+                });
+            if let Some(diag) = diag {
+                diagnostics.push(diag);
+            }
+        }
+        self.client
+            .publish_diagnostics(params.uri.clone(), diagnostics, params.version)
+            .await;
     }
 }
 
 #[tokio::main]
 async fn main() {
-    env_logger::init();
+    env_logger::Builder::from_env(Env::default().default_filter_or("debug")).init();
 
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
 
-    let (service, socket) = LspService::build(|client| Backend { client }).finish();
+    let (service, socket) = LspService::build(|client| Backend {
+        client,
+        ast_map: DashMap::new(),
+        document_map: DashMap::new(),
+    })
+    .finish();
 
     Server::new(stdin, stdout, socket).serve(service).await;
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn it_parses_simple_hurl_document() {
+        let (ast, errs) = hurl_parser::parser::parser::parse_ast("GET {{abc}}");
+        assert!(ast != None);
+        assert!(errs.len() == 0);
+    }
 }

@@ -5,11 +5,11 @@ use super::types::Lt;
 /// A parser that never matches. Used as a placeholder for parsers that
 /// I haven't yet implemented but plan to
 pub fn todo_parser<'a>() -> impl Parser<'a, &'a str, char, extra::Err<Rich<'a, char>>> + Clone {
-    any().filter(|_| false)
+    any().filter(|_| false).boxed()
 }
 
 pub fn sp_parser<'a>() -> impl Parser<'a, &'a str, char, extra::Err<Rich<'a, char>>> + Clone {
-    one_of("\t ").labelled("spacing")
+    one_of("\t ").labelled("spacing").boxed()
 }
 
 pub fn comment_parser<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Rich<'a, char>>> + Clone
@@ -17,7 +17,7 @@ pub fn comment_parser<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Rich<
     let comment = just('#')
         .ignore_then(none_of('\n').repeated().collect::<String>())
         .labelled("comment");
-    comment
+    comment.boxed()
 }
 
 pub fn lt_not_end_parser<'a>() -> impl Parser<'a, &'a str, Lt, extra::Err<Rich<'a, char>>> + Clone {
@@ -27,6 +27,7 @@ pub fn lt_not_end_parser<'a>() -> impl Parser<'a, &'a str, Lt, extra::Err<Rich<'
         .then_ignore(text::newline())
         .map(|comment| Lt { comment })
         .labelled("line terminator")
+        .boxed()
 }
 
 pub fn lt_at_end_parser<'a>() -> impl Parser<'a, &'a str, Lt, extra::Err<Rich<'a, char>>> + Clone {
@@ -36,6 +37,7 @@ pub fn lt_at_end_parser<'a>() -> impl Parser<'a, &'a str, Lt, extra::Err<Rich<'a
         .then_ignore(end())
         .map(|comment| Lt { comment })
         .labelled("line terminator")
+        .boxed()
 }
 
 pub fn lt_parser<'a>() -> impl Parser<'a, &'a str, Vec<Lt>, extra::Err<Rich<'a, char>>> + Clone {
@@ -56,6 +58,7 @@ pub fn lt_parser<'a>() -> impl Parser<'a, &'a str, Vec<Lt>, extra::Err<Rich<'a, 
             }),
         lt_at_end_parser().map(|lt| vec![lt]),
     ))
+    .boxed()
 }
 
 pub fn escaped_unicode_parser<'a>(
@@ -70,6 +73,7 @@ pub fn escaped_unicode_parser<'a>(
         })
         .delimited_by(just(r#"\u{"#), just("}"))
         .labelled("escaped-unicode-char")
+        .boxed()
 }
 
 #[cfg(test)]

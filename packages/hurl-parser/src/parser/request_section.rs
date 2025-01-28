@@ -35,7 +35,8 @@ pub fn file_param_parser<'a>(
         .then(file_value)
         .map(|(key, value)| FileKeyValue { key, value })
         .labelled("file_key_value");
-    file_param
+
+    file_param.boxed()
 }
 
 pub fn request_section_parser<'a>(
@@ -127,7 +128,7 @@ pub fn request_section_parser<'a>(
     // TODO and an unknown section for error handling
     // .or(unknown_section);
 
-    request_section
+    request_section.boxed()
 }
 
 //TODO sections can only be defined once per entry's request section. So you can't have [BasicAuth] defined

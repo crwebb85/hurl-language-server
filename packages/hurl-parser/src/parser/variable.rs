@@ -37,7 +37,7 @@ pub fn variable_value_parser<'a>(
         //actually used is more similar to value_parser
         quoted_string_parser().map(VariableValue::String),
     ));
-    variable_value
+    variable_value.boxed()
 }
 
 //TODO add code action to wrap an invalid unquoted string in quotes

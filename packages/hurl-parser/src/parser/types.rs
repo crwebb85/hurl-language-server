@@ -299,6 +299,11 @@ pub struct Entry {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Ast {
+    pub entries: Vec<Entry>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Lt {
     pub comment: Option<String>,
 }
@@ -339,3 +344,6 @@ pub enum Json {
     Bool(bool),
     Null,
 }
+
+//TODO replace with custom error type
+pub use chumsky::error::Rich;

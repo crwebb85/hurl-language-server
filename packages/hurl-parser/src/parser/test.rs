@@ -12,26 +12,28 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [],
+                                body: None,
                             },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org",
-                                    ),
-                                ],
-                            },
-                            header: [],
-                            request_sections: [],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -47,26 +49,28 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [],
+                                body: None,
                             },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org",
-                                    ),
-                                ],
-                            },
-                            header: [],
-                            request_sections: [],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -82,26 +86,28 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [],
+                                body: None,
                             },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org",
-                                    ),
-                                ],
-                            },
-                            header: [],
-                            request_sections: [],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -117,26 +123,28 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [],
+                                body: None,
                             },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org",
-                                    ),
-                                ],
-                            },
-                            header: [],
-                            request_sections: [],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -152,26 +160,28 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [],
+                                body: None,
                             },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org",
-                                    ),
-                                ],
-                            },
-                            header: [],
-                            request_sections: [],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -187,26 +197,28 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "POST",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "POST",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [],
+                                body: None,
                             },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org",
-                                    ),
-                                ],
-                            },
-                            header: [],
-                            request_sections: [],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -219,26 +231,28 @@ mod tests {
         assert_debug_snapshot!(ast_parser().parse(test_str),@r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "FOO",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "FOO",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [],
+                                body: None,
                             },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org",
-                                    ),
-                                ],
-                            },
-                            header: [],
-                            request_sections: [],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -254,43 +268,45 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org/protected",
-                                    ),
-                                ],
-                            },
-                            header: [
-                                KeyValue {
-                                    key: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "Authorization",
-                                            ),
-                                        ],
-                                    },
-                                    value: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "Basic Ym9iOnNlY3JldA==",
-                                            ),
-                                        ],
-                                    },
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
                                 },
-                            ],
-                            request_sections: [],
-                            body: None,
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org/protected",
+                                        ),
+                                    ],
+                                },
+                                header: [
+                                    KeyValue {
+                                        key: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "Authorization",
+                                                ),
+                                            ],
+                                        },
+                                        value: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "Basic Ym9iOnNlY3JldA==",
+                                                ),
+                                            ],
+                                        },
+                                    },
+                                ],
+                                request_sections: [],
+                                body: None,
+                            },
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -306,26 +322,28 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [],
+                                body: None,
                             },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org",
-                                    ),
-                                ],
-                            },
-                            header: [],
-                            request_sections: [],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -341,61 +359,63 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org",
-                                    ),
-                                ],
-                            },
-                            header: [],
-                            request_sections: [],
-                            body: None,
-                        },
-                        response: None,
-                    },
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org/protected",
-                                    ),
-                                ],
-                            },
-                            header: [
-                                KeyValue {
-                                    key: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "Authorization",
-                                            ),
-                                        ],
-                                    },
-                                    value: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "Basic Ym9iOnNlY3JldA==",
-                                            ),
-                                        ],
-                                    },
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
                                 },
-                            ],
-                            request_sections: [],
-                            body: None,
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [],
+                                body: None,
+                            },
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org/protected",
+                                        ),
+                                    ],
+                                },
+                                header: [
+                                    KeyValue {
+                                        key: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "Authorization",
+                                                ),
+                                            ],
+                                        },
+                                        value: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "Basic Ym9iOnNlY3JldA==",
+                                                ),
+                                            ],
+                                        },
+                                    },
+                                ],
+                                request_sections: [],
+                                body: None,
+                            },
+                            response: None,
+                        },
+                    ],
+                },
             ),
             errs: [],
         }
@@ -411,43 +431,45 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org",
-                                    ),
-                                ],
-                            },
-                            header: [
-                                KeyValue {
-                                    key: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "key",
-                                            ),
-                                        ],
-                                    },
-                                    value: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "this:value:has:colons",
-                                            ),
-                                        ],
-                                    },
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
                                 },
-                            ],
-                            request_sections: [],
-                            body: None,
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [
+                                    KeyValue {
+                                        key: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "key",
+                                                ),
+                                            ],
+                                        },
+                                        value: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "this:value:has:colons",
+                                                ),
+                                            ],
+                                        },
+                                    },
+                                ],
+                                request_sections: [],
+                                body: None,
+                            },
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -464,43 +486,45 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org",
-                                    ),
-                                ],
-                            },
-                            header: [
-                                KeyValue {
-                                    key: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "key:has:escaped:colons",
-                                            ),
-                                        ],
-                                    },
-                                    value: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "thekeyhadescapedcolons",
-                                            ),
-                                        ],
-                                    },
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
                                 },
-                            ],
-                            request_sections: [],
-                            body: None,
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [
+                                    KeyValue {
+                                        key: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "key:has:escaped:colons",
+                                                ),
+                                            ],
+                                        },
+                                        value: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "thekeyhadescapedcolons",
+                                                ),
+                                            ],
+                                        },
+                                    },
+                                ],
+                                request_sections: [],
+                                body: None,
+                            },
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -516,43 +540,45 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org",
-                                    ),
-                                ],
-                            },
-                            header: [
-                                KeyValue {
-                                    key: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "key",
-                                            ),
-                                        ],
-                                    },
-                                    value: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "thekeyhasescaped\\backslash",
-                                            ),
-                                        ],
-                                    },
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
                                 },
-                            ],
-                            request_sections: [],
-                            body: None,
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [
+                                    KeyValue {
+                                        key: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "key",
+                                                ),
+                                            ],
+                                        },
+                                        value: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "thekeyhasescaped\\backslash",
+                                                ),
+                                            ],
+                                        },
+                                    },
+                                ],
+                                request_sections: [],
+                                body: None,
+                            },
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -602,53 +628,55 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org",
-                                    ),
-                                ],
-                            },
-                            header: [
-                                KeyValue {
-                                    key: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "key-",
-                                            ),
-                                            Template(
-                                                Template {
-                                                    expr: Expr {
-                                                        variable: VariableName(
-                                                            "env",
-                                                        ),
-                                                        filters: [],
-                                                    },
-                                                },
-                                            ),
-                                        ],
-                                    },
-                                    value: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "dummyvalue",
-                                            ),
-                                        ],
-                                    },
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
                                 },
-                            ],
-                            request_sections: [],
-                            body: None,
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [
+                                    KeyValue {
+                                        key: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "key-",
+                                                ),
+                                                Template(
+                                                    Template {
+                                                        expr: Expr {
+                                                            variable: VariableName(
+                                                                "env",
+                                                            ),
+                                                            filters: [],
+                                                        },
+                                                    },
+                                                ),
+                                            ],
+                                        },
+                                        value: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "dummyvalue",
+                                                ),
+                                            ],
+                                        },
+                                    },
+                                ],
+                                request_sections: [],
+                                body: None,
+                            },
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -664,43 +692,45 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org",
-                                    ),
-                                ],
-                            },
-                            header: [
-                                KeyValue {
-                                    key: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "key",
-                                            ),
-                                        ],
-                                    },
-                                    value: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "valuewithemoji😀",
-                                            ),
-                                        ],
-                                    },
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
                                 },
-                            ],
-                            request_sections: [],
-                            body: None,
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [
+                                    KeyValue {
+                                        key: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "key",
+                                                ),
+                                            ],
+                                        },
+                                        value: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "valuewithemoji😀",
+                                                ),
+                                            ],
+                                        },
+                                    },
+                                ],
+                                request_sections: [],
+                                body: None,
+                            },
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -716,43 +746,45 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org",
-                                    ),
-                                ],
-                            },
-                            header: [
-                                KeyValue {
-                                    key: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "key",
-                                            ),
-                                        ],
-                                    },
-                                    value: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "dummy{v}alue",
-                                            ),
-                                        ],
-                                    },
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
                                 },
-                            ],
-                            request_sections: [],
-                            body: None,
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [
+                                    KeyValue {
+                                        key: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "key",
+                                                ),
+                                            ],
+                                        },
+                                        value: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "dummy{v}alue",
+                                                ),
+                                            ],
+                                        },
+                                    },
+                                ],
+                                request_sections: [],
+                                body: None,
+                            },
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -769,60 +801,62 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org/cn",
-                                    ),
-                                ],
-                            },
-                            header: [
-                                KeyValue {
-                                    key: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "key",
-                                            ),
-                                        ],
-                                    },
-                                    value: InterpolatedString {
-                                        parts: [
-                                            Template(
-                                                Template {
-                                                    expr: Expr {
-                                                        variable: VariableName(
-                                                            "apikey",
-                                                        ),
-                                                        filters: [
-                                                            Decode {
-                                                                encoding: InterpolatedString {
-                                                                    parts: [
-                                                                        Str(
-                                                                            "gb2312",
-                                                                        ),
-                                                                    ],
-                                                                },
-                                                            },
-                                                        ],
-                                                    },
-                                                },
-                                            ),
-                                        ],
-                                    },
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
                                 },
-                            ],
-                            request_sections: [],
-                            body: None,
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org/cn",
+                                        ),
+                                    ],
+                                },
+                                header: [
+                                    KeyValue {
+                                        key: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "key",
+                                                ),
+                                            ],
+                                        },
+                                        value: InterpolatedString {
+                                            parts: [
+                                                Template(
+                                                    Template {
+                                                        expr: Expr {
+                                                            variable: VariableName(
+                                                                "apikey",
+                                                            ),
+                                                            filters: [
+                                                                Decode {
+                                                                    encoding: InterpolatedString {
+                                                                        parts: [
+                                                                            Str(
+                                                                                "gb2312",
+                                                                            ),
+                                                                        ],
+                                                                    },
+                                                                },
+                                                            ],
+                                                        },
+                                                    },
+                                                ),
+                                            ],
+                                        },
+                                    },
+                                ],
+                                request_sections: [],
+                                body: None,
+                            },
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -839,50 +873,52 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org/cn",
-                                    ),
-                                ],
-                            },
-                            header: [
-                                KeyValue {
-                                    key: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "key",
-                                            ),
-                                        ],
-                                    },
-                                    value: InterpolatedString {
-                                        parts: [
-                                            Template(
-                                                Template {
-                                                    expr: Expr {
-                                                        variable: VariableName(
-                                                            "apikey",
-                                                        ),
-                                                        filters: [],
-                                                    },
-                                                },
-                                            ),
-                                        ],
-                                    },
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
                                 },
-                            ],
-                            request_sections: [],
-                            body: None,
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org/cn",
+                                        ),
+                                    ],
+                                },
+                                header: [
+                                    KeyValue {
+                                        key: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "key",
+                                                ),
+                                            ],
+                                        },
+                                        value: InterpolatedString {
+                                            parts: [
+                                                Template(
+                                                    Template {
+                                                        expr: Expr {
+                                                            variable: VariableName(
+                                                                "apikey",
+                                                            ),
+                                                            filters: [],
+                                                        },
+                                                    },
+                                                ),
+                                            ],
+                                        },
+                                    },
+                                ],
+                                request_sections: [],
+                                body: None,
+                            },
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -916,50 +952,52 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org/cn",
-                                    ),
-                                ],
-                            },
-                            header: [
-                                KeyValue {
-                                    key: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "key",
-                                            ),
-                                        ],
-                                    },
-                                    value: InterpolatedString {
-                                        parts: [
-                                            Template(
-                                                Template {
-                                                    expr: Expr {
-                                                        variable: VariableName(
-                                                            "apikey",
-                                                        ),
-                                                        filters: [],
-                                                    },
-                                                },
-                                            ),
-                                        ],
-                                    },
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
                                 },
-                            ],
-                            request_sections: [],
-                            body: None,
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org/cn",
+                                        ),
+                                    ],
+                                },
+                                header: [
+                                    KeyValue {
+                                        key: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "key",
+                                                ),
+                                            ],
+                                        },
+                                        value: InterpolatedString {
+                                            parts: [
+                                                Template(
+                                                    Template {
+                                                        expr: Expr {
+                                                            variable: VariableName(
+                                                                "apikey",
+                                                            ),
+                                                            filters: [],
+                                                        },
+                                                    },
+                                                ),
+                                            ],
+                                        },
+                                    },
+                                ],
+                                request_sections: [],
+                                body: None,
+                            },
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -976,52 +1014,54 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org/cn",
-                                    ),
-                                ],
-                            },
-                            header: [
-                                KeyValue {
-                                    key: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "key",
-                                            ),
-                                        ],
-                                    },
-                                    value: InterpolatedString {
-                                        parts: [
-                                            Template(
-                                                Template {
-                                                    expr: Expr {
-                                                        variable: VariableName(
-                                                            "apikey",
-                                                        ),
-                                                        filters: [
-                                                            UrlDecode,
-                                                        ],
-                                                    },
-                                                },
-                                            ),
-                                        ],
-                                    },
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
                                 },
-                            ],
-                            request_sections: [],
-                            body: None,
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org/cn",
+                                        ),
+                                    ],
+                                },
+                                header: [
+                                    KeyValue {
+                                        key: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "key",
+                                                ),
+                                            ],
+                                        },
+                                        value: InterpolatedString {
+                                            parts: [
+                                                Template(
+                                                    Template {
+                                                        expr: Expr {
+                                                            variable: VariableName(
+                                                                "apikey",
+                                                            ),
+                                                            filters: [
+                                                                UrlDecode,
+                                                            ],
+                                                        },
+                                                    },
+                                                ),
+                                            ],
+                                        },
+                                    },
+                                ],
+                                request_sections: [],
+                                body: None,
+                            },
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -1039,68 +1079,70 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org/cn",
-                                    ),
-                                ],
-                            },
-                            header: [
-                                KeyValue {
-                                    key: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "key",
-                                            ),
-                                        ],
-                                    },
-                                    value: InterpolatedString {
-                                        parts: [
-                                            Template(
-                                                Template {
-                                                    expr: Expr {
-                                                        variable: VariableName(
-                                                            "apikey",
-                                                        ),
-                                                        filters: [
-                                                            UrlDecode,
-                                                            Split {
-                                                                sep: InterpolatedString {
-                                                                    parts: [
-                                                                        Template(
-                                                                            Template {
-                                                                                expr: Expr {
-                                                                                    variable: VariableName(
-                                                                                        "seperator",
-                                                                                    ),
-                                                                                    filters: [],
-                                                                                },
-                                                                            },
-                                                                        ),
-                                                                    ],
-                                                                },
-                                                            },
-                                                        ],
-                                                    },
-                                                },
-                                            ),
-                                        ],
-                                    },
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
                                 },
-                            ],
-                            request_sections: [],
-                            body: None,
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org/cn",
+                                        ),
+                                    ],
+                                },
+                                header: [
+                                    KeyValue {
+                                        key: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "key",
+                                                ),
+                                            ],
+                                        },
+                                        value: InterpolatedString {
+                                            parts: [
+                                                Template(
+                                                    Template {
+                                                        expr: Expr {
+                                                            variable: VariableName(
+                                                                "apikey",
+                                                            ),
+                                                            filters: [
+                                                                UrlDecode,
+                                                                Split {
+                                                                    sep: InterpolatedString {
+                                                                        parts: [
+                                                                            Template(
+                                                                                Template {
+                                                                                    expr: Expr {
+                                                                                        variable: VariableName(
+                                                                                            "seperator",
+                                                                                        ),
+                                                                                        filters: [],
+                                                                                    },
+                                                                                },
+                                                                            ),
+                                                                        ],
+                                                                    },
+                                                                },
+                                                            ],
+                                                        },
+                                                    },
+                                                ),
+                                            ],
+                                        },
+                                    },
+                                ],
+                                request_sections: [],
+                                body: None,
+                            },
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -1116,53 +1158,55 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org",
-                                    ),
-                                ],
-                            },
-                            header: [
-                                KeyValue {
-                                    key: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "key",
-                                            ),
-                                        ],
-                                    },
-                                    value: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "dummyvalue-",
-                                            ),
-                                            Template(
-                                                Template {
-                                                    expr: Expr {
-                                                        variable: VariableName(
-                                                            "apikey",
-                                                        ),
-                                                        filters: [],
-                                                    },
-                                                },
-                                            ),
-                                        ],
-                                    },
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
                                 },
-                            ],
-                            request_sections: [],
-                            body: None,
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [
+                                    KeyValue {
+                                        key: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "key",
+                                                ),
+                                            ],
+                                        },
+                                        value: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "dummyvalue-",
+                                                ),
+                                                Template(
+                                                    Template {
+                                                        expr: Expr {
+                                                            variable: VariableName(
+                                                                "apikey",
+                                                            ),
+                                                            filters: [],
+                                                        },
+                                                    },
+                                                ),
+                                            ],
+                                        },
+                                    },
+                                ],
+                                request_sections: [],
+                                body: None,
+                            },
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -1178,50 +1222,52 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org",
-                                    ),
-                                ],
-                            },
-                            header: [
-                                KeyValue {
-                                    key: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "message",
-                                            ),
-                                        ],
-                                    },
-                                    value: InterpolatedString {
-                                        parts: [
-                                            Template(
-                                                Template {
-                                                    expr: Expr {
-                                                        variable: FunctionName(
-                                                            "newUuid",
-                                                        ),
-                                                        filters: [],
-                                                    },
-                                                },
-                                            ),
-                                        ],
-                                    },
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
                                 },
-                            ],
-                            request_sections: [],
-                            body: None,
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [
+                                    KeyValue {
+                                        key: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "message",
+                                                ),
+                                            ],
+                                        },
+                                        value: InterpolatedString {
+                                            parts: [
+                                                Template(
+                                                    Template {
+                                                        expr: Expr {
+                                                            variable: FunctionName(
+                                                                "newUuid",
+                                                            ),
+                                                            filters: [],
+                                                        },
+                                                    },
+                                                ),
+                                            ],
+                                        },
+                                    },
+                                ],
+                                request_sections: [],
+                                body: None,
+                            },
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -1237,73 +1283,75 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org",
-                                    ),
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [
+                                    KeyValue {
+                                        key: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "message",
+                                                ),
+                                            ],
+                                        },
+                                        value: InterpolatedString {
+                                            parts: [
+                                                Template(
+                                                    Template {
+                                                        expr: Expr {
+                                                            variable: FunctionName(
+                                                                "newUuid",
+                                                            ),
+                                                            filters: [],
+                                                        },
+                                                    },
+                                                ),
+                                            ],
+                                        },
+                                    },
+                                    KeyValue {
+                                        key: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "key",
+                                                ),
+                                            ],
+                                        },
+                                        value: InterpolatedString {
+                                            parts: [
+                                                Template(
+                                                    Template {
+                                                        expr: Expr {
+                                                            variable: VariableName(
+                                                                "apikey",
+                                                            ),
+                                                            filters: [],
+                                                        },
+                                                    },
+                                                ),
+                                            ],
+                                        },
+                                    },
                                 ],
+                                request_sections: [],
+                                body: None,
                             },
-                            header: [
-                                KeyValue {
-                                    key: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "message",
-                                            ),
-                                        ],
-                                    },
-                                    value: InterpolatedString {
-                                        parts: [
-                                            Template(
-                                                Template {
-                                                    expr: Expr {
-                                                        variable: FunctionName(
-                                                            "newUuid",
-                                                        ),
-                                                        filters: [],
-                                                    },
-                                                },
-                                            ),
-                                        ],
-                                    },
-                                },
-                                KeyValue {
-                                    key: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "key",
-                                            ),
-                                        ],
-                                    },
-                                    value: InterpolatedString {
-                                        parts: [
-                                            Template(
-                                                Template {
-                                                    expr: Expr {
-                                                        variable: VariableName(
-                                                            "apikey",
-                                                        ),
-                                                        filters: [],
-                                                    },
-                                                },
-                                            ),
-                                        ],
-                                    },
-                                },
-                            ],
-                            request_sections: [],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -1320,50 +1368,52 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.org",
-                                    ),
-                                ],
-                            },
-                            header: [
-                                KeyValue {
-                                    key: InterpolatedString {
-                                        parts: [
-                                            Str(
-                                                "key",
-                                            ),
-                                        ],
-                                    },
-                                    value: InterpolatedString {
-                                        parts: [
-                                            Template(
-                                                Template {
-                                                    expr: Expr {
-                                                        variable: VariableName(
-                                                            "api-key",
-                                                        ),
-                                                        filters: [],
-                                                    },
-                                                },
-                                            ),
-                                        ],
-                                    },
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
                                 },
-                            ],
-                            request_sections: [],
-                            body: None,
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [
+                                    KeyValue {
+                                        key: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "key",
+                                                ),
+                                            ],
+                                        },
+                                        value: InterpolatedString {
+                                            parts: [
+                                                Template(
+                                                    Template {
+                                                        expr: Expr {
+                                                            variable: VariableName(
+                                                                "api-key",
+                                                            ),
+                                                            filters: [],
+                                                        },
+                                                    },
+                                                ),
+                                            ],
+                                        },
+                                    },
+                                ],
+                                request_sections: [],
+                                body: None,
+                            },
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -1395,81 +1445,83 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://",
-                                    ),
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "host",
-                                                ),
-                                                filters: [],
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://",
+                                        ),
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "host",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                    Str(
-                                        "/",
-                                    ),
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "id",
-                                                ),
-                                                filters: [],
+                                        ),
+                                        Str(
+                                            "/",
+                                        ),
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "id",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
+                                        ),
+                                        Str(
+                                            "/status",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [
+                                    OptionsSection(
+                                        RequestOptionsSection {
+                                            options: [
+                                                Variable(
+                                                    VariableDefinitionOption {
+                                                        name: "host",
+                                                        value: String(
+                                                            InterpolatedString {
+                                                                parts: [
+                                                                    Str(
+                                                                        "example.net",
+                                                                    ),
+                                                                ],
+                                                            },
+                                                        ),
+                                                    },
+                                                ),
+                                                Variable(
+                                                    VariableDefinitionOption {
+                                                        name: "id",
+                                                        value: Integer(
+                                                            1234,
+                                                        ),
+                                                    },
+                                                ),
+                                            ],
                                         },
-                                    ),
-                                    Str(
-                                        "/status",
                                     ),
                                 ],
+                                body: None,
                             },
-                            header: [],
-                            request_sections: [
-                                OptionsSection(
-                                    RequestOptionsSection {
-                                        options: [
-                                            Variable(
-                                                VariableDefinitionOption {
-                                                    name: "host",
-                                                    value: String(
-                                                        InterpolatedString {
-                                                            parts: [
-                                                                Str(
-                                                                    "example.net",
-                                                                ),
-                                                            ],
-                                                        },
-                                                    ),
-                                                },
-                                            ),
-                                            Variable(
-                                                VariableDefinitionOption {
-                                                    name: "id",
-                                                    value: Integer(
-                                                        1234,
-                                                    ),
-                                                },
-                                            ),
-                                        ],
-                                    },
-                                ),
-                            ],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -1486,113 +1538,115 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.com",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.com",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [
+                                    OptionsSection(
+                                        RequestOptionsSection {
+                                            options: [
+                                                Compressed(
+                                                    Literal(
+                                                        true,
+                                                    ),
+                                                ),
+                                                Location(
+                                                    Literal(
+                                                        true,
+                                                    ),
+                                                ),
+                                                LocationTrusted(
+                                                    Literal(
+                                                        true,
+                                                    ),
+                                                ),
+                                                Http10(
+                                                    Literal(
+                                                        false,
+                                                    ),
+                                                ),
+                                                Http11(
+                                                    Literal(
+                                                        false,
+                                                    ),
+                                                ),
+                                                Http2(
+                                                    Literal(
+                                                        false,
+                                                    ),
+                                                ),
+                                                Http3(
+                                                    Literal(
+                                                        true,
+                                                    ),
+                                                ),
+                                                Insecure(
+                                                    Literal(
+                                                        false,
+                                                    ),
+                                                ),
+                                                Ipv4(
+                                                    Literal(
+                                                        false,
+                                                    ),
+                                                ),
+                                                Ipv6(
+                                                    Literal(
+                                                        true,
+                                                    ),
+                                                ),
+                                                Netrc(
+                                                    Literal(
+                                                        true,
+                                                    ),
+                                                ),
+                                                NetrcOptional(
+                                                    Literal(
+                                                        true,
+                                                    ),
+                                                ),
+                                                PathAsIs(
+                                                    Literal(
+                                                        true,
+                                                    ),
+                                                ),
+                                                Skip(
+                                                    Literal(
+                                                        false,
+                                                    ),
+                                                ),
+                                                Verbose(
+                                                    Literal(
+                                                        true,
+                                                    ),
+                                                ),
+                                                VeryVerbose(
+                                                    Literal(
+                                                        true,
+                                                    ),
+                                                ),
+                                            ],
+                                        },
                                     ),
                                 ],
+                                body: None,
                             },
-                            header: [],
-                            request_sections: [
-                                OptionsSection(
-                                    RequestOptionsSection {
-                                        options: [
-                                            Compressed(
-                                                Literal(
-                                                    true,
-                                                ),
-                                            ),
-                                            Location(
-                                                Literal(
-                                                    true,
-                                                ),
-                                            ),
-                                            LocationTrusted(
-                                                Literal(
-                                                    true,
-                                                ),
-                                            ),
-                                            Http10(
-                                                Literal(
-                                                    false,
-                                                ),
-                                            ),
-                                            Http11(
-                                                Literal(
-                                                    false,
-                                                ),
-                                            ),
-                                            Http2(
-                                                Literal(
-                                                    false,
-                                                ),
-                                            ),
-                                            Http3(
-                                                Literal(
-                                                    true,
-                                                ),
-                                            ),
-                                            Insecure(
-                                                Literal(
-                                                    false,
-                                                ),
-                                            ),
-                                            Ipv4(
-                                                Literal(
-                                                    false,
-                                                ),
-                                            ),
-                                            Ipv6(
-                                                Literal(
-                                                    true,
-                                                ),
-                                            ),
-                                            Netrc(
-                                                Literal(
-                                                    true,
-                                                ),
-                                            ),
-                                            NetrcOptional(
-                                                Literal(
-                                                    true,
-                                                ),
-                                            ),
-                                            PathAsIs(
-                                                Literal(
-                                                    true,
-                                                ),
-                                            ),
-                                            Skip(
-                                                Literal(
-                                                    false,
-                                                ),
-                                            ),
-                                            Verbose(
-                                                Literal(
-                                                    true,
-                                                ),
-                                            ),
-                                            VeryVerbose(
-                                                Literal(
-                                                    true,
-                                                ),
-                                            ),
-                                        ],
-                                    },
-                                ),
-                            ],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -1610,69 +1664,71 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.com",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.com",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [
+                                    OptionsSection(
+                                        RequestOptionsSection {
+                                            options: [
+                                                ConnectTimeout(
+                                                    Template(
+                                                        Template {
+                                                            expr: Expr {
+                                                                variable: VariableName(
+                                                                    "connectTimeout",
+                                                                ),
+                                                                filters: [],
+                                                            },
+                                                        },
+                                                    ),
+                                                ),
+                                                Delay(
+                                                    Template(
+                                                        Template {
+                                                            expr: Expr {
+                                                                variable: VariableName(
+                                                                    "delay",
+                                                                ),
+                                                                filters: [],
+                                                            },
+                                                        },
+                                                    ),
+                                                ),
+                                                RetryInterval(
+                                                    Template(
+                                                        Template {
+                                                            expr: Expr {
+                                                                variable: VariableName(
+                                                                    "retryInterval",
+                                                                ),
+                                                                filters: [],
+                                                            },
+                                                        },
+                                                    ),
+                                                ),
+                                            ],
+                                        },
                                     ),
                                 ],
+                                body: None,
                             },
-                            header: [],
-                            request_sections: [
-                                OptionsSection(
-                                    RequestOptionsSection {
-                                        options: [
-                                            ConnectTimeout(
-                                                Template(
-                                                    Template {
-                                                        expr: Expr {
-                                                            variable: VariableName(
-                                                                "connectTimeout",
-                                                            ),
-                                                            filters: [],
-                                                        },
-                                                    },
-                                                ),
-                                            ),
-                                            Delay(
-                                                Template(
-                                                    Template {
-                                                        expr: Expr {
-                                                            variable: VariableName(
-                                                                "delay",
-                                                            ),
-                                                            filters: [],
-                                                        },
-                                                    },
-                                                ),
-                                            ),
-                                            RetryInterval(
-                                                Template(
-                                                    Template {
-                                                        expr: Expr {
-                                                            variable: VariableName(
-                                                                "retryInterval",
-                                                            ),
-                                                            filters: [],
-                                                        },
-                                                    },
-                                                ),
-                                            ),
-                                        ],
-                                    },
-                                ),
-                            ],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -1690,57 +1746,59 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.com",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.com",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [
+                                    OptionsSection(
+                                        RequestOptionsSection {
+                                            options: [
+                                                ConnectTimeout(
+                                                    Literal(
+                                                        Duration {
+                                                            duration: 5,
+                                                            unit: None,
+                                                        },
+                                                    ),
+                                                ),
+                                                Delay(
+                                                    Literal(
+                                                        Duration {
+                                                            duration: 4,
+                                                            unit: None,
+                                                        },
+                                                    ),
+                                                ),
+                                                RetryInterval(
+                                                    Literal(
+                                                        Duration {
+                                                            duration: 500,
+                                                            unit: None,
+                                                        },
+                                                    ),
+                                                ),
+                                            ],
+                                        },
                                     ),
                                 ],
+                                body: None,
                             },
-                            header: [],
-                            request_sections: [
-                                OptionsSection(
-                                    RequestOptionsSection {
-                                        options: [
-                                            ConnectTimeout(
-                                                Literal(
-                                                    Duration {
-                                                        duration: 5,
-                                                        unit: None,
-                                                    },
-                                                ),
-                                            ),
-                                            Delay(
-                                                Literal(
-                                                    Duration {
-                                                        duration: 4,
-                                                        unit: None,
-                                                    },
-                                                ),
-                                            ),
-                                            RetryInterval(
-                                                Literal(
-                                                    Duration {
-                                                        duration: 500,
-                                                        unit: None,
-                                                    },
-                                                ),
-                                            ),
-                                        ],
-                                    },
-                                ),
-                            ],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -1758,63 +1816,65 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.com",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.com",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [
+                                    OptionsSection(
+                                        RequestOptionsSection {
+                                            options: [
+                                                ConnectTimeout(
+                                                    Literal(
+                                                        Duration {
+                                                            duration: 5,
+                                                            unit: Some(
+                                                                Second,
+                                                            ),
+                                                        },
+                                                    ),
+                                                ),
+                                                Delay(
+                                                    Literal(
+                                                        Duration {
+                                                            duration: 4,
+                                                            unit: Some(
+                                                                Second,
+                                                            ),
+                                                        },
+                                                    ),
+                                                ),
+                                                RetryInterval(
+                                                    Literal(
+                                                        Duration {
+                                                            duration: 500,
+                                                            unit: Some(
+                                                                Second,
+                                                            ),
+                                                        },
+                                                    ),
+                                                ),
+                                            ],
+                                        },
                                     ),
                                 ],
+                                body: None,
                             },
-                            header: [],
-                            request_sections: [
-                                OptionsSection(
-                                    RequestOptionsSection {
-                                        options: [
-                                            ConnectTimeout(
-                                                Literal(
-                                                    Duration {
-                                                        duration: 5,
-                                                        unit: Some(
-                                                            Second,
-                                                        ),
-                                                    },
-                                                ),
-                                            ),
-                                            Delay(
-                                                Literal(
-                                                    Duration {
-                                                        duration: 4,
-                                                        unit: Some(
-                                                            Second,
-                                                        ),
-                                                    },
-                                                ),
-                                            ),
-                                            RetryInterval(
-                                                Literal(
-                                                    Duration {
-                                                        duration: 500,
-                                                        unit: Some(
-                                                            Second,
-                                                        ),
-                                                    },
-                                                ),
-                                            ),
-                                        ],
-                                    },
-                                ),
-                            ],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -1832,63 +1892,65 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.com",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.com",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [
+                                    OptionsSection(
+                                        RequestOptionsSection {
+                                            options: [
+                                                ConnectTimeout(
+                                                    Literal(
+                                                        Duration {
+                                                            duration: 5,
+                                                            unit: Some(
+                                                                Millisecond,
+                                                            ),
+                                                        },
+                                                    ),
+                                                ),
+                                                Delay(
+                                                    Literal(
+                                                        Duration {
+                                                            duration: 4,
+                                                            unit: Some(
+                                                                Millisecond,
+                                                            ),
+                                                        },
+                                                    ),
+                                                ),
+                                                RetryInterval(
+                                                    Literal(
+                                                        Duration {
+                                                            duration: 500,
+                                                            unit: Some(
+                                                                Millisecond,
+                                                            ),
+                                                        },
+                                                    ),
+                                                ),
+                                            ],
+                                        },
                                     ),
                                 ],
+                                body: None,
                             },
-                            header: [],
-                            request_sections: [
-                                OptionsSection(
-                                    RequestOptionsSection {
-                                        options: [
-                                            ConnectTimeout(
-                                                Literal(
-                                                    Duration {
-                                                        duration: 5,
-                                                        unit: Some(
-                                                            Millisecond,
-                                                        ),
-                                                    },
-                                                ),
-                                            ),
-                                            Delay(
-                                                Literal(
-                                                    Duration {
-                                                        duration: 4,
-                                                        unit: Some(
-                                                            Millisecond,
-                                                        ),
-                                                    },
-                                                ),
-                                            ),
-                                            RetryInterval(
-                                                Literal(
-                                                    Duration {
-                                                        duration: 500,
-                                                        unit: Some(
-                                                            Millisecond,
-                                                        ),
-                                                    },
-                                                ),
-                                            ),
-                                        ],
-                                    },
-                                ),
-                            ],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -1906,63 +1968,65 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.com",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.com",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [
+                                    OptionsSection(
+                                        RequestOptionsSection {
+                                            options: [
+                                                ConnectTimeout(
+                                                    Literal(
+                                                        Duration {
+                                                            duration: 5,
+                                                            unit: Some(
+                                                                Minute,
+                                                            ),
+                                                        },
+                                                    ),
+                                                ),
+                                                Delay(
+                                                    Literal(
+                                                        Duration {
+                                                            duration: 4,
+                                                            unit: Some(
+                                                                Minute,
+                                                            ),
+                                                        },
+                                                    ),
+                                                ),
+                                                RetryInterval(
+                                                    Literal(
+                                                        Duration {
+                                                            duration: 500,
+                                                            unit: Some(
+                                                                Minute,
+                                                            ),
+                                                        },
+                                                    ),
+                                                ),
+                                            ],
+                                        },
                                     ),
                                 ],
+                                body: None,
                             },
-                            header: [],
-                            request_sections: [
-                                OptionsSection(
-                                    RequestOptionsSection {
-                                        options: [
-                                            ConnectTimeout(
-                                                Literal(
-                                                    Duration {
-                                                        duration: 5,
-                                                        unit: Some(
-                                                            Minute,
-                                                        ),
-                                                    },
-                                                ),
-                                            ),
-                                            Delay(
-                                                Literal(
-                                                    Duration {
-                                                        duration: 4,
-                                                        unit: Some(
-                                                            Minute,
-                                                        ),
-                                                    },
-                                                ),
-                                            ),
-                                            RetryInterval(
-                                                Literal(
-                                                    Duration {
-                                                        duration: 500,
-                                                        unit: Some(
-                                                            Minute,
-                                                        ),
-                                                    },
-                                                ),
-                                            ),
-                                        ],
-                                    },
-                                ),
-                            ],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -1979,41 +2043,43 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.com",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.com",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [
+                                    OptionsSection(
+                                        RequestOptionsSection {
+                                            options: [
+                                                RetryInterval(
+                                                    Literal(
+                                                        Duration {
+                                                            duration: 500,
+                                                            unit: None,
+                                                        },
+                                                    ),
+                                                ),
+                                            ],
+                                        },
                                     ),
                                 ],
+                                body: None,
                             },
-                            header: [],
-                            request_sections: [
-                                OptionsSection(
-                                    RequestOptionsSection {
-                                        options: [
-                                            RetryInterval(
-                                                Literal(
-                                                    Duration {
-                                                        duration: 500,
-                                                        unit: None,
-                                                    },
-                                                ),
-                                            ),
-                                        ],
-                                    },
-                                ),
-                            ],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -2030,41 +2096,43 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.com",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.com",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [
+                                    OptionsSection(
+                                        RequestOptionsSection {
+                                            options: [
+                                                Delay(
+                                                    Literal(
+                                                        Duration {
+                                                            duration: 4,
+                                                            unit: None,
+                                                        },
+                                                    ),
+                                                ),
+                                            ],
+                                        },
                                     ),
                                 ],
+                                body: None,
                             },
-                            header: [],
-                            request_sections: [
-                                OptionsSection(
-                                    RequestOptionsSection {
-                                        options: [
-                                            Delay(
-                                                Literal(
-                                                    Duration {
-                                                        duration: 4,
-                                                        unit: None,
-                                                    },
-                                                ),
-                                            ),
-                                        ],
-                                    },
-                                ),
-                            ],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -2082,53 +2150,55 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.com",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.com",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [
+                                    OptionsSection(
+                                        RequestOptionsSection {
+                                            options: [
+                                                LimitRate(
+                                                    Literal(
+                                                        59,
+                                                    ),
+                                                ),
+                                                MaxRedirs(
+                                                    Literal(
+                                                        109,
+                                                    ),
+                                                ),
+                                                Repeat(
+                                                    Literal(
+                                                        10,
+                                                    ),
+                                                ),
+                                                Retry(
+                                                    Literal(
+                                                        5,
+                                                    ),
+                                                ),
+                                            ],
+                                        },
                                     ),
                                 ],
+                                body: None,
                             },
-                            header: [],
-                            request_sections: [
-                                OptionsSection(
-                                    RequestOptionsSection {
-                                        options: [
-                                            LimitRate(
-                                                Literal(
-                                                    59,
-                                                ),
-                                            ),
-                                            MaxRedirs(
-                                                Literal(
-                                                    109,
-                                                ),
-                                            ),
-                                            Repeat(
-                                                Literal(
-                                                    10,
-                                                ),
-                                            ),
-                                            Retry(
-                                                Literal(
-                                                    5,
-                                                ),
-                                            ),
-                                        ],
-                                    },
-                                ),
-                            ],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -2148,38 +2218,40 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.com",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.com",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [
+                                    OptionsSection(
+                                        RequestOptionsSection {
+                                            options: [
+                                                LimitRate(
+                                                    Literal(
+                                                        18446744073709551615,
+                                                    ),
+                                                ),
+                                            ],
+                                        },
                                     ),
                                 ],
+                                body: None,
                             },
-                            header: [],
-                            request_sections: [
-                                OptionsSection(
-                                    RequestOptionsSection {
-                                        options: [
-                                            LimitRate(
-                                                Literal(
-                                                    18446744073709551615,
-                                                ),
-                                            ),
-                                        ],
-                                    },
-                                ),
-                            ],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -2197,38 +2269,40 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.com",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.com",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [
+                                    OptionsSection(
+                                        RequestOptionsSection {
+                                            options: [
+                                                LimitRate(
+                                                    BigInteger(
+                                                        "18446744073709551616",
+                                                    ),
+                                                ),
+                                            ],
+                                        },
                                     ),
                                 ],
+                                body: None,
                             },
-                            header: [],
-                            request_sections: [
-                                OptionsSection(
-                                    RequestOptionsSection {
-                                        options: [
-                                            LimitRate(
-                                                BigInteger(
-                                                    "18446744073709551616",
-                                                ),
-                                            ),
-                                        ],
-                                    },
-                                ),
-                            ],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [
                 The integer value is larger than 18446744073709551615 and is not valid for 64bit version of hurl at 46..66,
@@ -2244,44 +2318,45 @@ mod tests {
             "GET https://example.com\n[Options]\nlimit-rate: {}",
             u32::MAX,
         );
-
         assert_debug_snapshot!(
         ast_parser().parse(&test_str),
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.com",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.com",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [
+                                    OptionsSection(
+                                        RequestOptionsSection {
+                                            options: [
+                                                LimitRate(
+                                                    Literal(
+                                                        4294967295,
+                                                    ),
+                                                ),
+                                            ],
+                                        },
                                     ),
                                 ],
+                                body: None,
                             },
-                            header: [],
-                            request_sections: [
-                                OptionsSection(
-                                    RequestOptionsSection {
-                                        options: [
-                                            LimitRate(
-                                                Literal(
-                                                    4294967295,
-                                                ),
-                                            ),
-                                        ],
-                                    },
-                                ),
-                            ],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -2298,96 +2373,98 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.com",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.com",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [
+                                    OptionsSection(
+                                        RequestOptionsSection {
+                                            options: [
+                                                AwsSigv4(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Str(
+                                                                "aws:amz:eu-central-1:sts",
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                                ConnectTo(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Str(
+                                                                "example.com:8000:127.0.0.1:8080",
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                                NetrcFile(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Str(
+                                                                "~/.netrc",
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                                Proxy(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Str(
+                                                                "example.proxy:8050",
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                                Resolve(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Str(
+                                                                "example.com:8000:127.0.0.1",
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                                UnixSocket(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Str(
+                                                                "sock",
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                                User(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Str(
+                                                                "joe=secret",
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                            ],
+                                        },
                                     ),
                                 ],
+                                body: None,
                             },
-                            header: [],
-                            request_sections: [
-                                OptionsSection(
-                                    RequestOptionsSection {
-                                        options: [
-                                            AwsSigv4(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Str(
-                                                            "aws:amz:eu-central-1:sts",
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                            ConnectTo(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Str(
-                                                            "example.com:8000:127.0.0.1:8080",
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                            NetrcFile(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Str(
-                                                            "~/.netrc",
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                            Proxy(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Str(
-                                                            "example.proxy:8050",
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                            Resolve(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Str(
-                                                            "example.com:8000:127.0.0.1",
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                            UnixSocket(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Str(
-                                                            "sock",
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                            User(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Str(
-                                                            "joe=secret",
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                        ],
-                                    },
-                                ),
-                            ],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -2404,216 +2481,218 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://",
-                                    ),
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "host",
-                                                ),
-                                                filters: [],
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://",
+                                        ),
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "host",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
-                                        },
-                                    ),
-                                    Str(
-                                        ":",
-                                    ),
-                                    Template(
-                                        Template {
-                                            expr: Expr {
-                                                variable: VariableName(
-                                                    "port",
-                                                ),
-                                                filters: [],
+                                        ),
+                                        Str(
+                                            ":",
+                                        ),
+                                        Template(
+                                            Template {
+                                                expr: Expr {
+                                                    variable: VariableName(
+                                                        "port",
+                                                    ),
+                                                    filters: [],
+                                                },
                                             },
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [
+                                    OptionsSection(
+                                        RequestOptionsSection {
+                                            options: [
+                                                AwsSigv4(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Template(
+                                                                Template {
+                                                                    expr: Expr {
+                                                                        variable: VariableName(
+                                                                            "aws",
+                                                                        ),
+                                                                        filters: [],
+                                                                    },
+                                                                },
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                                ConnectTo(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Template(
+                                                                Template {
+                                                                    expr: Expr {
+                                                                        variable: VariableName(
+                                                                            "host",
+                                                                        ),
+                                                                        filters: [],
+                                                                    },
+                                                                },
+                                                            ),
+                                                            Str(
+                                                                ":",
+                                                            ),
+                                                            Template(
+                                                                Template {
+                                                                    expr: Expr {
+                                                                        variable: VariableName(
+                                                                            "port",
+                                                                        ),
+                                                                        filters: [],
+                                                                    },
+                                                                },
+                                                            ),
+                                                            Str(
+                                                                ":127.0.0.1:8080",
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                                NetrcFile(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Template(
+                                                                Template {
+                                                                    expr: Expr {
+                                                                        variable: VariableName(
+                                                                            "filepath",
+                                                                        ),
+                                                                        filters: [],
+                                                                    },
+                                                                },
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                                Proxy(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Template(
+                                                                Template {
+                                                                    expr: Expr {
+                                                                        variable: VariableName(
+                                                                            "proxyhost",
+                                                                        ),
+                                                                        filters: [],
+                                                                    },
+                                                                },
+                                                            ),
+                                                            Str(
+                                                                ":8050",
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                                Resolve(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Template(
+                                                                Template {
+                                                                    expr: Expr {
+                                                                        variable: VariableName(
+                                                                            "host",
+                                                                        ),
+                                                                        filters: [],
+                                                                    },
+                                                                },
+                                                            ),
+                                                            Str(
+                                                                ":",
+                                                            ),
+                                                            Template(
+                                                                Template {
+                                                                    expr: Expr {
+                                                                        variable: VariableName(
+                                                                            "port",
+                                                                        ),
+                                                                        filters: [],
+                                                                    },
+                                                                },
+                                                            ),
+                                                            Str(
+                                                                ":127.0.0.1",
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                                UnixSocket(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Template(
+                                                                Template {
+                                                                    expr: Expr {
+                                                                        variable: VariableName(
+                                                                            "socket",
+                                                                        ),
+                                                                        filters: [],
+                                                                    },
+                                                                },
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                                User(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Template(
+                                                                Template {
+                                                                    expr: Expr {
+                                                                        variable: VariableName(
+                                                                            "user",
+                                                                        ),
+                                                                        filters: [],
+                                                                    },
+                                                                },
+                                                            ),
+                                                            Str(
+                                                                "=",
+                                                            ),
+                                                            Template(
+                                                                Template {
+                                                                    expr: Expr {
+                                                                        variable: VariableName(
+                                                                            "password",
+                                                                        ),
+                                                                        filters: [],
+                                                                    },
+                                                                },
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                            ],
                                         },
                                     ),
                                 ],
+                                body: None,
                             },
-                            header: [],
-                            request_sections: [
-                                OptionsSection(
-                                    RequestOptionsSection {
-                                        options: [
-                                            AwsSigv4(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Template(
-                                                            Template {
-                                                                expr: Expr {
-                                                                    variable: VariableName(
-                                                                        "aws",
-                                                                    ),
-                                                                    filters: [],
-                                                                },
-                                                            },
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                            ConnectTo(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Template(
-                                                            Template {
-                                                                expr: Expr {
-                                                                    variable: VariableName(
-                                                                        "host",
-                                                                    ),
-                                                                    filters: [],
-                                                                },
-                                                            },
-                                                        ),
-                                                        Str(
-                                                            ":",
-                                                        ),
-                                                        Template(
-                                                            Template {
-                                                                expr: Expr {
-                                                                    variable: VariableName(
-                                                                        "port",
-                                                                    ),
-                                                                    filters: [],
-                                                                },
-                                                            },
-                                                        ),
-                                                        Str(
-                                                            ":127.0.0.1:8080",
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                            NetrcFile(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Template(
-                                                            Template {
-                                                                expr: Expr {
-                                                                    variable: VariableName(
-                                                                        "filepath",
-                                                                    ),
-                                                                    filters: [],
-                                                                },
-                                                            },
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                            Proxy(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Template(
-                                                            Template {
-                                                                expr: Expr {
-                                                                    variable: VariableName(
-                                                                        "proxyhost",
-                                                                    ),
-                                                                    filters: [],
-                                                                },
-                                                            },
-                                                        ),
-                                                        Str(
-                                                            ":8050",
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                            Resolve(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Template(
-                                                            Template {
-                                                                expr: Expr {
-                                                                    variable: VariableName(
-                                                                        "host",
-                                                                    ),
-                                                                    filters: [],
-                                                                },
-                                                            },
-                                                        ),
-                                                        Str(
-                                                            ":",
-                                                        ),
-                                                        Template(
-                                                            Template {
-                                                                expr: Expr {
-                                                                    variable: VariableName(
-                                                                        "port",
-                                                                    ),
-                                                                    filters: [],
-                                                                },
-                                                            },
-                                                        ),
-                                                        Str(
-                                                            ":127.0.0.1",
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                            UnixSocket(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Template(
-                                                            Template {
-                                                                expr: Expr {
-                                                                    variable: VariableName(
-                                                                        "socket",
-                                                                    ),
-                                                                    filters: [],
-                                                                },
-                                                            },
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                            User(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Template(
-                                                            Template {
-                                                                expr: Expr {
-                                                                    variable: VariableName(
-                                                                        "user",
-                                                                    ),
-                                                                    filters: [],
-                                                                },
-                                                            },
-                                                        ),
-                                                        Str(
-                                                            "=",
-                                                        ),
-                                                        Template(
-                                                            Template {
-                                                                expr: Expr {
-                                                                    variable: VariableName(
-                                                                        "password",
-                                                                    ),
-                                                                    filters: [],
-                                                                },
-                                                            },
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                        ],
-                                    },
-                                ),
-                            ],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -2630,60 +2709,62 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.com",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.com",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [
+                                    OptionsSection(
+                                        RequestOptionsSection {
+                                            options: [
+                                                Cacert(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Str(
+                                                                "/etc/cert.pem",
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                                Key(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Str(
+                                                                ".ssh/id_rsa.pub",
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                                Output(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Str(
+                                                                "./myreport",
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                            ],
+                                        },
                                     ),
                                 ],
+                                body: None,
                             },
-                            header: [],
-                            request_sections: [
-                                OptionsSection(
-                                    RequestOptionsSection {
-                                        options: [
-                                            Cacert(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Str(
-                                                            "/etc/cert.pem",
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                            Key(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Str(
-                                                            ".ssh/id_rsa.pub",
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                            Output(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Str(
-                                                            "./myreport",
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                        ],
-                                    },
-                                ),
-                            ],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -2700,81 +2781,83 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.com",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.com",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [
+                                    OptionsSection(
+                                        RequestOptionsSection {
+                                            options: [
+                                                Cacert(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Template(
+                                                                Template {
+                                                                    expr: Expr {
+                                                                        variable: VariableName(
+                                                                            "certfilepath",
+                                                                        ),
+                                                                        filters: [],
+                                                                    },
+                                                                },
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                                Key(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Template(
+                                                                Template {
+                                                                    expr: Expr {
+                                                                        variable: VariableName(
+                                                                            "keyfilepath",
+                                                                        ),
+                                                                        filters: [],
+                                                                    },
+                                                                },
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                                Output(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Template(
+                                                                Template {
+                                                                    expr: Expr {
+                                                                        variable: VariableName(
+                                                                            "reportfilepath",
+                                                                        ),
+                                                                        filters: [],
+                                                                    },
+                                                                },
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                            ],
+                                        },
                                     ),
                                 ],
+                                body: None,
                             },
-                            header: [],
-                            request_sections: [
-                                OptionsSection(
-                                    RequestOptionsSection {
-                                        options: [
-                                            Cacert(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Template(
-                                                            Template {
-                                                                expr: Expr {
-                                                                    variable: VariableName(
-                                                                        "certfilepath",
-                                                                    ),
-                                                                    filters: [],
-                                                                },
-                                                            },
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                            Key(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Template(
-                                                            Template {
-                                                                expr: Expr {
-                                                                    variable: VariableName(
-                                                                        "keyfilepath",
-                                                                    ),
-                                                                    filters: [],
-                                                                },
-                                                            },
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                            Output(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Template(
-                                                            Template {
-                                                                expr: Expr {
-                                                                    variable: VariableName(
-                                                                        "reportfilepath",
-                                                                    ),
-                                                                    filters: [],
-                                                                },
-                                                            },
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                        ],
-                                    },
-                                ),
-                            ],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -2791,65 +2874,67 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "http://localhost:3000/api/search",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "http://localhost:3000/api/search",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [
+                                    QueryStringParamsSection(
+                                        QueryStringParamsSection {
+                                            queries: [
+                                                KeyValue {
+                                                    key: InterpolatedString {
+                                                        parts: [
+                                                            Str(
+                                                                "q",
+                                                            ),
+                                                        ],
+                                                    },
+                                                    value: InterpolatedString {
+                                                        parts: [
+                                                            Str(
+                                                                "1982",
+                                                            ),
+                                                        ],
+                                                    },
+                                                },
+                                                KeyValue {
+                                                    key: InterpolatedString {
+                                                        parts: [
+                                                            Str(
+                                                                "sort",
+                                                            ),
+                                                        ],
+                                                    },
+                                                    value: InterpolatedString {
+                                                        parts: [
+                                                            Str(
+                                                                "name",
+                                                            ),
+                                                        ],
+                                                    },
+                                                },
+                                            ],
+                                        },
                                     ),
                                 ],
+                                body: None,
                             },
-                            header: [],
-                            request_sections: [
-                                QueryStringParamsSection(
-                                    QueryStringParamsSection {
-                                        queries: [
-                                            KeyValue {
-                                                key: InterpolatedString {
-                                                    parts: [
-                                                        Str(
-                                                            "q",
-                                                        ),
-                                                    ],
-                                                },
-                                                value: InterpolatedString {
-                                                    parts: [
-                                                        Str(
-                                                            "1982",
-                                                        ),
-                                                    ],
-                                                },
-                                            },
-                                            KeyValue {
-                                                key: InterpolatedString {
-                                                    parts: [
-                                                        Str(
-                                                            "sort",
-                                                        ),
-                                                    ],
-                                                },
-                                                value: InterpolatedString {
-                                                    parts: [
-                                                        Str(
-                                                            "name",
-                                                        ),
-                                                    ],
-                                                },
-                                            },
-                                        ],
-                                    },
-                                ),
-                            ],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
@@ -2875,139 +2960,177 @@ mod tests {
             @r#"
         ParseResult {
             output: Some(
-                [
-                    Entry {
-                        request: Request {
-                            method: Method {
-                                value: "GET",
-                            },
-                            url: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "https://example.com",
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.com",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [
+                                    OptionsSection(
+                                        RequestOptionsSection {
+                                            options: [
+                                                Cacert(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Template(
+                                                                Template {
+                                                                    expr: Expr {
+                                                                        variable: VariableName(
+                                                                            "certfilepath",
+                                                                        ),
+                                                                        filters: [],
+                                                                    },
+                                                                },
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                                Key(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Template(
+                                                                Template {
+                                                                    expr: Expr {
+                                                                        variable: VariableName(
+                                                                            "keyfilepath",
+                                                                        ),
+                                                                        filters: [],
+                                                                    },
+                                                                },
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                                Output(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Template(
+                                                                Template {
+                                                                    expr: Expr {
+                                                                        variable: VariableName(
+                                                                            "reportfilepath",
+                                                                        ),
+                                                                        filters: [],
+                                                                    },
+                                                                },
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                                ConnectTo(
+                                                    InterpolatedString {
+                                                        parts: [
+                                                            Template(
+                                                                Template {
+                                                                    expr: Expr {
+                                                                        variable: VariableName(
+                                                                            "host",
+                                                                        ),
+                                                                        filters: [],
+                                                                    },
+                                                                },
+                                                            ),
+                                                            Str(
+                                                                ":",
+                                                            ),
+                                                            Template(
+                                                                Template {
+                                                                    expr: Expr {
+                                                                        variable: VariableName(
+                                                                            "port",
+                                                                        ),
+                                                                        filters: [],
+                                                                    },
+                                                                },
+                                                            ),
+                                                            Str(
+                                                                ":127.0.0.1:8080",
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                                Variable(
+                                                    VariableDefinitionOption {
+                                                        name: "host",
+                                                        value: String(
+                                                            InterpolatedString {
+                                                                parts: [
+                                                                    Str(
+                                                                        "example.net",
+                                                                    ),
+                                                                ],
+                                                            },
+                                                        ),
+                                                    },
+                                                ),
+                                                Variable(
+                                                    VariableDefinitionOption {
+                                                        name: "id",
+                                                        value: Integer(
+                                                            1234,
+                                                        ),
+                                                    },
+                                                ),
+                                            ],
+                                        },
                                     ),
                                 ],
+                                body: None,
                             },
-                            header: [],
-                            request_sections: [
-                                OptionsSection(
-                                    RequestOptionsSection {
-                                        options: [
-                                            Cacert(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Template(
-                                                            Template {
-                                                                expr: Expr {
-                                                                    variable: VariableName(
-                                                                        "certfilepath",
-                                                                    ),
-                                                                    filters: [],
-                                                                },
-                                                            },
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                            Key(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Template(
-                                                            Template {
-                                                                expr: Expr {
-                                                                    variable: VariableName(
-                                                                        "keyfilepath",
-                                                                    ),
-                                                                    filters: [],
-                                                                },
-                                                            },
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                            Output(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Template(
-                                                            Template {
-                                                                expr: Expr {
-                                                                    variable: VariableName(
-                                                                        "reportfilepath",
-                                                                    ),
-                                                                    filters: [],
-                                                                },
-                                                            },
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                            ConnectTo(
-                                                InterpolatedString {
-                                                    parts: [
-                                                        Template(
-                                                            Template {
-                                                                expr: Expr {
-                                                                    variable: VariableName(
-                                                                        "host",
-                                                                    ),
-                                                                    filters: [],
-                                                                },
-                                                            },
-                                                        ),
-                                                        Str(
-                                                            ":",
-                                                        ),
-                                                        Template(
-                                                            Template {
-                                                                expr: Expr {
-                                                                    variable: VariableName(
-                                                                        "port",
-                                                                    ),
-                                                                    filters: [],
-                                                                },
-                                                            },
-                                                        ),
-                                                        Str(
-                                                            ":127.0.0.1:8080",
-                                                        ),
-                                                    ],
-                                                },
-                                            ),
-                                            Variable(
-                                                VariableDefinitionOption {
-                                                    name: "host",
-                                                    value: String(
-                                                        InterpolatedString {
-                                                            parts: [
-                                                                Str(
-                                                                    "example.net",
-                                                                ),
-                                                            ],
-                                                        },
-                                                    ),
-                                                },
-                                            ),
-                                            Variable(
-                                                VariableDefinitionOption {
-                                                    name: "id",
-                                                    value: Integer(
-                                                        1234,
-                                                    ),
-                                                },
-                                            ),
-                                        ],
-                                    },
-                                ),
-                            ],
-                            body: None,
+                            response: None,
                         },
-                        response: None,
-                    },
-                ],
+                    ],
+                },
             ),
             errs: [],
         }
         "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_empty_hurl_document() {
+        let test_str = "";
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r"
+        ParseResult {
+            output: Some(
+                Ast {
+                    entries: [],
+                },
+            ),
+            errs: [],
+        }
+        ",
+        );
+    }
+
+    #[test]
+    fn it_parses_hurl_document_with_only_line_terminators() {
+        let test_str = "#testing\n#testing";
+        assert_debug_snapshot!(
+        ast_parser().parse(test_str),
+            @r"
+        ParseResult {
+            output: Some(
+                Ast {
+                    entries: [],
+                },
+            ),
+            errs: [],
+        }
+        ",
         );
     }
 }

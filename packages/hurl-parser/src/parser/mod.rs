@@ -8,7 +8,7 @@ mod primitives;
 mod quoted_string;
 mod request_section;
 mod template;
-mod types;
+pub mod types;
 mod variable;
 
 #[cfg(test)]
