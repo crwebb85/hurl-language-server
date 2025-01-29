@@ -14,3 +14,6 @@ target/
 
 # Env files
 *.env
+
+# The testing snapshot used by the package `insta`
+*.pending-snap
