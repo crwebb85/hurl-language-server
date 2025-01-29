@@ -18,7 +18,7 @@ fn key_string_escaped_char_parser<'a>(
         )))
         .or(escaped_unicode_parser())
         .labelled("key-string-escaped-char");
-    key_string_escaped_char
+    key_string_escaped_char.boxed()
 }
 
 pub fn key_parser<'a>(
@@ -45,7 +45,7 @@ pub fn key_parser<'a>(
         .map(|k| InterpolatedString { parts: k })
         .labelled("key-string");
 
-    key_string
+    key_string.boxed()
 }
 
 fn value_string_escaped_char_parser<'a>(
@@ -62,7 +62,7 @@ fn value_string_escaped_char_parser<'a>(
         )))
         .or(escaped_unicode_parser())
         .labelled("value-string-escaped-char");
-    value_string_escaped_char
+    value_string_escaped_char.boxed()
 }
 
 pub fn value_parser<'a>(
@@ -93,7 +93,7 @@ pub fn value_parser<'a>(
         .map(|v| InterpolatedString { parts: v })
         .labelled("value-string");
 
-    value_string
+    value_string.boxed()
 }
 
 pub fn key_value_parser<'a>(
@@ -105,7 +105,7 @@ pub fn key_value_parser<'a>(
         .map(|(key, value)| KeyValue { key, value })
         .labelled("key-value");
 
-    key_value
+    key_value.boxed()
 }
 
 #[cfg(test)]

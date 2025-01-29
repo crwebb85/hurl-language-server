@@ -1,7 +1,11 @@
 [package]
 name = "hurl-language-server"
-version = "0.1.0"
+version = "0.1.0-alpha.0"
 edition = "2021"
+license = "MIT"
+description = "A language server for hurl files"
+repository = "https://github.com/crwebb85/hurl-language-server"
+rust-version = "1.84.0"
 build = "build.rs"
 
 [dependencies]

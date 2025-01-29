@@ -1,11 +1,12 @@
 [package]
 name = "hurl-parser"
-version = "0.1.0"
+version = "0.1.0-alpha.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license = "MIT"
+description = "A parser for hurl files"
+repository = "https://github.com/crwebb85/hurl-language-server"
 
 [dependencies]
-chumsky = { version = "=1.0.0-alpha.8", features = [] }
+chumsky = "=1.0.0-alpha.8"
 insta = "1.41.1"
 ordered-float = "4.6.0"

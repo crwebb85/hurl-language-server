@@ -1,4 +1,11 @@
 [workspace]
 members = ["packages/hurl-ls", "packages/hurl-parser"]
 resolver = "2"
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[profile.release]
+strip = true      # Strip symbols from the binary.
+lto = true        # Attempts to perform optimizations across all crates.
+codegen-units = 1 # Lower number of codegen units can increase optimizations.
+# TODO see if I want to use `panic = "abort"`. It was causing a lot of errors in neovim 
+# so I have have it disabled for now until I have debugged it. 
+# panic = "abort"   # Terminate the process upon panic.

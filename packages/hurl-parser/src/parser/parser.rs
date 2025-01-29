@@ -62,7 +62,7 @@ pub fn ast_parser<'a>() -> impl Parser<'a, &'a str, Ast, extra::Err<Rich<'a, cha
         .boxed()
 }
 
-pub fn parse_ast<'a>(document: &'a str) -> (Option<Ast>, Vec<Rich<'_, char>>) {
+pub fn parse_ast<'a>(document: &'a str) -> (Option<Ast>, Vec<Rich<'a, char>>) {
     let (ast, errs) = ast_parser().parse(document).into_output_errors();
     (ast, errs)
 }
