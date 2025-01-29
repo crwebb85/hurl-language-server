@@ -1,5 +1,5 @@
 [workspace]
-members = ["packages/hurl-ls", "packages/hurl-parser"]
+members = ["packages/hurl-language-server", "packages/hurl-parser"]
 resolver = "2"
 
 [profile.release]
