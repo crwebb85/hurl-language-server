@@ -8,6 +8,64 @@ pub fn todo_parser<'a>() -> impl Parser<'a, &'a str, char, extra::Err<Rich<'a, c
     any().filter(|_| false).boxed()
 }
 
+pub fn alphabetic_parser<'a>() -> impl Parser<'a, &'a str, char, extra::Err<Rich<'a, char>>> + Clone
+{
+    let ascii_alphabetic_char = custom::<'a, _, &'a str, char, extra::Err<Rich<'a, char>>>(|inp| {
+        let before = inp.cursor();
+        let c = inp.next();
+        let span = inp.span_since(&before);
+        match c {
+            Some(c) => {
+                if c.is_ascii_alphabetic() {
+                    Ok(c)
+                } else {
+                    Err(Rich::custom(
+                        span,
+                        format!("expected an ascii alphabetic char but found {}", c),
+                    ))
+                }
+            }
+            None => Err(Rich::custom(
+                span,
+                format!("expected an ascii alphabetic char but found end"),
+            )),
+        }
+    });
+    ascii_alphabetic_char
+        .labelled("ascii-alphabetic-char")
+        .boxed()
+}
+
+pub fn alphanumeric_parser<'a>(
+) -> impl Parser<'a, &'a str, char, extra::Err<Rich<'a, char>>> + Clone {
+    let ascii_alphanumeric_char =
+        custom::<'a, _, &'a str, char, extra::Err<Rich<'a, char>>>(|inp| {
+            let before = inp.cursor();
+            let c = inp.next();
+            let span = inp.span_since(&before);
+
+            match c {
+                Some(c) => {
+                    if c.is_ascii_alphanumeric() {
+                        Ok(c)
+                    } else {
+                        Err(Rich::custom(
+                            span,
+                            format!("expected an ascii alphanumeric char but found {}", c),
+                        ))
+                    }
+                }
+                None => Err(Rich::custom(
+                    span,
+                    format!("expected an ascii alphanumeric char but found end"),
+                )),
+            }
+        });
+    ascii_alphanumeric_char
+        .labelled("ascii-alphanumeric-char")
+        .boxed()
+}
+
 pub fn sp_parser<'a>() -> impl Parser<'a, &'a str, char, extra::Err<Rich<'a, char>>> + Clone {
     one_of("\t ").labelled("spacing").boxed()
 }
