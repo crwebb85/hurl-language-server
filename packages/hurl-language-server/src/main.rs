@@ -32,7 +32,7 @@ impl LanguageServer for Backend {
     async fn initialize(&self, _: InitializeParams) -> Result<InitializeResult> {
         Ok(InitializeResult {
             server_info: None,
-            offset_encoding: None,
+            offset_encoding: Some("utf-8".to_string()),
             capabilities: ServerCapabilities {
                 text_document_sync: Some(TextDocumentSyncCapability::Options(
                     TextDocumentSyncOptions {
@@ -58,16 +58,6 @@ impl LanguageServer for Backend {
                     }),
                     file_operations: None,
                 }),
-                diagnostic_provider: Some(DiagnosticServerCapabilities::Options(
-                    DiagnosticOptions {
-                        identifier: None,
-                        inter_file_dependencies: false,
-                        workspace_diagnostics: true,
-                        work_done_progress_options: WorkDoneProgressOptions {
-                            work_done_progress: Some(false),
-                        },
-                    },
-                )),
                 ..ServerCapabilities::default()
             },
         })
