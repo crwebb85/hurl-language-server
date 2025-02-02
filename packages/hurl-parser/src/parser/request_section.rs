@@ -3,11 +3,21 @@ use super::key_value::{key_parser, key_value_parser};
 use super::options::options_parser;
 use super::primitives::{lt_parser, sp_parser};
 use super::types::{
-    BasicAuthSection, CookiesSection, FileKeyValue, FileValue, FormParamsSection, KeyValue,
-    MultipartFormDataSection, MultipartFormParam, QueryStringParamsSection, RequestOptionsSection,
-    RequestSection,
+    BasicAuthSection, CookiesSection, FileKeyValue, FileValue, FormParamsSection,
+    InterpolatedString, KeyValue, MultipartFormDataSection, MultipartFormParam,
+    QueryStringParamsSection, RequestOptionsSection, RequestSection,
 };
 use chumsky::prelude::*;
+
+//TODO official spec should reuse the "file, filename ;" in file-value since
+//it is also the syntax as oneline-filename
+pub fn oneline_file_parser<'a>(
+) -> impl Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone {
+    just("file,")
+        .ignore_then(filename_parser())
+        .padded_by(sp_parser().repeated())
+        .then_ignore(just(';'))
+}
 
 pub fn file_param_parser<'a>(
 ) -> impl Parser<'a, &'a str, FileKeyValue, extra::Err<Rich<'a, char>>> + Clone {
@@ -19,12 +29,10 @@ pub fn file_param_parser<'a>(
         .labelled("file_content_type");
 
     //TODO determine where I need add padding to this
-    let file_value = just("file,")
-        .then(filename_parser())
-        .then_ignore(just(';'))
+    let file_value = oneline_file_parser()
         .padded_by(sp_parser().repeated())
         .then(file_content_type.or_not())
-        .map(|((_, filename), content_type)| FileValue {
+        .map(|(filename, content_type)| FileValue {
             filename,
             content_type,
         });
