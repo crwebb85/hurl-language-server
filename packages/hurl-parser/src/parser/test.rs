@@ -936,7 +936,8 @@ mod tests {
         ParseResult {
             output: None,
             errs: [
-                found end of input at 30..31 expected something else, spacing, or value-string,
+                Invalid character 'k'. Method must be ascii uppercase. at 27..30,
+                found end of input at 41..41 expected any, ''_'', ''-'', ''.'', ''['', '']'', ''@'', ''$'', key-string-escaped-char, key-string-content, key-template, spacing, '':'', or value-string,
             ],
         }
         ",
