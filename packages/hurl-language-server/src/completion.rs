@@ -66,6 +66,12 @@ const METHOD_SNIPPETS: [(&str, &str); 9] = [
     ("PATCH", PATCH_SNIPPET),
 ];
 
+const BYTE_SNIPPETS: [(&str, &str); 3] = [
+    ("base64", r#"base64, $1;"#),
+    ("file", r#"file, $1;"#),
+    ("hex", r#"hex, $1;"#),
+];
+
 pub fn completion() -> HashMap<String, ImCompleteCompletionItem> {
     let mut map = HashMap::new();
 
@@ -140,5 +146,14 @@ pub fn completion() -> HashMap<String, ImCompleteCompletionItem> {
             ImCompleteCompletionItem::Snippet(method.to_owned(), snippet.to_owned()),
         );
     }
+
+    for byte_snippet_tuple in BYTE_SNIPPETS {
+        let (key, snippet) = byte_snippet_tuple;
+        map.insert(
+            key.to_owned(),
+            ImCompleteCompletionItem::Snippet(key.to_owned(), snippet.to_owned()),
+        );
+    }
+
     map
 }
