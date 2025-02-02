@@ -72,66 +72,68 @@ const BYTE_SNIPPETS: [(&str, &str); 3] = [
     ("hex", r#"hex, $1;"#),
 ];
 
+const SECTION_HEADER: [&str; 11] = [
+    "[Asserts]\n",
+    "[Query]\n",
+    "[QueryStringParams]\n",
+    "[BasicAuth]\n",
+    "[Form]\n",
+    "[FormParams]\n",
+    "[Cookies]\n",
+    "[Captures]\n",
+    "[Multipart]\n",
+    "[MultipartFormData]\n",
+    "[Options]\n",
+];
+
+const OPTIONS: [&str; 35] = [
+    "aws-sigv4",
+    "cacert",
+    "cert",
+    "key",
+    "compressed",
+    "connect-to",
+    "connect-timeout",
+    "delay",
+    "location",
+    "location-trusted",
+    "http1.0",
+    "http1.1",
+    "http2",
+    "http3",
+    "insecure",
+    "ipv4",
+    "ipv6",
+    "limit-rate",
+    "max-redirs",
+    "netrc",
+    "netrc-file",
+    "netrc-optional",
+    "output",
+    "path-as-is",
+    "proxy",
+    "repeat",
+    "resolve",
+    "retry",
+    "retry-interval",
+    "skip",
+    "unix-socket",
+    "user",
+    "variable",
+    "verbose",
+    "very-verbose",
+];
+
 pub fn completion() -> HashMap<String, ImCompleteCompletionItem> {
     let mut map = HashMap::new();
 
-    const KEYWORDS: [&str; 11] = [
-        "Asserts",
-        "Query",
-        "QueryStringParams",
-        "BasicAuth",
-        "Form",
-        "FormParams",
-        "Cookies",
-        "Captures",
-        "Multipart",
-        "MultipartFormData",
-        "Options",
-    ];
-    for keyword in KEYWORDS {
+    for keyword in SECTION_HEADER {
         map.insert(
             keyword.to_owned(),
             ImCompleteCompletionItem::Keyword(keyword.to_owned()),
         );
     }
 
-    const OPTIONS: [&str; 35] = [
-        "aws-sigv4",
-        "cacert",
-        "cert",
-        "key",
-        "compressed",
-        "connect-to",
-        "connect-timeout",
-        "delay",
-        "location",
-        "location-trusted",
-        "http1.0",
-        "http1.1",
-        "http2",
-        "http3",
-        "insecure",
-        "ipv4",
-        "ipv6",
-        "limit-rate",
-        "max-redirs",
-        "netrc",
-        "netrc-file",
-        "netrc-optional",
-        "output",
-        "path-as-is",
-        "proxy",
-        "repeat",
-        "resolve",
-        "retry",
-        "retry-interval",
-        "skip",
-        "unix-socket",
-        "user",
-        "variable",
-        "verbose",
-        "very-verbose",
-    ];
     for option in OPTIONS {
         map.insert(
             option.to_owned(),
