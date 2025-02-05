@@ -1,39 +1,14 @@
 use super::body::body_parser;
-use super::key_value::{key_value_parser, value_parser};
-use super::primitives::{lt_parser, sp_parser};
+use super::key_value::key_value_parser;
+use super::method::method_line_parser;
+use super::primitives::lt_parser;
 use super::request_section::request_section_parser;
-use super::types::{Ast, Entry, KeyValue, Method, Request, RequestSection};
+use super::types::{Ast, Entry, KeyValue, Request, RequestSection};
 use chumsky::prelude::*;
-
-fn method_parser<'a>() -> impl Parser<'a, &'a str, Method, extra::Err<Rich<'a, char>>> + Clone {
-    let method = text::ident()
-        .to_slice()
-        .validate(|ident: &str, e, emitter| {
-            match ident.find(|c| !char::is_ascii_uppercase(&c)) {
-                Some(index) => emitter.emit(Rich::custom(
-                    e.span(),
-                    format!(
-                        "Invalid character '{}'. Method must be ascii uppercase.",
-                        ident.chars().nth(index).unwrap() // We know the character is in the index
-                    ),
-                )),
-                None => (),
-            };
-
-            Method {
-                value: ident.to_string(),
-            }
-        })
-        .padded();
-    method.boxed()
-}
 
 fn request_parser<'a>() -> impl Parser<'a, &'a str, Request, extra::Err<Rich<'a, char>>> + Clone {
     let header_line = key_value_parser().then_ignore(lt_parser());
-    let request = method_parser()
-        .padded_by(sp_parser().repeated())
-        .then(value_parser())
-        .then_ignore(lt_parser())
+    let request = method_line_parser(false)
         .then(header_line.repeated().collect::<Vec<KeyValue>>())
         .then(
             request_section_parser()
@@ -327,6 +302,545 @@ mod ast_tests {
             [
                 found end of input at 34..35 expected something else,
                 found end of input at 117..118 expected something else,
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_multiple_entries_with_json_request() {
+        let test_str = r#" 
+    POST https://example.org
+    {       
+        "id": "d89e270c-5f26-4906-b305-c9e3cc2a0a24",
+        "pets": [
+            "cat",
+            "dog",
+            "hampster"
+        ]
+    }
+
+    POST https://example.org
+    {       
+        "id": "bde6c63f-eebe-4cae-b955-d128b5d2444d",
+        "pets": [
+            "cat",
+            "dog"
+        ]
+    }
+            "#;
+        assert_debug_snapshot!(
+        parse_ast(test_str),
+            @r#"
+        (
+            Some(
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "POST",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [],
+                                body: Some(
+                                    Body {
+                                        bytes: JsonValue(
+                                            Object(
+                                                [
+                                                    JsonKeyValue {
+                                                        key: InterpolatedString {
+                                                            parts: [
+                                                                Str(
+                                                                    "id",
+                                                                ),
+                                                            ],
+                                                        },
+                                                        value: InterpolatedString(
+                                                            InterpolatedString {
+                                                                parts: [
+                                                                    Str(
+                                                                        "d89e270c-5f26-4906-b305-c9e3cc2a0a24",
+                                                                    ),
+                                                                ],
+                                                            },
+                                                        ),
+                                                    },
+                                                    JsonKeyValue {
+                                                        key: InterpolatedString {
+                                                            parts: [
+                                                                Str(
+                                                                    "pets",
+                                                                ),
+                                                            ],
+                                                        },
+                                                        value: Array(
+                                                            [
+                                                                InterpolatedString(
+                                                                    InterpolatedString {
+                                                                        parts: [
+                                                                            Str(
+                                                                                "cat",
+                                                                            ),
+                                                                        ],
+                                                                    },
+                                                                ),
+                                                                InterpolatedString(
+                                                                    InterpolatedString {
+                                                                        parts: [
+                                                                            Str(
+                                                                                "dog",
+                                                                            ),
+                                                                        ],
+                                                                    },
+                                                                ),
+                                                                InterpolatedString(
+                                                                    InterpolatedString {
+                                                                        parts: [
+                                                                            Str(
+                                                                                "hampster",
+                                                                            ),
+                                                                        ],
+                                                                    },
+                                                                ),
+                                                            ],
+                                                        ),
+                                                    },
+                                                ],
+                                            ),
+                                        ),
+                                    },
+                                ),
+                            },
+                            response: None,
+                        },
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "POST",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [],
+                                body: Some(
+                                    Body {
+                                        bytes: JsonValue(
+                                            Object(
+                                                [
+                                                    JsonKeyValue {
+                                                        key: InterpolatedString {
+                                                            parts: [
+                                                                Str(
+                                                                    "id",
+                                                                ),
+                                                            ],
+                                                        },
+                                                        value: InterpolatedString(
+                                                            InterpolatedString {
+                                                                parts: [
+                                                                    Str(
+                                                                        "bde6c63f-eebe-4cae-b955-d128b5d2444d",
+                                                                    ),
+                                                                ],
+                                                            },
+                                                        ),
+                                                    },
+                                                    JsonKeyValue {
+                                                        key: InterpolatedString {
+                                                            parts: [
+                                                                Str(
+                                                                    "pets",
+                                                                ),
+                                                            ],
+                                                        },
+                                                        value: Array(
+                                                            [
+                                                                InterpolatedString(
+                                                                    InterpolatedString {
+                                                                        parts: [
+                                                                            Str(
+                                                                                "cat",
+                                                                            ),
+                                                                        ],
+                                                                    },
+                                                                ),
+                                                                InterpolatedString(
+                                                                    InterpolatedString {
+                                                                        parts: [
+                                                                            Str(
+                                                                                "dog",
+                                                                            ),
+                                                                        ],
+                                                                    },
+                                                                ),
+                                                            ],
+                                                        ),
+                                                    },
+                                                ],
+                                            ),
+                                        ),
+                                    },
+                                ),
+                            },
+                            response: None,
+                        },
+                    ],
+                },
+            ),
+            [],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_recovers_error_in_first_entries_json_request() {
+        let test_str = r#" 
+    POST https://example.org
+    {       
+        "id": "d89e270c-5f26-4906-b305-c9e3cc2a0a24",
+        "pets": [
+            "cat",
+            "dog",
+            "hampster"
+        
+    }
+
+    POST https://example.org
+    {       
+        "id": "bde6c63f-eebe-4cae-b955-d128b5d2444d",
+        "pets": [
+            "cat",
+            "dog"
+        ]
+    }
+            "#;
+        assert_debug_snapshot!(
+        parse_ast(test_str),
+            @r#"
+        (
+            Some(
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "POST",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [],
+                                body: Some(
+                                    Body {
+                                        bytes: JsonValue(
+                                            Object(
+                                                [
+                                                    JsonKeyValue {
+                                                        key: InterpolatedString {
+                                                            parts: [
+                                                                Str(
+                                                                    "id",
+                                                                ),
+                                                            ],
+                                                        },
+                                                        value: InterpolatedString(
+                                                            InterpolatedString {
+                                                                parts: [
+                                                                    Str(
+                                                                        "d89e270c-5f26-4906-b305-c9e3cc2a0a24",
+                                                                    ),
+                                                                ],
+                                                            },
+                                                        ),
+                                                    },
+                                                    JsonKeyValue {
+                                                        key: InterpolatedString {
+                                                            parts: [
+                                                                Str(
+                                                                    "pets",
+                                                                ),
+                                                            ],
+                                                        },
+                                                        value: InterpolatedString(
+                                                            InterpolatedString {
+                                                                parts: [
+                                                                    Str(
+                                                                        "cat",
+                                                                    ),
+                                                                ],
+                                                            },
+                                                        ),
+                                                    },
+                                                ],
+                                            ),
+                                        ),
+                                    },
+                                ),
+                            },
+                            response: None,
+                        },
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "POST",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [],
+                                body: Some(
+                                    Body {
+                                        bytes: JsonValue(
+                                            Object(
+                                                [
+                                                    JsonKeyValue {
+                                                        key: InterpolatedString {
+                                                            parts: [
+                                                                Str(
+                                                                    "id",
+                                                                ),
+                                                            ],
+                                                        },
+                                                        value: InterpolatedString(
+                                                            InterpolatedString {
+                                                                parts: [
+                                                                    Str(
+                                                                        "bde6c63f-eebe-4cae-b955-d128b5d2444d",
+                                                                    ),
+                                                                ],
+                                                            },
+                                                        ),
+                                                    },
+                                                    JsonKeyValue {
+                                                        key: InterpolatedString {
+                                                            parts: [
+                                                                Str(
+                                                                    "pets",
+                                                                ),
+                                                            ],
+                                                        },
+                                                        value: Array(
+                                                            [
+                                                                InterpolatedString(
+                                                                    InterpolatedString {
+                                                                        parts: [
+                                                                            Str(
+                                                                                "cat",
+                                                                            ),
+                                                                        ],
+                                                                    },
+                                                                ),
+                                                                InterpolatedString(
+                                                                    InterpolatedString {
+                                                                        parts: [
+                                                                            Str(
+                                                                                "dog",
+                                                                            ),
+                                                                        ],
+                                                                    },
+                                                                ),
+                                                            ],
+                                                        ),
+                                                    },
+                                                ],
+                                            ),
+                                        ),
+                                    },
+                                ),
+                            },
+                            response: None,
+                        },
+                    ],
+                },
+            ),
+            [
+                found ''}'' at 190..191 expected '','', or '']'',
+                found '','' at 152..153 expected '':'',
+            ],
+        )
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_recovers_error_in_json_request_with_commented_closing_bracket() {
+        let test_str = r#" 
+    POST https://example.org
+    {       
+        "id": "d89e270c-5f26-4906-b305-c9e3cc2a0a24",
+        "pet": "cat"
+    #}
+
+    POST https://example.org
+    {       
+        "id": "55b42346-02be-4cf3-824c-b2dcdf5f7512",
+        "pet": "dog"
+    }
+
+    "#;
+        assert_debug_snapshot!(
+        parse_ast(test_str),
+            @r#"
+        (
+            Some(
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "POST",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [],
+                                body: Some(
+                                    Body {
+                                        bytes: JsonValue(
+                                            Object(
+                                                [
+                                                    JsonKeyValue {
+                                                        key: InterpolatedString {
+                                                            parts: [
+                                                                Str(
+                                                                    "id",
+                                                                ),
+                                                            ],
+                                                        },
+                                                        value: InterpolatedString(
+                                                            InterpolatedString {
+                                                                parts: [
+                                                                    Str(
+                                                                        "d89e270c-5f26-4906-b305-c9e3cc2a0a24",
+                                                                    ),
+                                                                ],
+                                                            },
+                                                        ),
+                                                    },
+                                                    JsonKeyValue {
+                                                        key: InterpolatedString {
+                                                            parts: [
+                                                                Str(
+                                                                    "pet",
+                                                                ),
+                                                            ],
+                                                        },
+                                                        value: InterpolatedString(
+                                                            InterpolatedString {
+                                                                parts: [
+                                                                    Str(
+                                                                        "cat",
+                                                                    ),
+                                                                ],
+                                                            },
+                                                        ),
+                                                    },
+                                                ],
+                                            ),
+                                        ),
+                                    },
+                                ),
+                            },
+                            response: None,
+                        },
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "POST",
+                                },
+                                url: InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "https://example.org",
+                                        ),
+                                    ],
+                                },
+                                header: [],
+                                request_sections: [],
+                                body: Some(
+                                    Body {
+                                        bytes: JsonValue(
+                                            Object(
+                                                [
+                                                    JsonKeyValue {
+                                                        key: InterpolatedString {
+                                                            parts: [
+                                                                Str(
+                                                                    "id",
+                                                                ),
+                                                            ],
+                                                        },
+                                                        value: InterpolatedString(
+                                                            InterpolatedString {
+                                                                parts: [
+                                                                    Str(
+                                                                        "55b42346-02be-4cf3-824c-b2dcdf5f7512",
+                                                                    ),
+                                                                ],
+                                                            },
+                                                        ),
+                                                    },
+                                                    JsonKeyValue {
+                                                        key: InterpolatedString {
+                                                            parts: [
+                                                                Str(
+                                                                    "pet",
+                                                                ),
+                                                            ],
+                                                        },
+                                                        value: InterpolatedString(
+                                                            InterpolatedString {
+                                                                parts: [
+                                                                    Str(
+                                                                        "dog",
+                                                                    ),
+                                                                ],
+                                                            },
+                                                        ),
+                                                    },
+                                                ],
+                                            ),
+                                        ),
+                                    },
+                                ),
+                            },
+                            response: None,
+                        },
+                    ],
+                },
+            ),
+            [
+                found ''#'' at 123..124 expected '','', or ''}'',
             ],
         )
         "#,

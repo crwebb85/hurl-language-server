@@ -1,28 +1,34 @@
 use chumsky::prelude::*;
 
 use super::{
+    json::json_value_parser,
     primitives::{alphanumeric_parser, escaped_unicode_parser, lt_parser, sp_parser, todo_parser},
     request_section::oneline_file_parser,
     template::template_parser,
-    types::{Body, Bytes, InterpolatedString, InterpolatedStringPart, Json, MultiLineString},
+    types::{Body, Bytes, InterpolatedString, InterpolatedStringPart, MultiLineString},
 };
+
+//TODO it may be easier to do error recovery if I select all the text until the
+// lt_parser().then(choice((
+//  request_method_line_parser(false),
+//  http_version_status_line_parser(),
+//  end()
+// )))
+//
+// and then parse that section of text into the body
 
 pub fn bytes_parser<'a>() -> impl Parser<'a, &'a str, Bytes, extra::Err<Rich<'a, char>>> + Clone {
     choice((
-        json_value_parser().map(Bytes::JsonValue),
         //xml_parser().map(Bytes::Xml), //TODO when hurl implements syntax for xml bytes
         multiline_string_parser().map(Bytes::MultilineString),
         oneline_string_parser().map(Bytes::OneLineString),
         oneline_base64_parser().map(Bytes::OneLineBase64),
         oneline_file_parser().map(Bytes::OneLineFile),
         oneline_hex_parser().map(Bytes::OneLineHex),
+        json_value_parser().map(Bytes::JsonValue),
     ))
     .labelled("bytes")
     .boxed()
-}
-
-fn json_value_parser<'a>() -> impl Parser<'a, &'a str, Json, extra::Err<Rich<'a, char>>> + Clone {
-    todo_parser().map(|_| Json::Invalid).boxed()
 }
 
 fn multiline_string_parser<'a>(

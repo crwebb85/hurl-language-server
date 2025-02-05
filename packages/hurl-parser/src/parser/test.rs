@@ -79,113 +79,18 @@ mod tests {
     }
 
     #[test]
-    fn it_parses_simple_get_with_newline_after_method() {
+    fn it_errors_simple_get_with_newline_after_method() {
         let test_str = "GET\nhttps://example.org";
         assert_debug_snapshot!(
             ast_parser().parse(test_str),
-            @r#"
+            @r"
         ParseResult {
-            output: Some(
-                Ast {
-                    entries: [
-                        Entry {
-                            request: Request {
-                                method: Method {
-                                    value: "GET",
-                                },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
-                                header: [],
-                                request_sections: [],
-                                body: None,
-                            },
-                            response: None,
-                        },
-                    ],
-                },
-            ),
-            errs: [],
+            output: None,
+            errs: [
+                found ''\n'' at 3..4 expected identifier, spacing, or value-string,
+            ],
         }
-        "#,
-        );
-    }
-
-    #[test]
-    fn it_parses_simple_get_with_newline_after_method_and_after_url() {
-        let test_str = "GET\nhttps://example.org\n";
-        assert_debug_snapshot!(
-            ast_parser().parse(test_str),
-            @r#"
-        ParseResult {
-            output: Some(
-                Ast {
-                    entries: [
-                        Entry {
-                            request: Request {
-                                method: Method {
-                                    value: "GET",
-                                },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
-                                header: [],
-                                request_sections: [],
-                                body: None,
-                            },
-                            response: None,
-                        },
-                    ],
-                },
-            ),
-            errs: [],
-        }
-        "#,
-        );
-    }
-
-    #[test]
-    fn it_parses_simple_get_with_extra_whitespace() {
-        let test_str = "GET\n https://example.org";
-        assert_debug_snapshot!(
-            ast_parser().parse(test_str),
-            @r#"
-        ParseResult {
-            output: Some(
-                Ast {
-                    entries: [
-                        Entry {
-                            request: Request {
-                                method: Method {
-                                    value: "GET",
-                                },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
-                                header: [],
-                                request_sections: [],
-                                body: None,
-                            },
-                            response: None,
-                        },
-                    ],
-                },
-            ),
-            errs: [],
-        }
-        "#,
+        ",
         );
     }
 
@@ -613,7 +518,7 @@ mod tests {
         ParseResult {
             output: None,
             errs: [
-                found ''}'' at 31..32 expected spacing, or expr,
+                found ''}'' at 32..33 expected line terminator,
             ],
         }
         ",

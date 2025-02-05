@@ -1,5 +1,5 @@
 use ordered_float::OrderedFloat;
-use std::{collections::BTreeMap, hash::Hash};
+use std::hash::Hash;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Method {
@@ -334,15 +334,22 @@ pub enum MultiLineString {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct JsonKeyValue {
+    pub key: InterpolatedString,
+    pub value: Json,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Json {
     Invalid,
-    Object(BTreeMap<String, Json>),
+    Object(Vec<JsonKeyValue>),
     Array(Vec<Json>),
     Str(String),
     InterpolatedString(InterpolatedString),
-    Num(OrderedFloat<f64>),
+    Num(String),
     Bool(bool),
     Null,
+    Template(Template),
 }
 
 //TODO replace with custom error type
