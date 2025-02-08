@@ -2,10 +2,11 @@ use chumsky::prelude::*;
 
 use super::{
     json::json_value_parser,
-    primitives::{alphanumeric_parser, escaped_unicode_parser, lt_parser, sp_parser, todo_parser},
+    multiline_string::multiline_string_parser,
+    primitives::{alphanumeric_parser, escaped_unicode_parser, lt_parser, sp_parser},
     request_section::oneline_file_parser,
     template::template_parser,
-    types::{Body, Bytes, InterpolatedString, InterpolatedStringPart, MultiLineString},
+    types::{Body, Bytes, InterpolatedString, InterpolatedStringPart},
 };
 
 //TODO it may be easier to do error recovery if I select all the text until the
@@ -29,13 +30,6 @@ pub fn bytes_parser<'a>() -> impl Parser<'a, &'a str, Bytes, extra::Err<Rich<'a,
     ))
     .labelled("bytes")
     .boxed()
-}
-
-fn multiline_string_parser<'a>(
-) -> impl Parser<'a, &'a str, MultiLineString, extra::Err<Rich<'a, char>>> + Clone {
-    todo_parser()
-        .map(|_| MultiLineString::Json(InterpolatedString { parts: vec![] }))
-        .boxed()
 }
 
 fn oneline_string_escaped_char_parser<'a>(

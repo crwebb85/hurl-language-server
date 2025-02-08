@@ -3,7 +3,9 @@ use chumsky::prelude::*;
 use super::types::Lt;
 
 /// A parser that never matches. Used as a placeholder for parsers that
-/// I haven't yet implemented but plan to
+/// I haven't yet implemented but plan to. Since I only use this when in the middle
+/// of implementing something I added the allow dead code attribute.
+#[allow(dead_code)]
 pub fn todo_parser<'a>() -> impl Parser<'a, &'a str, char, extra::Err<Rich<'a, char>>> + Clone {
     any().filter(|_| false).boxed()
 }

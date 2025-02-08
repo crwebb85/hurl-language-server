@@ -312,7 +312,7 @@ pub struct Lt {
 pub enum Bytes {
     JsonValue(Json),
     // XML,//TODO not yet implemented by hurl cli. Implement it here when that happens
-    MultilineString(MultiLineString),
+    MultilineString(MultilineString),
     OneLineString(InterpolatedString),
     OneLineBase64(String),
     OneLineFile(InterpolatedString),
@@ -325,12 +325,28 @@ pub struct Body {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum MultiLineString {
-    Base64(InterpolatedString),
-    Hex(InterpolatedString),
-    Json(InterpolatedString),
-    Xml(InterpolatedString),
-    Graphql(InterpolatedString),
+pub enum MultilineStringType {
+    Base64,
+    Hex,
+    Json,
+    Xml,
+    Graphql,
+    Unknown(String), //Used when an unknown type is specified. This will likely result in a
+                     //diagnostic error
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum MultilineStringAttribute {
+    Escape,
+    NoVariable,
+    Unknown(String),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct MultilineString {
+    pub r#type: Option<MultilineStringType>,
+    pub attributes: Vec<MultilineStringAttribute>,
+    pub content: InterpolatedString,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
