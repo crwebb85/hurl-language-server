@@ -9,8 +9,8 @@ use super::{
         MultilineStringType,
     },
 };
-pub type Span = SimpleSpan;
-pub type Spanned<T> = (T, Span);
+type Span = SimpleSpan;
+type Spanned<T> = (T, Span);
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 enum TypeOrAttributeToken<'src> {
@@ -84,7 +84,7 @@ fn multiline_string_escaped_char_parser<'a>(
     multiline_string_escaped_char.boxed()
 }
 
-pub fn multiline_string_header_parser<'a>() -> impl Parser<
+fn multiline_string_header_parser<'a>() -> impl Parser<
     'a,
     &'a str,
     (Option<MultilineStringType>, Vec<MultilineStringAttribute>),

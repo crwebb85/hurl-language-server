@@ -1,25 +1,15 @@
-use super::filename::filename_parser;
 use super::key_value::{key_parser, key_value_parser};
+use super::oneline_file::oneline_file_parser;
 use super::options::options_parser;
 use super::primitives::{lt_parser, sp_parser};
 use super::types::{
-    BasicAuthSection, CookiesSection, FileKeyValue, FileValue, FormParamsSection,
-    InterpolatedString, KeyValue, MultipartFormDataSection, MultipartFormParam,
-    QueryStringParamsSection, RequestOptionsSection, RequestSection,
+    BasicAuthSection, CookiesSection, FileKeyValue, FileValue, FormParamsSection, KeyValue,
+    MultipartFormDataSection, MultipartFormParam, QueryStringParamsSection, RequestOptionsSection,
+    RequestSection,
 };
 use chumsky::prelude::*;
 
-//TODO official spec should reuse the "file, filename ;" in file-value since
-//it is also the syntax as oneline-filename
-pub fn oneline_file_parser<'a>(
-) -> impl Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone {
-    just("file,")
-        .ignore_then(filename_parser())
-        .padded_by(sp_parser().repeated())
-        .then_ignore(just(';'))
-}
-
-pub fn file_param_parser<'a>(
+fn file_param_parser<'a>(
 ) -> impl Parser<'a, &'a str, FileKeyValue, extra::Err<Rich<'a, char>>> + Clone {
     let file_content_type = any()
         .filter(|c: &char| c.is_ascii_alphanumeric() || c == &'/' || c == &'+' || c == &'-')
@@ -31,7 +21,7 @@ pub fn file_param_parser<'a>(
     //TODO determine where I need add padding to this
     let file_value = oneline_file_parser()
         .padded_by(sp_parser().repeated())
-        .then(file_content_type.or_not())
+        .then(file_content_type.padded_by(sp_parser().repeated()).or_not())
         .map(|(filename, content_type)| FileValue {
             filename,
             content_type,
@@ -1099,6 +1089,42 @@ mod request_section_tests {
         let test_str = "field3: file,example.zip; application/zip";
         assert_debug_snapshot!(
         file_param_parser().then_ignore(end()).parse(test_str),
+            @r#"
+        ParseResult {
+            output: Some(
+                FileKeyValue {
+                    key: InterpolatedString {
+                        parts: [
+                            Str(
+                                "field3",
+                            ),
+                        ],
+                    },
+                    value: FileValue {
+                        filename: InterpolatedString {
+                            parts: [
+                                Str(
+                                    "example.zip",
+                                ),
+                            ],
+                        },
+                        content_type: Some(
+                            "application/zip",
+                        ),
+                    },
+                },
+            ),
+            errs: [],
+        }
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_file_param_with_content_type_and_extra_spaces() {
+        let test_str = "field3  :  file,   example.zip  ;   application/zip";
+        assert_debug_snapshot!(
+        file_param_parser().parse(test_str),
             @r#"
         ParseResult {
             output: Some(
