@@ -42,13 +42,154 @@ fn method_parser<'a>(
 pub fn method_line_parser<'a>(
     strict: bool,
 ) -> impl Parser<'a, &'a str, (Method, Url), extra::Err<Rich<'a, char>>> + Clone {
-    let method_line = method_parser(strict)
-        .padded_by(sp_parser().repeated()) //TODO sp is required
-        .then(value_parser().map(Url::Url))
-        .then_ignore(lt_parser());
-    method_line.boxed()
+    if strict {
+        let method_line = sp_parser()
+            .repeated()
+            .ignore_then(method_parser(strict))
+            .padded_by(sp_parser().repeated().at_least(1)) //TODO sp is required
+            .then(value_parser().map(Url::Url))
+            .then_ignore(lt_parser());
+        method_line.boxed()
+    } else {
+        let method_line = sp_parser()
+            .repeated()
+            .ignore_then(method_parser(strict))
+            .then(
+                sp_parser()
+                    .repeated()
+                    .at_least(1)
+                    .ignore_then(value_parser().or_not())
+                    .or_not()
+                    .validate(|spaces_and_url, e, emitter| match spaces_and_url {
+                        Some(url) => match url {
+                            Some(u) => Url::Url(u),
+                            None => {
+                                emitter.emit(Rich::custom(e.span(), "missing url"));
+                                Url::Missing
+                            }
+                        },
+                        None => {
+                            emitter.emit(Rich::custom(e.span(), "missing url"));
+                            Url::Missing
+                        }
+                    }),
+            )
+            .then_ignore(lt_parser());
+        method_line.boxed()
+    }
 }
 
-//TODO add tests
+#[cfg(test)]
+mod method_line_tests {
+    use super::*;
+    use insta::assert_debug_snapshot;
+    //TODO add tests
 
-//TODO error handle if missing URL
+    //TODO error handle if missing URL
+
+    #[test]
+    fn it_recovers_missing_space_and_missing_url() {
+        let test_str = "GET";
+        assert_debug_snapshot!(
+        method_line_parser(false).parse(test_str),
+            @r#"
+        ParseResult {
+            output: Some(
+                (
+                    Method {
+                        value: "GET",
+                    },
+                    Missing,
+                ),
+            ),
+            errs: [
+                missing url at 3..3,
+            ],
+        }
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_recovers_invalid_casing_method_for_non_strict_parsing() {
+        let test_str = "GeT https://example.org";
+        assert_debug_snapshot!(
+        method_line_parser(false).parse(test_str),
+            @r#"
+        ParseResult {
+            output: Some(
+                (
+                    Method {
+                        value: "GeT",
+                    },
+                    Url(
+                        InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org",
+                                ),
+                            ],
+                        },
+                    ),
+                ),
+            ),
+            errs: [
+                Invalid character 'e'. Method must be ascii uppercase. at 0..3,
+            ],
+        }
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_recovers_missing_url() {
+        let test_str = "GET ";
+        assert_debug_snapshot!(
+        method_line_parser(false).parse(test_str),
+            @r#"
+        ParseResult {
+            output: Some(
+                (
+                    Method {
+                        value: "GET",
+                    },
+                    Missing,
+                ),
+            ),
+            errs: [
+                missing url at 3..4,
+            ],
+        }
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parse_get_with_url() {
+        let test_str = "GET https://example.org/";
+        assert_debug_snapshot!(
+        method_line_parser(false).parse(test_str),
+            @r#"
+        ParseResult {
+            output: Some(
+                (
+                    Method {
+                        value: "GET",
+                    },
+                    Url(
+                        InterpolatedString {
+                            parts: [
+                                Str(
+                                    "https://example.org/",
+                                ),
+                            ],
+                        },
+                    ),
+                ),
+            ),
+            errs: [],
+        }
+        "#,
+        );
+    }
+}

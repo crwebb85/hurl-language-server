@@ -83,18 +83,52 @@ mod tests {
     }
 
     #[test]
-    fn it_errors_simple_get_with_newline_after_method() {
+    fn it_recovers_simple_get_with_newline_after_method() {
         let test_str = "GET\nhttps://example.org";
         assert_debug_snapshot!(
             ast_parser().parse(test_str),
-            @r"
+            @r#"
         ParseResult {
-            output: None,
+            output: Some(
+                Ast {
+                    entries: [
+                        Entry {
+                            request: Request {
+                                method: Method {
+                                    value: "GET",
+                                },
+                                url: Missing,
+                                headers: [
+                                    KeyValue {
+                                        key: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "https",
+                                                ),
+                                            ],
+                                        },
+                                        value: InterpolatedString {
+                                            parts: [
+                                                Str(
+                                                    "//example.org",
+                                                ),
+                                            ],
+                                        },
+                                    },
+                                ],
+                                request_sections: [],
+                                body: None,
+                            },
+                            response: None,
+                        },
+                    ],
+                },
+            ),
             errs: [
-                found ''\n'' at 3..4 expected identifier, spacing, or value-string,
+                missing url at 3..3,
             ],
         }
-        ",
+        "#,
         );
     }
 
@@ -873,8 +907,7 @@ mod tests {
         ParseResult {
             output: None,
             errs: [
-                Invalid character 'k'. Method must be ascii uppercase. at 27..30,
-                found end of input at 41..41 expected any, ''_'', ''-'', ''.'', ''['', '']'', ''@'', ''$'', key-string-escaped-char, key-string-content, key-template, spacing, '':'', or value-string,
+                found end of input at 30..31 expected something else, spacing, or value-string,
             ],
         }
         ",
