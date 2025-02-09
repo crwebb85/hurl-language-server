@@ -255,7 +255,7 @@ mod tests {
     #[test]
     fn it_parses_simple_hurl_document() {
         let (ast, errs) = hurl_parser::parser::parser::parse_ast("GET {{abc}}");
-        assert!(ast != None);
-        assert!(errs.len() == 0);
+        assert_ne!(ast, None);
+        assert_eq!(errs.len(), 0);
     }
 }

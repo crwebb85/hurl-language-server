@@ -131,10 +131,36 @@ pub struct CookiesSection {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum CertificateFieldSelector {
+    Subject,
+    Issuer,
+    StartDate,
+    ExpireDate,
+    SerialNumber,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum Query {
+    Status,
+    Url,
+    Header(InterpolatedString),
+    Certificate(CertificateFieldSelector),
+    Cookie(InterpolatedString),
+    Body,
+    Xpath(InterpolatedString),
+    JsonPath(InterpolatedString),
+    Regex(InterpolatedString),
+    Variable(InterpolatedString),
+    Duration,
+    Bytes,
+    Sha256,
+    Md5,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Capture {
-    key: InterpolatedString,
-    //TODO add
-    // query
+    pub key: InterpolatedString,
+    pub query: Query,
     pub filters: Vec<FilterFunction>,
 }
 
@@ -144,11 +170,61 @@ pub struct CapturesSection {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum PredicatePrefixOperator {
+    Not,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum PredicateValue {
+    Boolean(bool),
+    MultilineString(MultilineString),
+    Null,
+    Integer(i64),
+    Float(OrderedFloat<f64>),
+    BigInteger(String),
+    OneLineString(InterpolatedString),
+    OneLineBase64(String),
+    OneLineFile(InterpolatedString),
+    OneLineHex(String),
+    QuotedString(InterpolatedString),
+    Template(Template),
+    Invalid,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum PredicateFunc {
+    Equal { value: PredicateValue },
+    NotEqual { value: PredicateValue },
+    Greater { value: PredicateValue },
+    GreaterOrEqual { value: PredicateValue },
+    LessPredicate { value: PredicateValue },
+    LessOrEqual { value: PredicateValue },
+    StartWith { value: PredicateValue },
+    EndWith { value: PredicateValue },
+    Contain { value: PredicateValue },
+    Match { value: PredicateValue },
+    Exists,
+    IsEmpty,
+    Include { value: PredicateValue },
+    IsInteger,
+    IsFloat,
+    IsBoolean,
+    IsString,
+    IsCollection,
+    IsDate,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Predicate {
+    pub prefix: Option<PredicatePrefixOperator>,
+    pub function: PredicateFunc,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Assert {
-    // TODO
-    // pub query: Query,
+    pub query: Query,
     pub filters: Vec<FilterFunction>,
-    // pub predicate: Predicate
+    pub predicate: Predicate,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -288,8 +364,49 @@ pub struct Request {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum HttpVersion {
+    Http1_0,
+    Http1_1,
+    Http2,
+    Http3, //Off spec but is in official parser
+    Http,
+    HttpUknown(String), //For invalid http versions
+}
+
+impl std::fmt::Display for HttpVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            HttpVersion::Http1_0 => write!(f, "HTTP/1.0"),
+            HttpVersion::Http1_1 => write!(f, "HTTP/1.1"),
+            HttpVersion::Http2 => write!(f, "HTTP/2"),
+            HttpVersion::Http3 => write!(f, "HTTP/3"),
+            HttpVersion::Http => write!(f, "HTTP"),
+            HttpVersion::HttpUknown(s) => write!(f, "{}", s),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum HttpStatus {
+    Any,
+    Code(u64),
+    Invalid, //For when a too large status code is given or otherwise just invalid
+    Missing,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum ResponseSection {
+    CapturesSection(CapturesSection),
+    AssertsSection(AssertsSection),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Response {
-    //TODO fill remaining fields
+    pub version: HttpVersion,
+    pub status: HttpStatus,
+    pub headers: Vec<KeyValue>,
+    pub response_sections: Vec<ResponseSection>,
+    pub body: Option<Body>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

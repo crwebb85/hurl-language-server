@@ -1,39 +1,18 @@
-use super::body::body_parser;
-use super::key_value::key_value_parser;
-use super::method::method_line_parser;
 use super::primitives::lt_parser;
-use super::request_section::request_section_parser;
-use super::types::{Ast, Entry, KeyValue, Request, RequestSection};
+use super::request::request_parser;
+use super::response::response_parser;
+use super::types::{Ast, Entry};
 use chumsky::prelude::*;
-
-fn request_parser<'a>() -> impl Parser<'a, &'a str, Request, extra::Err<Rich<'a, char>>> + Clone {
-    let header_line = key_value_parser().then_ignore(lt_parser());
-    let request = method_line_parser(false)
-        .then(header_line.repeated().collect::<Vec<KeyValue>>())
-        .then(
-            request_section_parser()
-                .repeated()
-                .collect::<Vec<RequestSection>>(),
-        )
-        .then(body_parser().or_not())
-        .map(
-            |((((method_value, url_value_string), headers), request_sections), body)| Request {
-                method: method_value,
-                url: url_value_string,
-                header: headers,
-                request_sections,
-                body,
-            },
-        )
-        .labelled("request");
-    request.boxed()
-}
 
 pub fn ast_parser<'a>() -> impl Parser<'a, &'a str, Ast, extra::Err<Rich<'a, char>>> + Clone {
     let entry = request_parser()
-        .map(|request_value| Entry {
+        .then(response_parser().or_not())
+        .map(|(request_value, response_value)| Entry {
             request: Box::new(request_value),
-            response: None,
+            response: match response_value {
+                Some(r) => Some(Box::new(r)),
+                None => None,
+            },
         })
         .labelled("entry")
         .boxed();
@@ -843,6 +822,60 @@ mod ast_tests {
                 found ''#'' at 123..124 expected '','', or ''}'',
             ],
         )
+        "#,
+        );
+    }
+
+    #[ignore = "Fix method line parser so that http lines are not mistaken as method lines"]
+    #[test]
+    fn it_parses_response() {
+        let test_str = r#" 
+    POST https://example.org
+    {       
+        "id": "d89e270c-5f26-4906-b305-c9e3cc2a0a24",
+        "pet": "cat"
+    }
+    HTTP/3 404
+
+    POST https://example.org
+    {       
+        "id": "55b42346-02be-4cf3-824c-b2dcdf5f7512",
+        "pet": "dog"
+    }
+    HTTP/3 200
+
+    "#;
+        assert_debug_snapshot!(
+        parse_ast(test_str),
+            @r#"
+
+        "#,
+        );
+    }
+
+    #[ignore = "Fix method line parser so that http lines are not mistaken as method lines"]
+    #[test]
+    fn it_recovers_missing_status_error() {
+        let test_str = r#" 
+    POST https://example.org
+    {       
+        "id": "d89e270c-5f26-4906-b305-c9e3cc2a0a24",
+        "pet": "cat"
+    }
+    HTTP/3
+
+    POST https://example.org
+    {       
+        "id": "55b42346-02be-4cf3-824c-b2dcdf5f7512",
+        "pet": "dog"
+    }
+    HTTP/3 200
+
+    "#;
+        assert_debug_snapshot!(
+        parse_ast(test_str),
+            @r#"
+
         "#,
         );
     }

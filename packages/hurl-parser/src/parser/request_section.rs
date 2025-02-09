@@ -129,8 +129,16 @@ pub fn request_section_parser<'a>(
     request_section.boxed()
 }
 
-//TODO sections can only be defined once per entry's request section. So you can't have [BasicAuth] defined
-//twice and so should be a diagnostic error.
+pub fn request_sections_parser<'a>(
+) -> impl Parser<'a, &'a str, Vec<RequestSection>, extra::Err<Rich<'a, char>>> + Clone {
+    //TODO add tests
+    request_section_parser()
+        .repeated()
+        .collect::<Vec<RequestSection>>()
+
+    //TODO sections can only be defined once per entry's request section. So you can't have [BasicAuth] defined
+    //twice and so should be a diagnostic error.
+}
 
 #[cfg(test)]
 mod request_section_tests {

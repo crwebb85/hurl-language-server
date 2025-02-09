@@ -25,7 +25,7 @@ fn method_parser<'a>(
                         e.span(),
                         format!(
                             "Invalid character '{}'. Method must be ascii uppercase.",
-                            ident.chars().nth(index).unwrap() // We know the character is in the index
+                            ident.chars().nth(index).unwrap() // We know the character is at the index
                         ),
                     )),
                     None => (),
@@ -43,10 +43,12 @@ pub fn method_line_parser<'a>(
     strict: bool,
 ) -> impl Parser<'a, &'a str, (Method, InterpolatedString), extra::Err<Rich<'a, char>>> + Clone {
     let method_line = method_parser(strict)
-        .padded_by(sp_parser().repeated())
+        .padded_by(sp_parser().repeated()) //TODO sp is required
         .then(value_parser())
         .then_ignore(lt_parser());
     method_line.boxed()
 }
 
 //TODO add tests
+
+//TODO error handle if missing URL
