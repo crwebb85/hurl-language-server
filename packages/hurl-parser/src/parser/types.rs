@@ -4,7 +4,13 @@ use std::hash::Hash;
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Method {
     pub value: String,
-    // TODO add a trait to validate if method is valid,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum Url {
+    Url(InterpolatedString),
+    Invalid,
+    Missing,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -357,7 +363,7 @@ pub enum RequestSection {
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Request {
     pub method: Method,
-    pub url: InterpolatedString,
+    pub url: Url,
     pub headers: Vec<KeyValue>, //TODO rename to headers
     pub request_sections: Vec<RequestSection>,
     pub body: Option<Body>,

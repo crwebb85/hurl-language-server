@@ -66,13 +66,15 @@ mod ast_tests {
                                 method: Method {
                                     value: "GeT",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: None,
@@ -84,13 +86,15 @@ mod ast_tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: None,
@@ -102,13 +106,15 @@ mod ast_tests {
                                 method: Method {
                                     value: "post",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: None,
@@ -120,13 +126,15 @@ mod ast_tests {
                                 method: Method {
                                     value: "pOst",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: None,
@@ -138,13 +146,15 @@ mod ast_tests {
                                 method: Method {
                                     value: "POST",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: None,
@@ -190,13 +200,15 @@ mod ast_tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: None,
@@ -208,13 +220,15 @@ mod ast_tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: None,
@@ -226,13 +240,15 @@ mod ast_tests {
                                 method: Method {
                                     value: "POST",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: None,
@@ -244,13 +260,15 @@ mod ast_tests {
                                 method: Method {
                                     value: "POST",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: None,
@@ -262,13 +280,15 @@ mod ast_tests {
                                 method: Method {
                                     value: "POST",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: None,
@@ -321,13 +341,15 @@ mod ast_tests {
                                 method: Method {
                                     value: "POST",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: Some(
@@ -406,13 +428,15 @@ mod ast_tests {
                                 method: Method {
                                     value: "POST",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: Some(
@@ -520,13 +544,15 @@ mod ast_tests {
                                 method: Method {
                                     value: "POST",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: Some(
@@ -583,13 +609,15 @@ mod ast_tests {
                                 method: Method {
                                     value: "POST",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: Some(
@@ -694,13 +722,15 @@ mod ast_tests {
                                 method: Method {
                                     value: "POST",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: Some(
@@ -757,13 +787,15 @@ mod ast_tests {
                                 method: Method {
                                     value: "POST",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: Some(

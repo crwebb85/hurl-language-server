@@ -19,13 +19,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: None,
@@ -56,13 +58,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: None,
@@ -109,13 +113,15 @@ mod tests {
                                 method: Method {
                                     value: "POST",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: None,
@@ -143,13 +149,15 @@ mod tests {
                                 method: Method {
                                     value: "FOO",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: None,
@@ -180,13 +188,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org/protected",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org/protected",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [
                                     KeyValue {
                                         key: InterpolatedString {
@@ -234,13 +244,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: None,
@@ -271,13 +283,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [],
                                 body: None,
@@ -289,13 +303,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org/protected",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org/protected",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [
                                     KeyValue {
                                         key: InterpolatedString {
@@ -343,13 +359,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [
                                     KeyValue {
                                         key: InterpolatedString {
@@ -398,13 +416,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [
                                     KeyValue {
                                         key: InterpolatedString {
@@ -452,13 +472,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [
                                     KeyValue {
                                         key: InterpolatedString {
@@ -540,13 +562,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [
                                     KeyValue {
                                         key: InterpolatedString {
@@ -604,13 +628,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [
                                     KeyValue {
                                         key: InterpolatedString {
@@ -658,13 +684,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [
                                     KeyValue {
                                         key: InterpolatedString {
@@ -713,13 +741,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org/cn",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org/cn",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [
                                     KeyValue {
                                         key: InterpolatedString {
@@ -785,13 +815,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org/cn",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org/cn",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [
                                     KeyValue {
                                         key: InterpolatedString {
@@ -865,13 +897,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org/cn",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org/cn",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [
                                     KeyValue {
                                         key: InterpolatedString {
@@ -927,13 +961,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org/cn",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org/cn",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [
                                     KeyValue {
                                         key: InterpolatedString {
@@ -992,13 +1028,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org/cn",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org/cn",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [
                                     KeyValue {
                                         key: InterpolatedString {
@@ -1071,13 +1109,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [
                                     KeyValue {
                                         key: InterpolatedString {
@@ -1135,13 +1175,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [
                                     KeyValue {
                                         key: InterpolatedString {
@@ -1196,13 +1238,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [
                                     KeyValue {
                                         key: InterpolatedString {
@@ -1281,13 +1325,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.org",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.org",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [
                                     KeyValue {
                                         key: InterpolatedString {
@@ -1358,39 +1404,41 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://",
-                                        ),
-                                        Template(
-                                            Template {
-                                                expr: Expr {
-                                                    variable: VariableName(
-                                                        "host",
-                                                    ),
-                                                    filters: [],
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://",
+                                            ),
+                                            Template(
+                                                Template {
+                                                    expr: Expr {
+                                                        variable: VariableName(
+                                                            "host",
+                                                        ),
+                                                        filters: [],
+                                                    },
                                                 },
-                                            },
-                                        ),
-                                        Str(
-                                            "/",
-                                        ),
-                                        Template(
-                                            Template {
-                                                expr: Expr {
-                                                    variable: VariableName(
-                                                        "id",
-                                                    ),
-                                                    filters: [],
+                                            ),
+                                            Str(
+                                                "/",
+                                            ),
+                                            Template(
+                                                Template {
+                                                    expr: Expr {
+                                                        variable: VariableName(
+                                                            "id",
+                                                        ),
+                                                        filters: [],
+                                                    },
                                                 },
-                                            },
-                                        ),
-                                        Str(
-                                            "/status",
-                                        ),
-                                    ],
-                                },
+                                            ),
+                                            Str(
+                                                "/status",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [
                                     OptionsSection(
@@ -1451,13 +1499,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.com",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.com",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [
                                     OptionsSection(
@@ -1577,13 +1627,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.com",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.com",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [
                                     OptionsSection(
@@ -1659,13 +1711,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.com",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.com",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [
                                     OptionsSection(
@@ -1729,13 +1783,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.com",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.com",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [
                                     OptionsSection(
@@ -1805,13 +1861,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.com",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.com",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [
                                     OptionsSection(
@@ -1881,13 +1939,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.com",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.com",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [
                                     OptionsSection(
@@ -1956,13 +2016,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.com",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.com",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [
                                     OptionsSection(
@@ -2009,13 +2071,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.com",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.com",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [
                                     OptionsSection(
@@ -2063,13 +2127,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.com",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.com",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [
                                     OptionsSection(
@@ -2131,13 +2197,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.com",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.com",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [
                                     OptionsSection(
@@ -2182,13 +2250,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.com",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.com",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [
                                     OptionsSection(
@@ -2236,13 +2306,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.com",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.com",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [
                                     OptionsSection(
@@ -2286,13 +2358,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.com",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.com",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [
                                     OptionsSection(
@@ -2394,36 +2468,38 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://",
-                                        ),
-                                        Template(
-                                            Template {
-                                                expr: Expr {
-                                                    variable: VariableName(
-                                                        "host",
-                                                    ),
-                                                    filters: [],
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://",
+                                            ),
+                                            Template(
+                                                Template {
+                                                    expr: Expr {
+                                                        variable: VariableName(
+                                                            "host",
+                                                        ),
+                                                        filters: [],
+                                                    },
                                                 },
-                                            },
-                                        ),
-                                        Str(
-                                            ":",
-                                        ),
-                                        Template(
-                                            Template {
-                                                expr: Expr {
-                                                    variable: VariableName(
-                                                        "port",
-                                                    ),
-                                                    filters: [],
+                                            ),
+                                            Str(
+                                                ":",
+                                            ),
+                                            Template(
+                                                Template {
+                                                    expr: Expr {
+                                                        variable: VariableName(
+                                                            "port",
+                                                        ),
+                                                        filters: [],
+                                                    },
                                                 },
-                                            },
-                                        ),
-                                    ],
-                                },
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [
                                     OptionsSection(
@@ -2622,13 +2698,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.com",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.com",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [
                                     OptionsSection(
@@ -2694,13 +2772,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.com",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.com",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [
                                     OptionsSection(
@@ -2787,13 +2867,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "http://localhost:3000/api/search",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "http://localhost:3000/api/search",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [
                                     QueryStringParamsSection(
@@ -2873,13 +2955,15 @@ mod tests {
                                 method: Method {
                                     value: "GET",
                                 },
-                                url: InterpolatedString {
-                                    parts: [
-                                        Str(
-                                            "https://example.com",
-                                        ),
-                                    ],
-                                },
+                                url: Url(
+                                    InterpolatedString {
+                                        parts: [
+                                            Str(
+                                                "https://example.com",
+                                            ),
+                                        ],
+                                    },
+                                ),
                                 headers: [],
                                 request_sections: [
                                     OptionsSection(

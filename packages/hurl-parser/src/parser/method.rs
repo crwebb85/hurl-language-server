@@ -3,7 +3,7 @@ use chumsky::prelude::*;
 use super::{
     key_value::value_parser,
     primitives::{ascii_alphabetic_uppercase_parser, lt_parser, sp_parser},
-    types::{InterpolatedString, Method},
+    types::{Method, Url},
 };
 
 fn method_parser<'a>(
@@ -41,10 +41,10 @@ fn method_parser<'a>(
 
 pub fn method_line_parser<'a>(
     strict: bool,
-) -> impl Parser<'a, &'a str, (Method, InterpolatedString), extra::Err<Rich<'a, char>>> + Clone {
+) -> impl Parser<'a, &'a str, (Method, Url), extra::Err<Rich<'a, char>>> + Clone {
     let method_line = method_parser(strict)
         .padded_by(sp_parser().repeated()) //TODO sp is required
-        .then(value_parser())
+        .then(value_parser().map(Url::Url))
         .then_ignore(lt_parser());
     method_line.boxed()
 }
