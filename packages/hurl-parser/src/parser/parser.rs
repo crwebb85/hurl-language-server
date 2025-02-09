@@ -73,7 +73,7 @@ mod ast_tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: None,
                             },
@@ -91,7 +91,7 @@ mod ast_tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: None,
                             },
@@ -109,7 +109,7 @@ mod ast_tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: None,
                             },
@@ -127,7 +127,7 @@ mod ast_tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: None,
                             },
@@ -145,7 +145,7 @@ mod ast_tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: None,
                             },
@@ -197,7 +197,7 @@ mod ast_tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: None,
                             },
@@ -215,7 +215,7 @@ mod ast_tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: None,
                             },
@@ -233,7 +233,7 @@ mod ast_tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: None,
                             },
@@ -251,7 +251,7 @@ mod ast_tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: None,
                             },
@@ -269,7 +269,7 @@ mod ast_tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: None,
                             },
@@ -328,7 +328,7 @@ mod ast_tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: Some(
                                     Body {
@@ -413,7 +413,7 @@ mod ast_tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: Some(
                                     Body {
@@ -527,7 +527,7 @@ mod ast_tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: Some(
                                     Body {
@@ -590,7 +590,7 @@ mod ast_tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: Some(
                                     Body {
@@ -701,7 +701,7 @@ mod ast_tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: Some(
                                     Body {
@@ -764,7 +764,7 @@ mod ast_tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: Some(
                                     Body {

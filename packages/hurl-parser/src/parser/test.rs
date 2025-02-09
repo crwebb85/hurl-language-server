@@ -26,7 +26,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: None,
                             },
@@ -63,7 +63,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: None,
                             },
@@ -116,7 +116,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: None,
                             },
@@ -150,7 +150,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: None,
                             },
@@ -187,7 +187,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [
+                                headers: [
                                     KeyValue {
                                         key: InterpolatedString {
                                             parts: [
@@ -241,7 +241,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: None,
                             },
@@ -278,7 +278,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [],
                                 body: None,
                             },
@@ -296,7 +296,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [
+                                headers: [
                                     KeyValue {
                                         key: InterpolatedString {
                                             parts: [
@@ -350,7 +350,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [
+                                headers: [
                                     KeyValue {
                                         key: InterpolatedString {
                                             parts: [
@@ -405,7 +405,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [
+                                headers: [
                                     KeyValue {
                                         key: InterpolatedString {
                                             parts: [
@@ -459,7 +459,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [
+                                headers: [
                                     KeyValue {
                                         key: InterpolatedString {
                                             parts: [
@@ -547,7 +547,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [
+                                headers: [
                                     KeyValue {
                                         key: InterpolatedString {
                                             parts: [
@@ -611,7 +611,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [
+                                headers: [
                                     KeyValue {
                                         key: InterpolatedString {
                                             parts: [
@@ -665,7 +665,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [
+                                headers: [
                                     KeyValue {
                                         key: InterpolatedString {
                                             parts: [
@@ -720,7 +720,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [
+                                headers: [
                                     KeyValue {
                                         key: InterpolatedString {
                                             parts: [
@@ -792,7 +792,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [
+                                headers: [
                                     KeyValue {
                                         key: InterpolatedString {
                                             parts: [
@@ -872,7 +872,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [
+                                headers: [
                                     KeyValue {
                                         key: InterpolatedString {
                                             parts: [
@@ -934,7 +934,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [
+                                headers: [
                                     KeyValue {
                                         key: InterpolatedString {
                                             parts: [
@@ -999,7 +999,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [
+                                headers: [
                                     KeyValue {
                                         key: InterpolatedString {
                                             parts: [
@@ -1078,7 +1078,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [
+                                headers: [
                                     KeyValue {
                                         key: InterpolatedString {
                                             parts: [
@@ -1142,7 +1142,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [
+                                headers: [
                                     KeyValue {
                                         key: InterpolatedString {
                                             parts: [
@@ -1203,7 +1203,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [
+                                headers: [
                                     KeyValue {
                                         key: InterpolatedString {
                                             parts: [
@@ -1288,7 +1288,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [
+                                headers: [
                                     KeyValue {
                                         key: InterpolatedString {
                                             parts: [
@@ -1391,7 +1391,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [
                                     OptionsSection(
                                         RequestOptionsSection {
@@ -1458,7 +1458,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [
                                     OptionsSection(
                                         RequestOptionsSection {
@@ -1584,7 +1584,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [
                                     OptionsSection(
                                         RequestOptionsSection {
@@ -1666,7 +1666,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [
                                     OptionsSection(
                                         RequestOptionsSection {
@@ -1736,7 +1736,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [
                                     OptionsSection(
                                         RequestOptionsSection {
@@ -1812,7 +1812,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [
                                     OptionsSection(
                                         RequestOptionsSection {
@@ -1888,7 +1888,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [
                                     OptionsSection(
                                         RequestOptionsSection {
@@ -1963,7 +1963,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [
                                     OptionsSection(
                                         RequestOptionsSection {
@@ -2016,7 +2016,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [
                                     OptionsSection(
                                         RequestOptionsSection {
@@ -2070,7 +2070,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [
                                     OptionsSection(
                                         RequestOptionsSection {
@@ -2138,7 +2138,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [
                                     OptionsSection(
                                         RequestOptionsSection {
@@ -2189,7 +2189,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [
                                     OptionsSection(
                                         RequestOptionsSection {
@@ -2243,7 +2243,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [
                                     OptionsSection(
                                         RequestOptionsSection {
@@ -2293,7 +2293,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [
                                     OptionsSection(
                                         RequestOptionsSection {
@@ -2424,7 +2424,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [
                                     OptionsSection(
                                         RequestOptionsSection {
@@ -2629,7 +2629,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [
                                     OptionsSection(
                                         RequestOptionsSection {
@@ -2701,7 +2701,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [
                                     OptionsSection(
                                         RequestOptionsSection {
@@ -2794,7 +2794,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [
                                     QueryStringParamsSection(
                                         QueryStringParamsSection {
@@ -2880,7 +2880,7 @@ mod tests {
                                         ),
                                     ],
                                 },
-                                header: [],
+                                headers: [],
                                 request_sections: [
                                     OptionsSection(
                                         RequestOptionsSection {

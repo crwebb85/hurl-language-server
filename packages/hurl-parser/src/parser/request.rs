@@ -15,7 +15,7 @@ pub fn request_parser<'a>() -> impl Parser<'a, &'a str, Request, extra::Err<Rich
             |((((method_value, url_value_string), headers), request_sections), body)| Request {
                 method: method_value,
                 url: url_value_string,
-                header: headers,
+                headers,
                 request_sections,
                 body,
             },

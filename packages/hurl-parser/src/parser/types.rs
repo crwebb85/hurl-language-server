@@ -358,7 +358,7 @@ pub enum RequestSection {
 pub struct Request {
     pub method: Method,
     pub url: InterpolatedString,
-    pub header: Vec<KeyValue>, //TODO rename to headers
+    pub headers: Vec<KeyValue>, //TODO rename to headers
     pub request_sections: Vec<RequestSection>,
     pub body: Option<Body>,
 }
