@@ -135,6 +135,7 @@ pub fn request_sections_parser<'a>(
     request_section_parser()
         .repeated()
         .collect::<Vec<RequestSection>>()
+        .boxed()
 
     //TODO sections can only be defined once per entry's request section. So you can't have [BasicAuth] defined
     //twice and so should be a diagnostic error.

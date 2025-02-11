@@ -7,7 +7,7 @@ pub fn response_sections_parser<'a>(
     // response_section_parser()
     //     .repeated()
     //     .collect::<Vec<ResponseSection>>(),
-    todo_parser().or_not().map(|_| vec![])
+    todo_parser().or_not().map(|_| vec![]).boxed()
 
     //TODO sections can only be defined once per entry's request section. So you can't have [Asserts] defined
     //twice and so should be a diagnostic error.

@@ -156,9 +156,9 @@ fn multiline_string_header_parser<'a>() -> impl Parser<
             }
         }).boxed();
 
-    multiline_string_header.then_ignore(text::newline()) //TODO off-spec official grammer allows
-                                                         //full lt_parser() but hurl only allows
-                                                         //a single newline of \n or \r\n
+    multiline_string_header.then_ignore(text::newline()).boxed() //TODO off-spec official grammer allows
+                                                                 //full lt_parser() but hurl only allows
+                                                                 //a single newline of \n or \r\n
 }
 
 pub fn multiline_string_parser<'a>(
@@ -196,13 +196,14 @@ pub fn multiline_string_parser<'a>(
         // .then_ignore(lt_parser())
         .boxed();
 
-    multiline_string.delimited_by(just("```"), just("```")).map(
-        |((string_type, attributes), content)| MultilineString {
+    multiline_string
+        .delimited_by(just("```"), just("```"))
+        .map(|((string_type, attributes), content)| MultilineString {
             r#type: string_type,
             attributes,
             content,
-        },
-    )
+        })
+        .boxed()
 }
 
 #[cfg(test)]

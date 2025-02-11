@@ -21,6 +21,7 @@ pub fn response_parser<'a>(
             },
         )
         .labelled("response")
+        .boxed()
 }
 
 #[cfg(test)]

@@ -42,10 +42,10 @@ pub enum FilterFunction {
         nth: u64,
     },
     Regex {
-        value: InterpolatedString,
+        value: Regex,
     },
     Replace {
-        old_value: InterpolatedString,
+        old_value: Regex,
         new_value: InterpolatedString,
     },
     Split {
@@ -489,6 +489,12 @@ pub enum Json {
     Bool(bool),
     Null,
     Template(Template),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum Regex {
+    Interpolated(InterpolatedString),
+    Literal(String),
 }
 
 //TODO replace with custom error type

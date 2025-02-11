@@ -22,11 +22,18 @@ fn quoted_string_escaped_char_parser<'a>(
 
 fn quoted_str_part_parser<'a>(
 ) -> impl Parser<'a, &'a str, InterpolatedStringPart, extra::Err<Rich<'a, char>>> + Clone {
-    let quoted_str_part = choice((quoted_string_escaped_char_parser(), none_of("\"\\")))
-        .repeated()
-        .at_least(1)
-        .collect::<String>()
-        .map(InterpolatedStringPart::Str);
+    let quoted_str_part = choice((
+        quoted_string_escaped_char_parser(),
+        //opening curly brackes are valid as long as they are not followed by a
+        //second curly bracket since two denote the start of a template
+        //(this observation isn't explicit in the grammer but was determined
+        just('{').then(just('{').not().rewind()).to('{'),
+        none_of("\"\\{"),
+    ))
+    .repeated()
+    .at_least(1)
+    .collect::<String>()
+    .map(InterpolatedStringPart::Str);
     quoted_str_part.boxed()
 }
 
@@ -49,7 +56,7 @@ pub fn generic_quoted_string_parser<
 ) -> impl Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone {
     let template_part = template.map(InterpolatedStringPart::Template);
 
-    let parts = choice((template_part, quoted_str_part_parser()))
+    let parts = choice((quoted_str_part_parser(), template_part))
         .repeated()
         .collect::<Vec<InterpolatedStringPart>>()
         .map(|v| InterpolatedString { parts: v });
@@ -122,7 +129,7 @@ mod quoted_string_tests {
         ParseResult {
             output: None,
             errs: [
-                found end of input at 1..1 expected template, quoted_string_escaped_char, something else, or ''"'',
+                found end of input at 1..1 expected quoted_string_escaped_char, ''{'', something else, template, or ''"'',
             ],
         }
         "#,
@@ -138,7 +145,7 @@ mod quoted_string_tests {
         ParseResult {
             output: None,
             errs: [
-                found end of input at 6..6 expected quoted_string_escaped_char, something else, template, or ''"'',
+                found end of input at 6..6 expected quoted_string_escaped_char, ''{'', something else, template, or ''"'',
             ],
         }
         "#,
@@ -193,6 +200,57 @@ mod quoted_string_tests {
             errs: [],
         }
         "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_quoted_template_inside_curly_brackets_with_spaces() {
+        let test_str = "\"{ {{count}} }\"";
+        assert_debug_snapshot!(
+        quoted_string_parser().parse(test_str),
+            @r#"
+        ParseResult {
+            output: Some(
+                InterpolatedString {
+                    parts: [
+                        Str(
+                            "{ ",
+                        ),
+                        Template(
+                            Template {
+                                expr: Expr {
+                                    variable: VariableName(
+                                        "count",
+                                    ),
+                                    filters: [],
+                                },
+                            },
+                        ),
+                        Str(
+                            " }",
+                        ),
+                    ],
+                },
+            ),
+            errs: [],
+        }
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_errors_quoted_template_inside_curly_brackets_without_spaces() {
+        let test_str = "\"{{{count}}}\"";
+        assert_debug_snapshot!(
+        quoted_string_parser().parse(test_str),
+            @r"
+        ParseResult {
+            output: None,
+            errs: [
+                found ''{'' at 2..3 expected spacing, expr, or something else,
+            ],
+        }
+        ",
         );
     }
 

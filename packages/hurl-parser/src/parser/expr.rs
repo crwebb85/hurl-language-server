@@ -1,6 +1,6 @@
 use chumsky::prelude::*;
 
-use super::{primitives::{alphabetic_parser, alphanumeric_parser, sp_parser}, types::{Expr, ExprValue, FilterFunction, InterpolatedString}};
+use super::{primitives::{alphabetic_parser, alphanumeric_parser, sp_parser}, regex::regex_parser, types::{Expr, ExprValue, FilterFunction, InterpolatedString}};
 
 
 
@@ -25,7 +25,7 @@ pub fn variable_name_parser<'a>() -> impl Parser<'a, &'a str, String, extra::Err
         .boxed()
 }
 
-pub fn expr_parser<'a, T: Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone>(
+pub fn expr_parser<'a, T: Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone + 'a>(
     quoted_string: T,
 ) -> impl Parser<'a, &'a str, Expr, extra::Err<Rich<'a, char>>> + Clone {
 
@@ -33,27 +33,28 @@ pub fn expr_parser<'a, T: Parser<'a, &'a str, InterpolatedString, extra::Err<Ric
         text::keyword("getEnv").to(ExprValue::FunctionName("getEnv".to_owned())), 
         text::keyword("newDate").to(ExprValue::FunctionName("newDate".to_owned())),
         text::keyword("newUuid").to(ExprValue::FunctionName("newUuid".to_owned()))
-    ));
+    )).boxed();
 
     let expr_variable = expr_function.or(variable_name_parser().map(ExprValue::VariableName));
 
+    let sp = sp_parser();
     let decode_filter_function = just("decode")
-        .delimited_by(sp_parser().repeated(), sp_parser().repeated().at_least(1))
+        .delimited_by(sp.clone().repeated(), sp.clone().repeated().at_least(1))
         .ignore_then(quoted_string.clone())
         .map(|s| FilterFunction::Decode { encoding: s});
 
     let format_filter_function = just("format")
-        .delimited_by(sp_parser().repeated(), sp_parser().repeated().at_least(1))
+        .delimited_by(sp.clone().repeated(), sp.clone().repeated().at_least(1))
         .ignore_then(quoted_string.clone())
         .map(|s| FilterFunction::Format { fmt: s});
 
     let jsonpath_filter_function = just("jsonpath")
-        .delimited_by(sp_parser().repeated(), sp_parser().repeated().at_least(1))
+        .delimited_by(sp.clone().repeated(), sp.clone().repeated().at_least(1))
         .ignore_then(quoted_string.clone())
         .map(|s| FilterFunction::JsonPath { expr: s });
 
     let nth_filter_function = just("nth")
-        .delimited_by(sp_parser().repeated(), sp_parser().repeated().at_least(1))
+        .delimited_by(sp.clone().repeated(), sp.clone().repeated().at_least(1))
         .then(text::int(10))
         .map(|(_, n)| FilterFunction::Nth { 
             nth: n.parse::<u64>()
@@ -61,29 +62,29 @@ pub fn expr_parser<'a, T: Parser<'a, &'a str, InterpolatedString, extra::Err<Ric
         });
 
     let regex_filter_function = just("regex")
-        .delimited_by(sp_parser().repeated(), sp_parser().repeated().at_least(1))
-        .ignore_then(quoted_string.clone())
-        .map(|s| FilterFunction::Regex { value: s });
+        .delimited_by(sp.clone().repeated(), sp.clone().repeated().at_least(1))
+        .ignore_then(regex_parser(quoted_string.clone()))
+        .map(|s| FilterFunction::Regex { value: s }).boxed();
 
     let split_filter_function = just("split")
-        .delimited_by(sp_parser().repeated(), sp_parser().repeated().at_least(1))
+        .delimited_by(sp.clone().repeated(), sp.clone().repeated().at_least(1))
         .ignore_then(quoted_string.clone())
         .map(|s| FilterFunction::Split { sep: s });
         
     let replace_filter_function = just("replace")
-        .delimited_by(sp_parser().repeated(), sp_parser().repeated().at_least(1))
-        .ignore_then(quoted_string.clone())
-        .then_ignore(sp_parser().repeated().at_least(1))
+        .delimited_by(sp.clone().repeated(), sp.clone().repeated().at_least(1))
+        .ignore_then(regex_parser(quoted_string.clone()))
+        .then_ignore(sp.clone().repeated().at_least(1))
         .then(quoted_string.clone())
         .map(|(old, new)| FilterFunction::Replace { old_value: old, new_value: new });
 
     let todate_filter_function = just("toDate")
-        .delimited_by(sp_parser().repeated(), sp_parser().repeated().at_least(1))
+        .delimited_by(sp.clone().repeated(), sp.clone().repeated().at_least(1))
         .ignore_then(quoted_string.clone())
         .map(|s| FilterFunction::ToDate { fmt: s });
 
     let xpath_filter_function = just("xpath")
-        .delimited_by(sp_parser().repeated(), sp_parser().repeated().at_least(1))
+        .delimited_by(sp.clone().repeated(), sp.clone().repeated().at_least(1))
         .ignore_then(quoted_string.clone())
         .map(|s| FilterFunction::XPath { expr: s });
 
@@ -107,11 +108,11 @@ pub fn expr_parser<'a, T: Parser<'a, &'a str, InterpolatedString, extra::Err<Ric
         replace_filter_function,
         todate_filter_function,
         xpath_filter_function,
-    )).separated_by(sp_parser().repeated().at_least(1))
+    )).separated_by(sp.clone().repeated().at_least(1))
         .collect::<Vec<FilterFunction>>();
 
     let expr = expr_variable
-    .padded_by(sp_parser().repeated())
+    .padded_by(sp.clone().repeated())
     .then(filters)
     .map( |(expr_var, filter_funcs)| Expr {
         variable: expr_var,
@@ -458,7 +459,7 @@ mod expr_tests {
 
 
     #[test]
-    fn it_parses_expr_with_regex_filter() {
+    fn it_parses_expr_with_regex_quoted_string_filter() {
         let test_str = r#"id regex "\\d{10}""#;
         let quoted_string = quoted_string_parser();
         assert_debug_snapshot!(
@@ -472,13 +473,43 @@ mod expr_tests {
                     ),
                     filters: [
                         Regex {
-                            value: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "\\d{10}",
-                                    ),
-                                ],
-                            },
+                            value: Interpolated(
+                                InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "\\d{10}",
+                                        ),
+                                    ],
+                                },
+                            ),
+                        },
+                    ],
+                },
+            ),
+            errs: [],
+        }
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_expr_with_regex_literal_filter() {
+        let test_str = r#"id regex /\d{10}/"#;
+        let quoted_string = quoted_string_parser();
+        assert_debug_snapshot!(
+        expr_parser(quoted_string).parse(test_str),
+            @r#"
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "id",
+                    ),
+                    filters: [
+                        Regex {
+                            value: Literal(
+                                "\\d{10}",
+                            ),
                         },
                     ],
                 },
@@ -524,7 +555,7 @@ mod expr_tests {
 
 
     #[test]
-    fn it_parses_expr_with_replace_filter() {
+    fn it_parses_expr_with_replace_filter_with_quoted_string_old_value() {
         let test_str = r#"names replace "; " ",""#;
         let quoted_string = quoted_string_parser();
         assert_debug_snapshot!(
@@ -538,17 +569,54 @@ mod expr_tests {
                     ),
                     filters: [
                         Replace {
-                            old_value: InterpolatedString {
-                                parts: [
-                                    Str(
-                                        "; ",
-                                    ),
-                                ],
-                            },
+                            old_value: Interpolated(
+                                InterpolatedString {
+                                    parts: [
+                                        Str(
+                                            "; ",
+                                        ),
+                                    ],
+                                },
+                            ),
                             new_value: InterpolatedString {
                                 parts: [
                                     Str(
                                         ",",
+                                    ),
+                                ],
+                            },
+                        },
+                    ],
+                },
+            ),
+            errs: [],
+        }
+        "#,
+        );
+    }
+
+    #[test]
+    fn it_parses_expr_with_replace_filter_and_regex_literal_old_value() {
+        let test_str = r#"names replace /\d{10}/ "100""#;
+        let quoted_string = quoted_string_parser();
+        assert_debug_snapshot!(
+        expr_parser(quoted_string).parse(test_str),
+            @r#"
+        ParseResult {
+            output: Some(
+                Expr {
+                    variable: VariableName(
+                        "names",
+                    ),
+                    filters: [
+                        Replace {
+                            old_value: Literal(
+                                "\\d{10}",
+                            ),
+                            new_value: InterpolatedString {
+                                parts: [
+                                    Str(
+                                        "100",
                                     ),
                                 ],
                             },

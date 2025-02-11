@@ -15,6 +15,7 @@ mod options;
 pub mod parser;
 mod primitives;
 mod quoted_string;
+mod regex;
 mod request;
 mod request_section;
 mod response;
