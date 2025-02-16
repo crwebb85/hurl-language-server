@@ -33,7 +33,7 @@ pub fn variable_value_parser<'a>(
         just("false").to(VariableValue::Boolean(false)),
         just("false").to(VariableValue::Boolean(false)),
         number,
-        key_parser().map(VariableValue::String), //TODO the official grammer is wrong and what is
+        key_parser().map(VariableValue::String), //TODO off spec the official grammer is wrong and what is
         //actually used is more similar to value_parser
         quoted_string_parser().map(VariableValue::String),
     ));

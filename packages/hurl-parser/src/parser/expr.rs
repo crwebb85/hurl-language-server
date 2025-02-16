@@ -25,17 +25,10 @@ pub fn variable_name_parser<'a>() -> impl Parser<'a, &'a str, String, extra::Err
         .boxed()
 }
 
-pub fn expr_parser<'a, T: Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone + 'a>(
+
+pub fn filters_parser<'a, T: Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone + 'a>(
     quoted_string: T,
-) -> impl Parser<'a, &'a str, Expr, extra::Err<Rich<'a, char>>> + Clone {
-
-    let expr_function = choice((
-        text::keyword("getEnv").to(ExprValue::FunctionName("getEnv".to_owned())), 
-        text::keyword("newDate").to(ExprValue::FunctionName("newDate".to_owned())),
-        text::keyword("newUuid").to(ExprValue::FunctionName("newUuid".to_owned()))
-    )).boxed();
-
-    let expr_variable = expr_function.or(variable_name_parser().map(ExprValue::VariableName));
+) -> impl Parser<'a, &'a str, Vec<FilterFunction>, extra::Err<Rich<'a, char>>> + Clone {
 
     let sp = sp_parser();
     let decode_filter_function = just("decode")
@@ -110,10 +103,25 @@ pub fn expr_parser<'a, T: Parser<'a, &'a str, InterpolatedString, extra::Err<Ric
         xpath_filter_function,
     )).separated_by(sp.clone().repeated().at_least(1))
         .collect::<Vec<FilterFunction>>();
+    
+    filters
+}
+
+pub fn expr_parser<'a, T: Parser<'a, &'a str, InterpolatedString, extra::Err<Rich<'a, char>>> + Clone + 'a>(
+    quoted_string: T,
+) -> impl Parser<'a, &'a str, Expr, extra::Err<Rich<'a, char>>> + Clone {
+
+    let expr_function = choice((
+        text::keyword("getEnv").to(ExprValue::FunctionName("getEnv".to_owned())), 
+        text::keyword("newDate").to(ExprValue::FunctionName("newDate".to_owned())),
+        text::keyword("newUuid").to(ExprValue::FunctionName("newUuid".to_owned()))
+    )).boxed();
+
+    let expr_variable = expr_function.or(variable_name_parser().map(ExprValue::VariableName));
 
     let expr = expr_variable
-    .padded_by(sp.clone().repeated())
-    .then(filters)
+    .padded_by(sp_parser().repeated())
+    .then(filters_parser(quoted_string))
     .map( |(expr_var, filter_funcs)| Expr {
         variable: expr_var,
         filters: filter_funcs

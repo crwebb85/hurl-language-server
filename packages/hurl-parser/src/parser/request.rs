@@ -24,8 +24,6 @@ pub fn request_parser<'a>() -> impl Parser<'a, &'a str, Request, extra::Err<Rich
     request.boxed()
 }
 
-//TODO add tests
-
 #[cfg(test)]
 mod request_parser_tests {
     use super::*;

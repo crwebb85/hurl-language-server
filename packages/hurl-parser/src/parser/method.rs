@@ -46,7 +46,7 @@ pub fn method_line_parser<'a>(
         let method_line = sp_parser()
             .repeated()
             .ignore_then(method_parser(strict))
-            .padded_by(sp_parser().repeated().at_least(1)) //TODO sp is required
+            .padded_by(sp_parser().repeated().at_least(1))
             .then(value_parser().map(Url::Url))
             .then_ignore(lt_parser());
         method_line.boxed()

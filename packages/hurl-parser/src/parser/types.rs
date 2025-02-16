@@ -155,7 +155,7 @@ pub enum Query {
     Body,
     Xpath(InterpolatedString),
     JsonPath(InterpolatedString),
-    Regex(InterpolatedString),
+    Regex(Regex),
     Variable(InterpolatedString),
     Duration,
     Bytes,
@@ -182,19 +182,27 @@ pub enum PredicatePrefixOperator {
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum PredicateValue {
+    Invalid,
     Boolean(bool),
-    MultilineString(MultilineString),
     Null,
+    OneLineFile(InterpolatedString),
+    MultilineString(MultilineString),
+    Regex(Regex), //Technically off spec but is valid in specific predicate functions like
+    //Is expression
+    Template(Template),
+
+    //Is number
     Integer(i64),
     Float(OrderedFloat<f64>),
     BigInteger(String),
-    OneLineString(InterpolatedString),
+
+    //Is bytearray
     OneLineBase64(String),
-    OneLineFile(InterpolatedString),
     OneLineHex(String),
+
+    //Is string
+    OneLineString(InterpolatedString),
     QuotedString(InterpolatedString),
-    Template(Template),
-    Invalid,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -203,7 +211,7 @@ pub enum PredicateFunc {
     NotEqual { value: PredicateValue },
     Greater { value: PredicateValue },
     GreaterOrEqual { value: PredicateValue },
-    LessPredicate { value: PredicateValue },
+    Less { value: PredicateValue },
     LessOrEqual { value: PredicateValue },
     StartWith { value: PredicateValue },
     EndWith { value: PredicateValue },
@@ -218,6 +226,8 @@ pub enum PredicateFunc {
     IsString,
     IsCollection,
     IsDate,
+    IsIsoDate,
+    Invalid, //An invalid function
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
