@@ -1,0 +1,17 @@
+root = true
+
+[*]
+end_of_line = lf
+charset = utf-8
+insert_final_newline = true
+
+[*.rs]
+max_line_length = 100
+# Don't trim trailing whitespace in rust files
+# since whitespace matter the hurl parser's tests
+trim_trailing_whitespace = false
+
+[*.md]
+# Don't trim double whitespace at end of line since it denotes a line break in Markdown
+trim_trailing_whitespace = false
+
