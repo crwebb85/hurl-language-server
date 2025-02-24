@@ -1,21 +1,405 @@
-name: Rust
+name: Build
 
 on:
   push:
     branches: ["main"]
   pull_request:
     branches: ["main"]
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      branch:
+        description: "branch to build artifacts from"
+        default: "main"
+        required: true
+        type: string
 
 env:
   CARGO_TERM_COLOR: always
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+permissions: {}
 
+jobs:
+  package-generic-linux-x64:
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.branch }}
+      - name: Check if clean repository
+        # This is to make sure that no changes to the code were made
+        # by the pipeline. I don't want my official builds to ever have
+        # the plus sign next to the version hash which signifies it was built
+        # from a dirty working tree.
+        run: |
+          if git diff --quiet --exit-code; then
+            echo "Git repo clean"
+          else
+            ret=$?
+            echo "Git repo is not clean"
+            exit $ret
+          fi
       - name: Build
-        run: cargo build --verbose
+        run: cargo build --release --verbose --locked
       - name: Run tests
         run: cargo test --verbose
+      - name: Validate Build Version String
+        run: |
+          version=$(./target/release/hurl-language-server --version)
+
+          commit_hash_with_dirty_modifier=$(echo "$version" | cut -d " " -f 3 | cut -d ":" -f 2 | cut -d "," -f 1)
+          commit_hash=$(echo "$commit_hash_with_dirty_modifier" | cut -d "+" -f 1)
+
+          expected_commit_hash=$(git log -1 --pretty=format:%H)
+          if [[ $expected_commit_hash != $commit_hash ]]; then
+              echo "Commit hash in version string of ${commit_hash} does not match the expected commit hash of ${expected_commit_hash}"
+              exit 1
+          else
+              echo "Version string has correct git hash of ${expected_commit_hash}"
+          fi
+
+          if [[ ${commit_hash_with_dirty_modifier: -1} == "+" ]]; then
+              echo "Branch was dirty during build. Build artifacts require all changes to be committed."
+              exit 1
+          else
+              echo "Built with clean branch."
+          fi
+      - name: Package
+        run: |
+          release_version=$(cargo metadata --no-deps --format-version=1 | jq '.packages.[] | select(.name == "hurl-language-server").version' -r)
+          echo "release_version=${release_version}"
+
+          toolchain=$(rustup show active-toolchain | cut -d '-' -f 2- | cut -d ' ' -f1)
+          echo "toolchain=${toolchain}"
+
+          package_name="hurl-language-server-${release_version}-${toolchain}"
+          echo "package_name=${package_name}" 
+
+          package_dir="target/tarball/${package_name}"
+          echo "package_dir=${package_dir}"
+
+          tarball_filename="${package_name}.tar.gz"
+          echo "tarball_filename=${tarball_filename}"
+
+          mkdir -p "${package_dir}"
+          mkdir -p "${package_dir}/bin"
+
+          cp target/release/hurl-language-server "${package_dir}/bin"
+
+          mkdir -p target/upload
+          tar cvfz "target/upload/${tarball_filename}" -C "$(dirname "${package_dir}")" "${package_name}"
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: release-generic-linux-x64-artifacts
+          path: target/upload/*
+
+  package-generic-linux-aarch64:
+    runs-on: ubuntu-22.04-arm
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.branch }}
+      - name: Check if clean repository
+        # This is to make sure that no changes to the code were made
+        # by the pipeline. I don't want my official builds to ever have
+        # the plus sign next to the version hash which signifies it was built
+        # from a dirty working tree.
+        run: |
+          if git diff --quiet --exit-code; then
+            echo "Git repo clean"
+          else
+            ret=$?
+            echo "Git repo is not clean"
+            exit $ret
+          fi
+      - name: Build
+        run: cargo build --release --verbose --locked
+      - name: Run tests
+        run: cargo test --verbose
+      - name: Validate Build Version String
+        run: |
+          version=$(./target/release/hurl-language-server --version)
+
+          commit_hash_with_dirty_modifier=$(echo "$version" | cut -d " " -f 3 | cut -d ":" -f 2 | cut -d "," -f 1)
+          commit_hash=$(echo "$commit_hash_with_dirty_modifier" | cut -d "+" -f 1)
+
+          expected_commit_hash=$(git log -1 --pretty=format:%H)
+          if [[ $expected_commit_hash != $commit_hash ]]; then
+              echo "Commit hash in version string of ${commit_hash} does not match the expected commit hash of ${expected_commit_hash}"
+              exit 1
+          else
+              echo "Version string has correct git hash of ${expected_commit_hash}"
+          fi
+
+          if [[ ${commit_hash_with_dirty_modifier: -1} == "+" ]]; then
+              echo "Branch was dirty during build. Build artifacts require all changes to be committed."
+              exit 1
+          else
+              echo "Built with clean branch."
+          fi
+      - name: Package
+        run: |
+          release_version=$(cargo metadata --no-deps --format-version=1 | jq '.packages[] | select(.name == "hurl-language-server").version' -r)
+          echo "release_version=${release_version}"
+
+          toolchain=$(rustup show active-toolchain | cut -d '-' -f 2- | cut -d ' ' -f1)
+          echo "toolchain=${toolchain}"
+
+          package_name="hurl-language-server-${release_version}-${toolchain}"
+          echo "package_name=${package_name}" 
+
+          package_dir="target/tarball/${package_name}"
+          echo "package_dir=${package_dir}"
+
+          tarball_filename="${package_name}.tar.gz"
+          echo "tarball_filename=${tarball_filename}"
+
+          mkdir -p "${package_dir}"
+          mkdir -p "${package_dir}/bin"
+
+          cp target/release/hurl-language-server "${package_dir}/bin"
+
+          mkdir -p target/upload
+          tar cvfz "target/upload/${tarball_filename}" -C "$(dirname "${package_dir}")" "${package_name}"
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: release-generic-linux-aarch64-artifacts
+          path: target/upload/*
+
+  package-macos-x64:
+    runs-on: macos-13
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.branch }}
+      - name: Check if clean repository
+        # This is to make sure that no changes to the code were made
+        # by the pipeline. I don't want my official builds to ever have
+        # the plus sign next to the version hash which signifies it was built
+        # from a dirty working tree.
+        run: |
+          if git diff --quiet --exit-code; then
+            echo "Git repo clean"
+          else
+            ret=$?
+            echo "Git repo is not clean"
+            exit $ret
+          fi
+      - name: Build
+        run: cargo build --release --verbose --locked
+      - name: Run tests
+        run: cargo test --verbose
+      - name: Validate Build Version String
+        run: |
+          version=$(./target/release/hurl-language-server --version)
+
+          commit_hash_with_dirty_modifier=$(echo "$version" | cut -d " " -f 3 | cut -d ":" -f 2 | cut -d "," -f 1)
+          commit_hash=$(echo "$commit_hash_with_dirty_modifier" | cut -d "+" -f 1)
+
+          expected_commit_hash=$(git log -1 --pretty=format:%H)
+          if [[ $expected_commit_hash != $commit_hash ]]; then
+              echo "Commit hash in version string of ${commit_hash} does not match the expected commit hash of ${expected_commit_hash}"
+              exit 1
+          else
+              echo "Version string has correct git hash of ${expected_commit_hash}"
+          fi
+
+          if [[ ${commit_hash_with_dirty_modifier: -1} == "+" ]]; then
+              echo "Branch was dirty during build. Build artifacts require all changes to be committed."
+              exit 1
+          else
+              echo "Built with clean branch."
+          fi
+      - name: Package
+        run: |
+          release_version=$(cargo metadata --no-deps --format-version=1 | jq '.packages.[] | select(.name == "hurl-language-server").version' -r)
+          echo "release_version=${release_version}"
+
+          toolchain=$(rustup show active-toolchain | cut -d '-' -f 2- | cut -d ' ' -f1)
+          echo "toolchain=${toolchain}"
+
+          package_name="hurl-language-server-${release_version}-${toolchain}"
+          echo "package_name=${package_name}" 
+
+          package_dir="target/tarball/${package_name}"
+          echo "package_dir=${package_dir}"
+
+          tarball_filename="${package_name}.tar.gz"
+          echo "tarball_filename=${tarball_filename}"
+
+          mkdir -p "${package_dir}"
+          mkdir -p "${package_dir}/bin"
+
+          cp target/release/hurl-language-server "${package_dir}/bin"
+
+          mkdir -p target/upload
+          tar cvfz "target/upload/${tarball_filename}" -C "$(dirname "${package_dir}")" "${package_name}"
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: release-macos-x64-artifacts
+          path: target/upload/*
+
+  package-macos-aarch64:
+    runs-on: macos-14
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.branch }}
+      - name: Check if clean repository
+        # This is to make sure that no changes to the code were made
+        # by the pipeline. I don't want my official builds to ever have
+        # the plus sign next to the version hash which signifies it was built
+        # from a dirty working tree.
+        run: |
+          if git diff --quiet --exit-code; then
+            echo "Git repo clean"
+          else
+            ret=$?
+            echo "Git repo is not clean"
+            exit $ret
+          fi
+      - name: Build
+        run: cargo build --release --verbose --locked
+      - name: Run tests
+        run: cargo test --verbose
+      - name: Validate Build Version String
+        run: |
+          version=$(./target/release/hurl-language-server --version)
+
+          commit_hash_with_dirty_modifier=$(echo "$version" | cut -d " " -f 3 | cut -d ":" -f 2 | cut -d "," -f 1)
+          commit_hash=$(echo "$commit_hash_with_dirty_modifier" | cut -d "+" -f 1)
+
+          expected_commit_hash=$(git log -1 --pretty=format:%H)
+          if [[ $expected_commit_hash != $commit_hash ]]; then
+              echo "Commit hash in version string of ${commit_hash} does not match the expected commit hash of ${expected_commit_hash}"
+              exit 1
+          else
+              echo "Version string has correct git hash of ${expected_commit_hash}"
+          fi
+
+          if [[ ${commit_hash_with_dirty_modifier: -1} == "+" ]]; then
+              echo "Branch was dirty during build. Build artifacts require all changes to be committed."
+              exit 1
+          else
+              echo "Built with clean branch."
+          fi
+      - name: Package
+        run: |
+          release_version=$(cargo metadata --no-deps --format-version=1 | jq '.packages.[] | select(.name == "hurl-language-server").version' -r)
+          echo "release_version=${release_version}"
+
+          toolchain=$(rustup show active-toolchain | cut -d '-' -f 2- | cut -d ' ' -f1)
+          echo "toolchain=${toolchain}"
+
+          package_name="hurl-language-server-${release_version}-${toolchain}"
+          echo "package_name=${package_name}" 
+
+          package_dir="target/tarball/${package_name}"
+          echo "package_dir=${package_dir}"
+
+          tarball_filename="${package_name}.tar.gz"
+          echo "tarball_filename=${tarball_filename}"
+
+          mkdir -p "${package_dir}"
+          mkdir -p "${package_dir}/bin"
+
+          cp target/release/hurl-language-server "${package_dir}/bin"
+
+          mkdir -p target/upload
+          tar cvfz "target/upload/${tarball_filename}" -C "$(dirname "${package_dir}")" "${package_name}"
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: release-macos-aarch64-artifacts
+          path: target/upload/*
+
+  package-windows-x64:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.branch }}
+      - name: Set git to use LF (CLRF stands for evil)
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+      - name: Check if clean repository
+        # This is to make sure that no changes to the code were made
+        # by the pipeline. I don't want my official builds to ever have
+        # the plus sign next to the version hash which signifies it was built
+        # from a dirty working tree.
+        run: |
+          git diff --quiet --exit-code 
+          $exitcode = $LASTEXITCODE
+          if (${exitcode} -eq 0) {
+              Write-Output "Git repo clean"
+          } else {
+              Write-Output "Git repo is not clean"
+              exit ${exitcode}
+          }
+      - name: Build
+        run: cargo build --release --verbose --locked
+      - name: Run tests
+        run: cargo test --verbose
+      - name: Validate Build Version String
+        run: |
+          $version = $(./target/release/hurl-language-server.exe --version)
+
+          $commit_hash_with_dirty_modifier = $version.Split()[2].Split(':')[1].Split(',')[0]
+          $commit_hash = $commit_hash_with_dirty_modifier.Split('+')[0]
+
+          $expected_commit_hash = (git log -1 --pretty=format:%H) 
+          if ($expected_commit_hash -ne $commit_hash) {
+              Write-Output "Commit hash in version string of ${commit_hash} does not match the expected commit hash of ${expected_commit_hash}"
+              exit 1
+          } else {
+              Write-Output "Version string has correct git hash of ${expected_commit_hash}"
+          }
+
+          if ($commit_hash_with_dirty_modifier -match '\+$') {
+              Write-Output "Branch was dirty during build. Build artifacts require all changes to be committed."
+              exit 1
+          } else {
+              Write-Output "Built with clean branch."
+          }
+      - name: Package
+        run: |
+          $release_version=(cargo metadata --no-deps --format-version=1 | jq '.packages.[] | select(.name == \"hurl-language-server\").version' -r)
+          Write-Output "release_version=${release_version}"
+
+          $toolchain=(rustup show active-toolchain).split()[0]
+          Write-Output "toolchain=${toolchain}"
+
+          $package_name="hurl-language-server-${release_version}-${toolchain}"
+          Write-Output "package_name=${package_name}"
+
+          $package_dir="target/win_package/${package_name}"
+          Write-Output "package_dir=${package_dir}"
+
+          $zip_filename="${package_name}.zip"
+          Write-Output "zip_filename=${zip_filename}"
+
+          mkdir -p "${package_dir}"
+
+          Copy-Item target/release/hurl-language-server.exe "${package_dir}"
+
+          mkdir -p target/upload
+          Compress-Archive -Path $package_dir\* -DestinationPath "target/upload/${zip_filename}"
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: release-windows-x64-artifacts
+          path: target/upload/*
