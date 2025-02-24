@@ -227,7 +227,7 @@ async fn main() {
     let mut args = pico_args::Arguments::from_env();
 
     if args.contains(["-v", "--version"]) {
-        println!("version: {}", VERSION_STRING);
+        println!("{}", VERSION_STRING);
         return;
     }
 
