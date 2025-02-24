@@ -1,6 +1,6 @@
 [package]
 name = "hurl-language-server"
-version = "0.1.0-alpha.0"
+version = "0.0.1-SNAPSHOT"
 edition = "2021"
 license = "MIT"
 description = "A language server for hurl files"

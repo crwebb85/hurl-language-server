@@ -438,7 +438,7 @@ checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 
 [[package]]
 name = "hurl-language-server"
-version = "0.1.0-alpha.0"
+version = "0.0.1-SNAPSHOT"
 dependencies = [
  "chrono",
  "dashmap 6.1.0",
@@ -454,7 +454,7 @@ dependencies = [
 
 [[package]]
 name = "hurl-parser"
-version = "0.1.0-alpha.0"
+version = "0.0.1-SNAPSHOT"
 dependencies = [
  "chumsky",
  "insta",
