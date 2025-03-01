@@ -48,7 +48,7 @@ fn get_commit_hash() -> String {
     let output = Command::new("git")
         .arg("log")
         .arg("-1")
-        .arg("--pretty=format:%h") // Abbreviated commit hash
+        .arg("--pretty=format:%H") // Full commit hash
         .current_dir(env!("CARGO_MANIFEST_DIR"))
         .output()
         .unwrap();
